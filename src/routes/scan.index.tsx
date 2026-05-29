@@ -58,6 +58,10 @@ function ScanPage() {
 
   const onFile = async (file?: File | null) => {
     if (!file) return;
+    if (isHeic(file)) {
+      toast.error("heic photos aren't supported yet. switch your iphone camera to 'most compatible' (settings → camera → formats), or upload a jpg/png.");
+      return;
+    }
     if (file.size > 15 * 1024 * 1024) {
       toast.error("photo too large. try a smaller one.");
       return;
@@ -68,7 +72,7 @@ function ScanPage() {
       setPhoto(small);
       navigate({ to: "/scan/analyzing" });
     } catch {
-      toast.error("couldn't read that photo. try again.");
+      toast.error("couldn't read that photo. try a jpg or png.");
     }
   };
 
