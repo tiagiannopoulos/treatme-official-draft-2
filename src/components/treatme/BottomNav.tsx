@@ -2,13 +2,20 @@ import { Link } from "@tanstack/react-router";
 import { Home, Search, Sparkles, ListChecks, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const tabs = [
+type Tab = {
+  to: "/" | "/search" | "/scan" | "/treatments" | "/profile";
+  label: string;
+  icon: typeof Home;
+  primary?: boolean;
+};
+
+const tabs: Tab[] = [
   { to: "/", label: "menu", icon: Home },
   { to: "/search", label: "search", icon: Search },
   { to: "/scan", label: "scan", icon: Sparkles, primary: true },
   { to: "/treatments", label: "tx", icon: ListChecks },
   { to: "/profile", label: "profile", icon: User },
-] as const;
+];
 
 export function BottomNav() {
   return (
