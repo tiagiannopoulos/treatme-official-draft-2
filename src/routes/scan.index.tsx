@@ -24,9 +24,10 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-// downscale a data URL to max 1024px so the API payload stays small
+// downscale a data URL to max 1024px so the API payload stays small.
+// throws if the browser can't decode the image (e.g. HEIC on non-safari).
 async function downscale(dataUrl: string, max = 1024): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
       const ratio = Math.min(1, max / Math.max(img.width, img.height));
@@ -38,9 +39,15 @@ async function downscale(dataUrl: string, max = 1024): Promise<string> {
       ctx.drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL("image/jpeg", 0.85));
     };
-    img.onerror = () => resolve(dataUrl);
+    img.onerror = () => reject(new Error("decode_failed"));
     img.src = dataUrl;
   });
+}
+
+function isHeic(file: File) {
+  const t = (file.type || "").toLowerCase();
+  const n = file.name.toLowerCase();
+  return t.includes("heic") || t.includes("heif") || n.endsWith(".heic") || n.endsWith(".heif");
 }
 
 function ScanPage() {
@@ -51,6 +58,10 @@ function ScanPage() {
 
   const onFile = async (file?: File | null) => {
     if (!file) return;
+    if (isHeic(file)) {
+      toast.error("heic photos aren't supported yet. switch your iphone camera to 'most compatible' (settings → camera → formats), or upload a jpg/png.");
+      return;
+    }
     if (file.size > 15 * 1024 * 1024) {
       toast.error("photo too large. try a smaller one.");
       return;
@@ -61,7 +72,7 @@ function ScanPage() {
       setPhoto(small);
       navigate({ to: "/scan/analyzing" });
     } catch {
-      toast.error("couldn't read that photo. try again.");
+      toast.error("couldn't read that photo. try a jpg or png.");
     }
   };
 
@@ -99,8 +110,9 @@ function ScanPage() {
         ))}
       </ul>
 
-      <input ref={cameraRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-      <input ref={uploadRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={cameraRef} type="file" accept="image/jpeg,image/png" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+
     </div>
   );
 }
