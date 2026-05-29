@@ -45,7 +45,7 @@ function TreatmentDetail() {
       <div className="px-6 mt-5">
         <p className="brand-eyebrow">improves</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {t.improves.map((i) => (
+          {t.improves.map((i: string) => (
             <span key={i} className="rounded-full bg-mint text-ink/80 px-3 py-1 text-[12px] font-medium lowercase">{i}</span>
           ))}
         </div>

@@ -50,15 +50,15 @@ function ChatPage() {
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = (message: { text?: string }, e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const fd = new FormData(form);
-    const text = String(fd.get("message") ?? "").trim();
+    const text = (message.text ?? "").trim();
     if (!text) return;
     sendMessage({ text });
     form.reset();
   };
+
 
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem-5.5rem)]">
@@ -80,7 +80,7 @@ function ChatPage() {
 
           {messages.map((m) => (
             <Message from={m.role} key={m.id}>
-              <MessageContent variant={m.role === "user" ? "contained" : "flat"}>
+              <MessageContent>
                 {m.parts.map((part, i) => {
                   if (part.type === "text") {
                     return m.role === "assistant"
@@ -95,7 +95,7 @@ function ChatPage() {
 
           {isLoading && messages.at(-1)?.role === "user" && (
             <Message from="assistant">
-              <MessageContent variant="flat">
+              <MessageContent>
                 <Shimmer>thinking…</Shimmer>
               </MessageContent>
             </Message>
