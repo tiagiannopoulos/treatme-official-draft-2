@@ -9,38 +9,199 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TreatmentsIndexRouteImport } from './routes/treatments.index'
+import { Route as ScanIndexRouteImport } from './routes/scan.index'
+import { Route as ScanResultsRouteImport } from './routes/scan.results'
+import { Route as ScanChatRouteImport } from './routes/scan.chat'
+import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiAnalyzeRouteImport } from './routes/api/analyze'
+import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
+import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
 
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TreatmentsIndexRoute = TreatmentsIndexRouteImport.update({
+  id: '/treatments/',
+  path: '/treatments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanIndexRoute = ScanIndexRouteImport.update({
+  id: '/scan/',
+  path: '/scan/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanResultsRoute = ScanResultsRouteImport.update({
+  id: '/scan/results',
+  path: '/scan/results',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanChatRoute = ScanChatRouteImport.update({
+  id: '/scan/chat',
+  path: '/scan/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanAnalyzingRoute = ScanAnalyzingRouteImport.update({
+  id: '/scan/analyzing',
+  path: '/scan/analyzing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAnalyzeRoute = ApiAnalyzeRouteImport.update({
+  id: '/api/analyze',
+  path: '/api/analyze',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TreatmentsSlugIndexRoute = TreatmentsSlugIndexRouteImport.update({
+  id: '/treatments/$slug/',
+  path: '/treatments/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TreatmentsSlugBookRoute = TreatmentsSlugBookRouteImport.update({
+  id: '/treatments/$slug/book',
+  path: '/treatments/$slug/book',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/api/analyze': typeof ApiAnalyzeRoute
+  '/api/chat': typeof ApiChatRoute
+  '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/chat': typeof ScanChatRoute
+  '/scan/results': typeof ScanResultsRoute
+  '/scan/': typeof ScanIndexRoute
+  '/treatments/': typeof TreatmentsIndexRoute
+  '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
+  '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/api/analyze': typeof ApiAnalyzeRoute
+  '/api/chat': typeof ApiChatRoute
+  '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/chat': typeof ScanChatRoute
+  '/scan/results': typeof ScanResultsRoute
+  '/scan': typeof ScanIndexRoute
+  '/treatments': typeof TreatmentsIndexRoute
+  '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
+  '/treatments/$slug': typeof TreatmentsSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/profile': typeof ProfileRoute
+  '/search': typeof SearchRoute
+  '/api/analyze': typeof ApiAnalyzeRoute
+  '/api/chat': typeof ApiChatRoute
+  '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/chat': typeof ScanChatRoute
+  '/scan/results': typeof ScanResultsRoute
+  '/scan/': typeof ScanIndexRoute
+  '/treatments/': typeof TreatmentsIndexRoute
+  '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
+  '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/profile'
+    | '/search'
+    | '/api/analyze'
+    | '/api/chat'
+    | '/scan/analyzing'
+    | '/scan/chat'
+    | '/scan/results'
+    | '/scan/'
+    | '/treatments/'
+    | '/treatments/$slug/book'
+    | '/treatments/$slug/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/profile'
+    | '/search'
+    | '/api/analyze'
+    | '/api/chat'
+    | '/scan/analyzing'
+    | '/scan/chat'
+    | '/scan/results'
+    | '/scan'
+    | '/treatments'
+    | '/treatments/$slug/book'
+    | '/treatments/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/profile'
+    | '/search'
+    | '/api/analyze'
+    | '/api/chat'
+    | '/scan/analyzing'
+    | '/scan/chat'
+    | '/scan/results'
+    | '/scan/'
+    | '/treatments/'
+    | '/treatments/$slug/book'
+    | '/treatments/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ProfileRoute: typeof ProfileRoute
+  SearchRoute: typeof SearchRoute
+  ApiAnalyzeRoute: typeof ApiAnalyzeRoute
+  ApiChatRoute: typeof ApiChatRoute
+  ScanAnalyzingRoute: typeof ScanAnalyzingRoute
+  ScanChatRoute: typeof ScanChatRoute
+  ScanResultsRoute: typeof ScanResultsRoute
+  ScanIndexRoute: typeof ScanIndexRoute
+  TreatmentsIndexRoute: typeof TreatmentsIndexRoute
+  TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
+  TreatmentsSlugIndexRoute: typeof TreatmentsSlugIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +209,86 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/treatments/': {
+      id: '/treatments/'
+      path: '/treatments'
+      fullPath: '/treatments/'
+      preLoaderRoute: typeof TreatmentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/': {
+      id: '/scan/'
+      path: '/scan'
+      fullPath: '/scan/'
+      preLoaderRoute: typeof ScanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/results': {
+      id: '/scan/results'
+      path: '/scan/results'
+      fullPath: '/scan/results'
+      preLoaderRoute: typeof ScanResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/chat': {
+      id: '/scan/chat'
+      path: '/scan/chat'
+      fullPath: '/scan/chat'
+      preLoaderRoute: typeof ScanChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/analyzing': {
+      id: '/scan/analyzing'
+      path: '/scan/analyzing'
+      fullPath: '/scan/analyzing'
+      preLoaderRoute: typeof ScanAnalyzingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/analyze': {
+      id: '/api/analyze'
+      path: '/api/analyze'
+      fullPath: '/api/analyze'
+      preLoaderRoute: typeof ApiAnalyzeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/treatments/$slug/': {
+      id: '/treatments/$slug/'
+      path: '/treatments/$slug'
+      fullPath: '/treatments/$slug/'
+      preLoaderRoute: typeof TreatmentsSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/treatments/$slug/book': {
+      id: '/treatments/$slug/book'
+      path: '/treatments/$slug/book'
+      fullPath: '/treatments/$slug/book'
+      preLoaderRoute: typeof TreatmentsSlugBookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ProfileRoute: ProfileRoute,
+  SearchRoute: SearchRoute,
+  ApiAnalyzeRoute: ApiAnalyzeRoute,
+  ApiChatRoute: ApiChatRoute,
+  ScanAnalyzingRoute: ScanAnalyzingRoute,
+  ScanChatRoute: ScanChatRoute,
+  ScanResultsRoute: ScanResultsRoute,
+  ScanIndexRoute: ScanIndexRoute,
+  TreatmentsIndexRoute: TreatmentsIndexRoute,
+  TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
+  TreatmentsSlugIndexRoute: TreatmentsSlugIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
