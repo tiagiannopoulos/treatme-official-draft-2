@@ -110,8 +110,9 @@ function ScanPage() {
         ))}
       </ul>
 
-      <input ref={cameraRef} type="file" accept="image/*" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-      <input ref={uploadRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={cameraRef} type="file" accept="image/jpeg,image/png" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+      <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+
     </div>
   );
 }
