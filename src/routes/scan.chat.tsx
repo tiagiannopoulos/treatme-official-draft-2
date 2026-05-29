@@ -9,7 +9,7 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
-import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
   PromptInput,
   PromptInputTextarea,
@@ -59,7 +59,6 @@ function ChatPage() {
     form.reset();
   };
 
-
   return (
     <div className="flex flex-col h-[calc(100vh-3.5rem-5.5rem)]">
       <div className="px-6 pt-4 pb-2 flex items-center justify-between">
@@ -84,8 +83,16 @@ function ChatPage() {
                 {m.parts.map((part, i) => {
                   if (part.type === "text") {
                     return m.role === "assistant"
-                      ? <MessageResponse key={i}>{part.text}</MessageResponse>
-                      : <p key={i} className="whitespace-pre-wrap">{part.text}</p>;
+                      ? (
+                          <p key={i} className="whitespace-pre-wrap leading-6 text-foreground">
+                            {part.text}
+                          </p>
+                        )
+                      : (
+                          <p key={i} className="whitespace-pre-wrap leading-6">
+                            {part.text}
+                          </p>
+                        );
                   }
                   return null;
                 })}
