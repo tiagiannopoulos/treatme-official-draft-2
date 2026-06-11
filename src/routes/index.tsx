@@ -1,83 +1,155 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Sparkles, ArrowRight } from "lucide-react";
-import { PillButton } from "@/components/treatme/PillButton";
+import { Sparkles, Lock, BookOpen, TrendingUp, ArrowRight } from "lucide-react";
+import { TREATMENTS } from "@/lib/treatments-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "treatme — get treated." },
-      { name: "description", content: "your tx, matched. scan your skin, see what's actually there, find verified providers nearby." },
+      { name: "description", content: "your tx, matched. scan your skin, find verified providers nearby." },
     ],
   }),
   component: MenuPage,
 });
 
 function MenuPage() {
+  const forYou = TREATMENTS.slice(0, 4);
+  const trending = TREATMENTS.slice(1, 5);
+
   return (
-    <div className="px-6 pt-6">
-      <p className="brand-eyebrow">menu · for you</p>
+    <div className="pt-5 pb-4 space-y-10">
+      {/* 1. CTA / unlock banner */}
+      <section className="px-6">
+        <p className="brand-eyebrow">menu · for you</p>
+        <h1 className="brand-display text-[40px] mt-3 text-balance">
+          let's see what your<br />skin is asking for<span className="text-hot">.</span>
+        </h1>
 
-      <h1 className="brand-display text-[44px] mt-3 text-balance">
-        let's see what your<br/>skin is asking for<span className="text-hot">.</span>
-      </h1>
-
-
-      <div className="mt-7 flex flex-col gap-3">
-        <Link to="/scan">
-          <PillButton fullWidth icon={<Sparkles className="size-[18px]" />}>scan me</PillButton>
-        </Link>
-        <Link to="/treatments">
-          <PillButton fullWidth variant="outline">browse treatments</PillButton>
-        </Link>
-      </div>
-
-      <section className="mt-10">
-        <p className="brand-eyebrow">what's on the menu</p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <CategoryCard tone="bubblegum" title="skin analysis" sub="see what's actually there." />
-          <CategoryCard tone="butter" title="treatment discovery" sub="know what to do next." />
-          <CategoryCard tone="mint" title="provider matching" sub="find the right hands." />
-          <CategoryCard tone="cream" title="education" sub="learn the difference." />
+        <div className="mt-6 rounded-3xl bg-bubblegum/45 p-5">
+          <div className="flex items-start gap-3">
+            <div className="size-11 rounded-full bg-cream grid place-items-center shrink-0">
+              <Lock className="size-[18px] text-ink" strokeWidth={2.2} />
+            </div>
+            <div className="flex-1">
+              <p className="font-bold text-[16px] tracking-tight leading-tight">
+                your personalized skin consult is waiting
+              </p>
+              <p className="text-[13px] text-ink-soft mt-1 leading-snug">
+                unlock ai-powered treatment recommendations tailored to you.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/scan"
+            className="mt-4 flex items-center justify-center gap-2 rounded-full bg-cream h-12 font-semibold text-[15px] tracking-tight lowercase shadow-[0_1px_0_rgba(0,0,0,0.04)]"
+          >
+            <Sparkles className="size-[18px] text-hot" />
+            unlock with free scan
+          </Link>
         </div>
       </section>
 
-      <section className="mt-10 rounded-2xl bg-ink text-cream p-6">
-        <p className="brand-eyebrow text-cream/60">how it works</p>
-        <h2 className="brand-display text-[28px] mt-2">get scanned,<br/>get treated.</h2>
-        <ol className="mt-5 space-y-3 text-[14px] text-cream/85">
-          <Step n="01" t="scan your face" d="one photo. good light. no makeup." />
-          <Step n="02" t="read the result" d="13 markers + a clear blurb. tap any concern to see it on your face." />
-          <Step n="03" t="book a 15-min consult" d="verified providers near you. first visit is always a free consult." />
-        </ol>
-        <Link to="/scan" className="mt-6 inline-flex items-center gap-1 text-hot font-semibold lowercase">
-          start scan <ArrowRight className="size-4" />
-        </Link>
+      {/* 2. For you */}
+      <TreatmentRail
+        eyebrow="for you"
+        title="picked for your skin"
+        sub="based on your last scan."
+        items={forYou}
+        tone="butter"
+      />
+
+      {/* 3. Trending now */}
+      <TreatmentRail
+        eyebrow="trending now"
+        title="what people are booking"
+        sub="this week, near you."
+        items={trending}
+        tone="mint"
+        icon={<TrendingUp className="size-[18px] text-ink" strokeWidth={2.2} />}
+      />
+
+      {/* 4. Education */}
+      <section className="px-6">
+        <div className="flex items-center gap-2">
+          <BookOpen className="size-[18px] text-ink" strokeWidth={2.2} />
+          <h2 className="brand-display text-[26px]">skin education</h2>
+        </div>
+        <p className="text-[13px] text-ink-mute mt-1">learn the basics before you treat.</p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <EduCard title="what is skin structure?" sub="understanding the layers of your skin." />
+          <EduCard title="skin health vs structure" sub="learn the key differences." />
+          <EduCard title="common concerns" sub="what affects your skin most." />
+          <EduCard title="treatment types explained" sub="from injectables to lasers." />
+        </div>
       </section>
     </div>
   );
 }
 
-function CategoryCard({ tone, title, sub }: { tone: "bubblegum" | "butter" | "mint" | "cream"; title: string; sub: string }) {
-  const bg = { bubblegum: "bg-bubblegum", butter: "bg-butter", mint: "bg-mint", cream: "bg-cream border border-line" }[tone];
+function TreatmentRail({
+  eyebrow,
+  title,
+  sub,
+  items,
+  tone,
+  icon,
+}: {
+  eyebrow: string;
+  title: string;
+  sub: string;
+  items: typeof TREATMENTS;
+  tone: "butter" | "mint" | "bubblegum";
+  icon?: React.ReactNode;
+}) {
+  const bg = { butter: "bg-butter", mint: "bg-mint", bubblegum: "bg-bubblegum/60" }[tone];
   return (
-    <div className={`rounded-2xl ${bg} p-4 h-32 flex flex-col justify-between`}>
-      <span className="text-[11px] font-semibold tracking-[0.16em] uppercase text-ink/70">on the menu</span>
-      <div>
-        <p className="font-bold text-[15px] tracking-tight">{title}</p>
-        <p className="text-[12px] text-ink/70">{sub}</p>
+    <section>
+      <div className="px-6 flex items-end justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            {icon}
+            <p className="brand-eyebrow">{eyebrow}</p>
+          </div>
+          <h2 className="brand-display text-[24px] mt-1">{title}</h2>
+          <p className="text-[12px] text-ink-mute">{sub}</p>
+        </div>
+        <Link to="/treatments" className="text-[12px] font-semibold lowercase text-ink-soft inline-flex items-center gap-0.5">
+          see all <ArrowRight className="size-3" />
+        </Link>
       </div>
-    </div>
+
+      <div className="mt-4 flex gap-3 overflow-x-auto scrollbar-none px-6 snap-x snap-mandatory">
+        {items.map((t) => (
+          <Link
+            key={t.slug}
+            to="/treatments/$slug"
+            params={{ slug: t.slug }}
+            className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden"
+          >
+            <div className={`h-28 ${bg} grid place-items-center`}>
+              <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+            </div>
+            <div className="p-3">
+              <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
+              <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category}</p>
+              <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${t.priceFrom}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
-function Step({ n, t, d }: { n: string; t: string; d: string }) {
+function EduCard({ title, sub }: { title: string; sub: string }) {
   return (
-    <li className="flex gap-3">
-      <span className="text-hot font-bold text-[12px] tracking-widest pt-[2px]">{n}</span>
-      <div>
-        <p className="font-semibold text-cream">{t}</p>
-        <p className="text-cream/65">{d}</p>
+    <div className="rounded-2xl border border-line p-4 bg-cream">
+      <div className="size-8 rounded-full bg-bubblegum/40 grid place-items-center mb-3">
+        <BookOpen className="size-4 text-ink" strokeWidth={2.2} />
       </div>
-    </li>
+      <p className="font-bold text-[13px] tracking-tight leading-tight lowercase">{title}</p>
+      <p className="text-[11px] text-ink-mute mt-1 leading-snug">{sub}</p>
+    </div>
   );
 }
