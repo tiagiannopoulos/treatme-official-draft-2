@@ -20,7 +20,6 @@ function MenuPage() {
     <div className="pt-5 pb-4 space-y-10">
       {/* 1. CTA / unlock banner */}
       <section className="px-6">
-        <p className="brand-eyebrow">menu · for you</p>
         <h1 className="brand-display text-[40px] mt-3 text-balance">
           let's see what your<br />skin is asking for<span className="text-hot">.</span>
         </h1>
