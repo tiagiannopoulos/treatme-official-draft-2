@@ -21,9 +21,6 @@ function MenuPage() {
         let's see what your<br/>skin is asking for<span className="text-hot">.</span>
       </h1>
 
-      <p className="mt-4 text-ink-soft text-[15px] leading-relaxed max-w-[28ch]">
-        smart analysis underneath. clean, sensory, expert on top. take one photo — we'll do the rest.
-      </p>
 
       <div className="mt-7 flex flex-col gap-3">
         <Link to="/scan">
