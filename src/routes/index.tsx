@@ -24,7 +24,7 @@ function MenuPage() {
           let's see what your<br />skin is asking for<span className="text-hot">.</span>
         </h1>
 
-        <div className="mt-6 rounded-3xl bg-white border border-line p-5">
+        <div className="mt-6 rounded-3xl bg-bubblegum/45 p-5">
           <div className="flex items-start gap-3">
             <div className="size-11 rounded-full bg-cream grid place-items-center shrink-0">
               <Lock className="size-[18px] text-ink" strokeWidth={2.2} />
@@ -101,7 +101,7 @@ function TreatmentRail({
   tone: "butter" | "mint" | "bubblegum";
   icon?: React.ReactNode;
 }) {
-  const bg = { butter: "bg-butter/50", mint: "bg-mint/50", bubblegum: "bg-bubblegum/30" }[tone];
+  const bg = { butter: "bg-butter", mint: "bg-mint", bubblegum: "bg-bubblegum/60" }[tone];
   return (
     <section>
       <div className="px-6 flex items-end justify-between">
@@ -124,7 +124,7 @@ function TreatmentRail({
             key={t.slug}
             to="/treatments/$slug"
             params={{ slug: t.slug }}
-            className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-white overflow-hidden"
+            className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden"
           >
             <div className={`h-28 ${bg} grid place-items-center`}>
               <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
@@ -143,7 +143,7 @@ function TreatmentRail({
 
 function EduCard({ title, sub }: { title: string; sub: string }) {
   return (
-    <div className="rounded-2xl border border-line p-4 bg-white">
+    <div className="rounded-2xl border border-line p-4 bg-cream">
       <div className="size-8 rounded-full bg-bubblegum/40 grid place-items-center mb-3">
         <BookOpen className="size-4 text-ink" strokeWidth={2.2} />
       </div>
