@@ -39,7 +39,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-6 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 text-center">
       <div className="max-w-sm">
         <p className="brand-eyebrow">something broke</p>
         <h1 className="brand-display text-3xl mt-3">couldn't get a clear read.</h1>
