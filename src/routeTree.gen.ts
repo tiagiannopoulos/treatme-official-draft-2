@@ -18,9 +18,9 @@ import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
 import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as ApiAnalyzeRouteImport } from './routes/api/analyze'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
 import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
+import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
@@ -67,11 +67,6 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAnalyzeRoute = ApiAnalyzeRouteImport.update({
-  id: '/api/analyze',
-  path: '/api/analyze',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TreatmentsSlugIndexRoute = TreatmentsSlugIndexRouteImport.update({
   id: '/treatments/$slug/',
   path: '/treatments/$slug/',
@@ -82,18 +77,23 @@ const TreatmentsSlugBookRoute = TreatmentsSlugBookRouteImport.update({
   path: '/treatments/$slug/book',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
+  id: '/api/public/analyze',
+  path: '/api/public/analyze',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
-  '/api/analyze': typeof ApiAnalyzeRoute
   '/api/chat': typeof ApiChatRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/scan/': typeof ScanIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
+  '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
@@ -101,13 +101,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
-  '/api/analyze': typeof ApiAnalyzeRoute
   '/api/chat': typeof ApiChatRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/scan': typeof ScanIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
+  '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatments/$slug': typeof TreatmentsSlugIndexRoute
 }
@@ -116,13 +116,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
-  '/api/analyze': typeof ApiAnalyzeRoute
   '/api/chat': typeof ApiChatRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/scan/': typeof ScanIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
+  '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
@@ -132,13 +132,13 @@ export interface FileRouteTypes {
     | '/'
     | '/profile'
     | '/search'
-    | '/api/analyze'
     | '/api/chat'
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
     | '/scan/'
     | '/treatments/'
+    | '/api/public/analyze'
     | '/treatments/$slug/book'
     | '/treatments/$slug/'
   fileRoutesByTo: FileRoutesByTo
@@ -146,13 +146,13 @@ export interface FileRouteTypes {
     | '/'
     | '/profile'
     | '/search'
-    | '/api/analyze'
     | '/api/chat'
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
     | '/scan'
     | '/treatments'
+    | '/api/public/analyze'
     | '/treatments/$slug/book'
     | '/treatments/$slug'
   id:
@@ -160,13 +160,13 @@ export interface FileRouteTypes {
     | '/'
     | '/profile'
     | '/search'
-    | '/api/analyze'
     | '/api/chat'
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
     | '/scan/'
     | '/treatments/'
+    | '/api/public/analyze'
     | '/treatments/$slug/book'
     | '/treatments/$slug/'
   fileRoutesById: FileRoutesById
@@ -175,13 +175,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
-  ApiAnalyzeRoute: typeof ApiAnalyzeRoute
   ApiChatRoute: typeof ApiChatRoute
   ScanAnalyzingRoute: typeof ScanAnalyzingRoute
   ScanChatRoute: typeof ScanChatRoute
   ScanResultsRoute: typeof ScanResultsRoute
   ScanIndexRoute: typeof ScanIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
+  ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
   TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
   TreatmentsSlugIndexRoute: typeof TreatmentsSlugIndexRoute
 }
@@ -251,13 +251,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/analyze': {
-      id: '/api/analyze'
-      path: '/api/analyze'
-      fullPath: '/api/analyze'
-      preLoaderRoute: typeof ApiAnalyzeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/treatments/$slug/': {
       id: '/treatments/$slug/'
       path: '/treatments/$slug'
@@ -272,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentsSlugBookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/analyze': {
+      id: '/api/public/analyze'
+      path: '/api/public/analyze'
+      fullPath: '/api/public/analyze'
+      preLoaderRoute: typeof ApiPublicAnalyzeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -279,13 +279,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
-  ApiAnalyzeRoute: ApiAnalyzeRoute,
   ApiChatRoute: ApiChatRoute,
   ScanAnalyzingRoute: ScanAnalyzingRoute,
   ScanChatRoute: ScanChatRoute,
   ScanResultsRoute: ScanResultsRoute,
   ScanIndexRoute: ScanIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
+  ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
   TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
   TreatmentsSlugIndexRoute: TreatmentsSlugIndexRoute,
 }

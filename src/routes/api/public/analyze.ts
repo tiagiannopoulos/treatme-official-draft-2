@@ -209,7 +209,7 @@ async function runAnalysis(model: ReturnType<ReturnType<typeof createLovableAiGa
   }
 }
 
-export const Route = createFileRoute("/api/analyze")({
+export const Route = createFileRoute("/api/public/analyze")({
   server: {
     handlers: {
       POST: async ({ request }) => {
