@@ -18,7 +18,7 @@ import { BottomNav } from "@/components/treatme/BottomNav";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-6 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 text-center">
       <div className="max-w-sm">
         <p className="brand-eyebrow">404</p>
         <h1 className="brand-display text-5xl mt-3">page not found.</h1>
@@ -39,7 +39,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-6 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 text-center">
       <div className="max-w-sm">
         <p className="brand-eyebrow">something broke</p>
         <h1 className="brand-display text-3xl mt-3">couldn't get a clear read.</h1>
@@ -83,7 +83,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-cream text-ink">
+      <body className="bg-white text-ink">
         {children}
         <Scripts />
       </body>
@@ -96,7 +96,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ScanProvider>
-        <div className="min-h-screen flex flex-col bg-cream">
+        <div className="min-h-screen flex flex-col bg-white">
           <TopBar />
           <main className="flex-1 pb-28">
             <Outlet />
