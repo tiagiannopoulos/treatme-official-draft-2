@@ -83,7 +83,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="bg-cream text-ink">
+      <body className="bg-white text-ink">
         {children}
         <Scripts />
       </body>
