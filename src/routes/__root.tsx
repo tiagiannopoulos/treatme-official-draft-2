@@ -96,7 +96,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ScanProvider>
-        <div className="min-h-screen flex flex-col bg-cream">
+        <div className="min-h-screen flex flex-col bg-white">
           <TopBar />
           <main className="flex-1 pb-28">
             <Outlet />
