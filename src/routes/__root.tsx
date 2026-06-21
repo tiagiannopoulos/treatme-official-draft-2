@@ -18,7 +18,7 @@ import { BottomNav } from "@/components/treatme/BottomNav";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream px-6 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 text-center">
       <div className="max-w-sm">
         <p className="brand-eyebrow">404</p>
         <h1 className="brand-display text-5xl mt-3">page not found.</h1>
