@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles, Lock, BookOpen, TrendingUp, ArrowRight } from "lucide-react";
 import { TREATMENTS } from "@/lib/treatments-data";
+import { useTreatmentStory } from "@/lib/treatment-story-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -117,24 +118,30 @@ function TreatmentRail({
 
       <div className="mt-4 flex gap-3 overflow-x-auto scrollbar-none px-6 snap-x snap-mandatory">
         {items.map((t) => (
-          <Link
-            key={t.slug}
-            to="/treatments/$slug"
-            params={{ slug: t.slug }}
-            className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden"
-          >
-            <div className={`h-28 ${bg} grid place-items-center`}>
-              <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
-            </div>
-            <div className="p-3">
-              <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
-              <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category}</p>
-              <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${t.priceFrom}</p>
-            </div>
-          </Link>
+          <StoryCard key={t.slug} t={t} bg={bg} />
         ))}
       </div>
     </section>
+  );
+}
+
+function StoryCard({ t, bg }: { t: (typeof TREATMENTS)[number]; bg: string }) {
+  const { open } = useTreatmentStory();
+  return (
+    <button
+      type="button"
+      onClick={() => open(t.slug)}
+      className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden text-left"
+    >
+      <div className={`h-28 ${bg} grid place-items-center`}>
+        <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+      </div>
+      <div className="p-3">
+        <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
+        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category}</p>
+        <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${t.priceFrom}</p>
+      </div>
+    </button>
   );
 }
 
