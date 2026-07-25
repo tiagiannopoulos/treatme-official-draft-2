@@ -48,7 +48,7 @@ function MenuPage() {
       {/* 2. For you */}
       <TreatmentRail
         eyebrow="for you"
-        title="picked for your skin"
+        title="Picked for your skin"
         sub="based on your last scan."
         items={forYou}
         tone="butter"
@@ -57,7 +57,7 @@ function MenuPage() {
       {/* 3. Trending now */}
       <TreatmentRail
         eyebrow="trending now"
-        title="what people are booking"
+        title="What people are booking"
         sub="this week, near you."
         items={trending}
         tone="mint"
