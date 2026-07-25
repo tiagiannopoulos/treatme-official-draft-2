@@ -14,7 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      treatment_before_afters: {
+        Row: {
+          after_url: string
+          before_url: string
+          caption: string | null
+          created_at: string
+          id: string
+          provider_name: string | null
+          sort_order: number
+          treatment_slug: string
+          weeks_between: number | null
+        }
+        Insert: {
+          after_url: string
+          before_url: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          provider_name?: string | null
+          sort_order?: number
+          treatment_slug: string
+          weeks_between?: number | null
+        }
+        Update: {
+          after_url?: string
+          before_url?: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          provider_name?: string | null
+          sort_order?: number
+          treatment_slug?: string
+          weeks_between?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_before_afters_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      treatments: {
+        Row: {
+          category: string
+          created_at: string
+          downtime: string
+          hero_image_url: string | null
+          improves: string[]
+          name: string
+          price_from: number
+          science: string
+          slug: string
+          sort_order: number
+          what_it_is: string
+          what_to_expect: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          downtime: string
+          hero_image_url?: string | null
+          improves?: string[]
+          name: string
+          price_from: number
+          science?: string
+          slug: string
+          sort_order?: number
+          what_it_is: string
+          what_to_expect: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          downtime?: string
+          hero_image_url?: string | null
+          improves?: string[]
+          name?: string
+          price_from?: number
+          science?: string
+          slug?: string
+          sort_order?: number
+          what_it_is?: string
+          what_to_expect?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
