@@ -15,6 +15,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { ScanProvider } from "@/lib/scan-store";
 import { TopBar } from "@/components/treatme/TopBar";
 import { BottomNav } from "@/components/treatme/BottomNav";
+import { TreatmentStoryProvider } from "@/lib/treatment-story-store";
+import { TreatmentStory } from "@/components/treatme/TreatmentStory";
 
 function NotFoundComponent() {
   return (
@@ -96,14 +98,17 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ScanProvider>
-        <div className="min-h-screen flex flex-col bg-white">
-          <TopBar />
-          <main className="flex-1 pb-28">
-            <Outlet />
-          </main>
-          <BottomNav />
-        </div>
-        <Toaster position="top-center" />
+        <TreatmentStoryProvider>
+          <div className="min-h-screen flex flex-col bg-white">
+            <TopBar />
+            <main className="flex-1 pb-28">
+              <Outlet />
+            </main>
+            <BottomNav />
+          </div>
+          <TreatmentStory />
+          <Toaster position="top-center" />
+        </TreatmentStoryProvider>
       </ScanProvider>
     </QueryClientProvider>
   );
