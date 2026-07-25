@@ -4,6 +4,7 @@ import { ArrowRight, MessageCircle, RefreshCcw } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
 import { MARKER_KEYS, MARKER_LABEL, ZONE_POINTS, type MarkerKey } from "@/lib/skin-analysis";
 import { getTreatment } from "@/lib/treatments-data";
+import { useTreatmentStory } from "@/lib/treatment-story-store";
 import { PillButton } from "@/components/treatme/PillButton";
 import { cn } from "@/lib/utils";
 
