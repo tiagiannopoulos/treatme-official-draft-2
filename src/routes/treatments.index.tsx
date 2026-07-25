@@ -1,6 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { TREATMENTS } from "@/lib/treatments-data";
-import { ArrowRight } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { TREATMENTS, GROUP_ORDER, GROUP_LABEL, type Treatment } from "@/lib/treatments-data";
+import { useTreatmentStory } from "@/lib/treatment-story-store";
 
 export const Route = createFileRoute("/treatments/")({
   head: () => ({
@@ -13,24 +13,75 @@ export const Route = createFileRoute("/treatments/")({
 });
 
 function TreatmentsPage() {
-  return (
-    <div className="px-6 pt-6">
-      <p className="brand-eyebrow">the menu</p>
-      <h1 className="brand-display text-[36px] mt-2 text-balance">treatment library<span className="text-hot">.</span></h1>
-      <p className="mt-3 text-ink-mute text-[14px]">every treatment, plain language, before you book.</p>
+  const grouped = GROUP_ORDER.map((g) => ({
+    group: g,
+    items: TREATMENTS.filter((t) => t.group === g),
+  })).filter((g) => g.items.length > 0);
 
-      <div className="mt-6 flex flex-col gap-3">
-        {TREATMENTS.map((t) => (
-          <Link key={t.slug} to="/treatments/$slug" params={{ slug: t.slug }} className="rounded-2xl bg-card border border-line p-4 flex items-center justify-between hover:border-ink/40 transition">
-            <div className="pr-3">
-              <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{t.category}</p>
-              <p className="font-bold text-[16px] mt-1">{t.name}</p>
-              <p className="text-[12px] text-ink-mute mt-1">from ${t.priceFrom}</p>
+  return (
+    <div className="px-6 pt-6 pb-6">
+      <p className="brand-eyebrow">the menu</p>
+      <h1 className="brand-display text-[36px] mt-2 text-balance">
+        treatment library<span className="text-hot">.</span>
+      </h1>
+      <p className="mt-3 text-ink-mute text-[14px]">
+        tap a treatment to open its story.
+      </p>
+
+      <div className="mt-8 space-y-10">
+        {grouped.map(({ group, items }) => (
+          <section key={group}>
+            <div className="flex items-baseline justify-between">
+              <h2 className="brand-display text-[22px]">{GROUP_LABEL[group]}</h2>
+              <p className="text-[11px] text-ink-mute lowercase">{items.length} treatments</p>
             </div>
-            <ArrowRight className="size-5 shrink-0" />
-          </Link>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {items.map((t) => (
+                <CoverCard key={t.slug} t={t} />
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </div>
+  );
+}
+
+function toneClass(tone: Treatment["heroTone"]) {
+  switch (tone) {
+    case "butter_scrim": return "bg-butter/60";
+    case "mint_scrim": return "bg-mint/60";
+    case "bubblegum_scrim": return "bg-bubblegum/55";
+    default: return "bg-cream/40";
+  }
+}
+
+function CoverCard({ t }: { t: Treatment }) {
+  const { open } = useTreatmentStory();
+  return (
+    <button
+      type="button"
+      onClick={() => open(t.slug)}
+      className="text-left rounded-2xl overflow-hidden border border-line bg-cream active:scale-[0.98] transition"
+    >
+      <div className="relative aspect-[4/5] w-full overflow-hidden">
+        <img
+          src={t.heroImage}
+          alt=""
+          loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className={`absolute inset-0 ${toneClass(t.heroTone)}`} aria-hidden />
+      </div>
+      <div className="p-3">
+        <p className="font-bold text-[14px] tracking-tight leading-tight lowercase line-clamp-1">
+          {t.name}
+        </p>
+        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2 lowercase">
+          {t.descriptor}
+        </p>
+        <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${t.priceFrom}</p>
+      </div>
+    </button>
   );
 }

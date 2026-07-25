@@ -10,6 +10,7 @@ type SlideType =
   | "hook"
   | "what_it_is"
   | "how_it_works"
+  | "science"
   | "what_to_expect"
   | "downtime"
   | "results"
@@ -18,14 +19,15 @@ type SlideType =
 
 type Overlay = "cream_scrim" | "butter_scrim" | "mint_scrim" | "bubblegum_scrim" | "none";
 
-type Slide = {
-  type: SlideType;
+type DbSlide = {
+  id: string;
+  slide_order: number;
+  slide_type: SlideType;
   headline: string;
-  body?: string;
-  chips?: string[];
-  tone: Overlay;
-  onDark?: boolean;
-  media?: string;
+  body: string | null;
+  detail_chips: string[];
+  media_url: string | null;
+  media_overlay: Overlay;
 };
 
 type BeforeAfter = {
@@ -37,12 +39,27 @@ type BeforeAfter = {
   weeks_between: number | null;
 };
 
+type Slide = DbSlide & {
+  resolvedMedia: string | null;
+};
+
 const SLIDE_DURATION_MS = 6000;
 
-// no em-dashes anywhere in copy
-const clean = (s: string) => s.replace(/—/g, ",").replace(/–/g, "-");
+// scrub em/en dashes anywhere just in case
+const clean = (s: string | null | undefined) =>
+  (s ?? "").replace(/—/g, ",").replace(/–/g, "-");
 
 function toneClass(tone: Overlay) {
+  switch (tone) {
+    case "cream_scrim": return "bg-cream/60";
+    case "butter_scrim": return "bg-butter/70";
+    case "mint_scrim": return "bg-mint/65";
+    case "bubblegum_scrim": return "bg-bubblegum/60";
+    default: return "";
+  }
+}
+
+function toneBase(tone: Overlay) {
   switch (tone) {
     case "cream_scrim": return "bg-cream";
     case "butter_scrim": return "bg-butter";
@@ -50,61 +67,6 @@ function toneClass(tone: Overlay) {
     case "bubblegum_scrim": return "bg-bubblegum/70";
     default: return "bg-cream";
   }
-}
-
-function buildSlides(t: Treatment, beforeAfters: BeforeAfter[], priceFrom: number): Slide[] {
-  const slides: Slide[] = [
-    {
-      type: "hook",
-      headline: clean(t.name.toLowerCase()),
-      body: clean(t.category.toLowerCase()),
-      chips: [t.downtime.toLowerCase().startsWith("none") ? "no downtime" : "minimal downtime"],
-      tone: "bubblegum_scrim",
-    },
-    {
-      type: "what_it_is",
-      headline: "what it is.",
-      body: clean(t.whatItIs.toLowerCase()),
-      tone: "cream_scrim",
-    },
-    {
-      type: "what_to_expect",
-      headline: "what to expect.",
-      body: clean(t.whatToExpect.toLowerCase()),
-      tone: "butter_scrim",
-    },
-    {
-      type: "downtime",
-      headline: "downtime.",
-      body: clean(t.downtime.toLowerCase()),
-      chips: t.improves.slice(0, 3).map((i) => i.toLowerCase()),
-      tone: "mint_scrim",
-    },
-  ];
-
-  if (beforeAfters.length > 0) {
-    slides.push({
-      type: "results",
-      headline: "real results.",
-      tone: "cream_scrim",
-    });
-  }
-
-  slides.push({
-    type: "pricing",
-    headline: "what it really costs.",
-    body: `from $${priceFrom} at clinics near you.`,
-    tone: "bubblegum_scrim",
-  });
-
-  slides.push({
-    type: "cta",
-    headline: "ready when you are.",
-    body: "providers near you offer this.",
-    tone: "butter_scrim",
-  });
-
-  return slides;
 }
 
 export function TreatmentStory() {
@@ -116,6 +78,20 @@ export function TreatmentStory() {
 function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
   const treatment = getTreatment(slug);
   const navigate = useNavigate();
+
+  const { data: dbSlides = [] } = useQuery({
+    queryKey: ["treatment-story-slides", slug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("treatment_story_slides")
+        .select("id, slide_order, slide_type, headline, body, detail_chips, media_url, media_overlay")
+        .eq("treatment_slug", slug)
+        .order("slide_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as DbSlide[];
+    },
+    staleTime: 5 * 60_000,
+  });
 
   const { data: beforeAfters = [] } = useQuery({
     queryKey: ["treatment-before-afters", slug],
@@ -131,10 +107,39 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
     staleTime: 60_000,
   });
 
-  const slides = useMemo(
-    () => (treatment ? buildSlides(treatment, beforeAfters, treatment.priceFrom) : []),
-    [treatment, beforeAfters],
-  );
+  // Assemble final slide list:
+  // - use DB slides as source of truth for hook/what_it_is/how_it_works/science/what_to_expect/downtime/pricing/cta
+  // - inject a results slide before pricing IF approved before/afters exist
+  // - drop any DB results slide if no approved content
+  // - resolve hero media from the treatment for hook when DB row has no media_url
+  const slides = useMemo<Slide[]>(() => {
+    if (!treatment) return [];
+    const filtered = dbSlides.filter((s) => {
+      if (s.slide_type === "results") return beforeAfters.length > 0;
+      return true;
+    });
+    const withMedia: Slide[] = filtered.map((s) => ({
+      ...s,
+      resolvedMedia: s.media_url ?? (s.slide_type === "hook" ? treatment.heroImage : null),
+    }));
+    // Ensure results slide is present when we have content
+    if (beforeAfters.length > 0 && !withMedia.some((s) => s.slide_type === "results")) {
+      const pricingIdx = withMedia.findIndex((s) => s.slide_type === "pricing");
+      const insertAt = pricingIdx === -1 ? withMedia.length : pricingIdx;
+      withMedia.splice(insertAt, 0, {
+        id: "results-synth",
+        slide_order: -1,
+        slide_type: "results",
+        headline: "real results.",
+        body: null,
+        detail_chips: [],
+        media_url: null,
+        media_overlay: "cream_scrim",
+        resolvedMedia: null,
+      });
+    }
+    return withMedia;
+  }, [treatment, dbSlides, beforeAfters]);
 
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -143,14 +148,12 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
   const elapsedRef = useRef<number>(0);
   const rafRef = useRef<number | null>(null);
 
-  // reset progress on slide change
   useEffect(() => {
     setProgress(0);
     elapsedRef.current = 0;
     startRef.current = performance.now();
   }, [index]);
 
-  // rAF loop
   useEffect(() => {
     if (slides.length === 0) return;
     const tick = (now: number) => {
@@ -176,7 +179,6 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
     };
   }, [paused, index, slides.length, onClose]);
 
-  // pause bookkeeping
   useEffect(() => {
     if (paused) {
       elapsedRef.current += performance.now() - startRef.current;
@@ -185,22 +187,21 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
     }
   }, [paused]);
 
-  // preload next image (before/after or media)
+  // preload next slide's media + first before/after pair when the next slide is results
   useEffect(() => {
     const next = slides[index + 1];
     if (!next) return;
     const urls: string[] = [];
-    if (next.type === "results" && beforeAfters[0]) {
+    if (next.slide_type === "results" && beforeAfters[0]) {
       urls.push(beforeAfters[0].before_url, beforeAfters[0].after_url);
     }
-    if (next.media) urls.push(next.media);
+    if (next.resolvedMedia) urls.push(next.resolvedMedia);
     urls.forEach((u) => {
       const img = new Image();
       img.src = u;
     });
   }, [index, slides, beforeAfters]);
 
-  // keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -250,12 +251,10 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
     const dx = e.clientX - start.x;
     const dy = e.clientY - start.y;
     const dt = performance.now() - start.t;
-    // swipe down
     if (dy > 80 && Math.abs(dy) > Math.abs(dx) * 1.3) {
       onClose();
       return;
     }
-    // treat as tap if quick and small movement
     if (dt < 400 && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
       const target = e.currentTarget as HTMLElement;
       const rect = target.getBoundingClientRect();
@@ -279,27 +278,40 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
   if (!treatment || slides.length === 0) {
     return (
       <div className="fixed inset-0 z-[100] bg-cream grid place-items-center" onClick={onClose}>
-        <p className="text-ink-mute lowercase">not available.</p>
+        <p className="text-ink-mute lowercase">loading story...</p>
       </div>
     );
   }
 
   const slide = slides[index];
-  const inkColor = slide.onDark ? "text-cream" : "text-ink";
+
+  // resolve pricing body from treatment.priceFrom
+  const bodyText =
+    slide.slide_type === "pricing"
+      ? `from $${treatment.priceFrom} at clinics near you.${slide.body ? " " + clean(slide.body) : ""}`
+      : clean(slide.body);
 
   return (
     <div className="fixed inset-0 z-[100] bg-cream md:bg-cream md:grid md:place-items-center">
-      {/* phone frame on desktop */}
       <div
         className="relative w-full h-full md:w-[420px] md:h-[860px] md:rounded-[36px] md:overflow-hidden md:shadow-2xl bg-cream select-none touch-none"
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        {/* full-bleed media */}
-        <div className={`absolute inset-0 ${toneClass(slide.tone)}`} aria-hidden />
-        {/* scrim @ ~60% for legibility over any imagery — solid tone provides base */}
-        <div className="absolute inset-0 bg-cream/0" aria-hidden />
+        {/* full-bleed media + scrim */}
+        <div className={`absolute inset-0 ${toneBase(slide.media_overlay)}`} aria-hidden />
+        {slide.resolvedMedia && (
+          <img
+            src={slide.resolvedMedia}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden
+          />
+        )}
+        {slide.resolvedMedia && (
+          <div className={`absolute inset-0 ${toneClass(slide.media_overlay)}`} aria-hidden />
+        )}
 
         {/* progress segments */}
         <div className="absolute top-3 left-3 right-3 flex gap-1 z-20">
@@ -324,20 +336,25 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
           className="absolute top-7 right-4 z-30 size-9 grid place-items-center rounded-full bg-ink/10 backdrop-blur"
           aria-label="close"
         >
-          <X className={`size-5 ${inkColor}`} />
+          <X className="size-5 text-ink" />
         </button>
 
         {/* content */}
-        <div className={`relative z-10 h-full flex flex-col px-6 pt-16 pb-10 ${inkColor}`}>
+        <div className="relative z-10 h-full flex flex-col px-6 pt-16 pb-10 text-ink">
           <p className="brand-eyebrow lowercase tracking-[0.18em] text-[11px]">
-            {slide.type.replace(/_/g, " ")}
+            {slide.slide_type.replace(/_/g, " ")}
           </p>
 
-          {slide.type === "results" ? (
-            <ResultsSlide items={beforeAfters} onInteract={() => setPaused(true)} onRelease={() => setPaused(false)} />
-          ) : slide.type === "cta" ? (
+          {slide.slide_type === "results" ? (
+            <ResultsSlide
+              items={beforeAfters}
+              onInteract={() => setPaused(true)}
+              onRelease={() => setPaused(false)}
+            />
+          ) : slide.slide_type === "cta" ? (
             <CtaSlide
-              treatment={treatment}
+              headline={clean(slide.headline)}
+              body={clean(bodyText)}
               onFindProviders={() => { onClose(); navigate({ to: "/treatments" }); }}
               onScanFirst={() => { onClose(); navigate({ to: "/scan" }); }}
             />
@@ -347,21 +364,21 @@ function StoryInner({ slug, onClose }: { slug: string; onClose: () => void }) {
                 className="text-[40px] leading-[1.02] tracking-tight lowercase font-bold"
                 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
               >
-                {slide.headline}
+                {clean(slide.headline)}
               </h2>
-              {slide.body && (
-                <p className="mt-4 text-[15px] leading-snug lowercase max-w-[92%] line-clamp-3">
-                  {slide.body}
+              {bodyText && (
+                <p className="mt-4 text-[15px] leading-snug lowercase max-w-[92%] line-clamp-4">
+                  {bodyText}
                 </p>
               )}
-              {slide.chips && slide.chips.length > 0 && (
+              {slide.detail_chips && slide.detail_chips.length > 0 && (
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {slide.chips.map((c) => (
+                  {slide.detail_chips.map((c) => (
                     <span
                       key={c}
-                      className="rounded-full bg-ink/8 backdrop-blur px-3 py-1 text-[11px] font-semibold lowercase"
+                      className="rounded-full bg-ink/10 backdrop-blur px-3 py-1 text-[11px] font-semibold lowercase"
                     >
-                      {c}
+                      {clean(c)}
                     </span>
                   ))}
                 </div>
@@ -397,6 +414,8 @@ function ResultsSlide({
     setPos(Math.max(0, Math.min(100, p)));
   }
 
+  if (!item) return null;
+
   return (
     <div className="mt-4 flex-1 flex flex-col">
       <h2
@@ -414,15 +433,18 @@ function ResultsSlide({
           (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
           handleMove(e.clientX);
         }}
-        onPointerMove={(e) => {
-          if (e.buttons === 1) handleMove(e.clientX);
-        }}
+        onPointerMove={(e) => { if (e.buttons === 1) handleMove(e.clientX); }}
         onPointerUp={(e) => { e.stopPropagation(); onRelease(); }}
         onPointerCancel={onRelease}
       >
         <img src={item.after_url} alt="after" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 overflow-hidden" style={{ width: `${pos}%` }}>
-          <img src={item.before_url} alt="before" className="absolute inset-0 w-full h-full object-cover" style={{ width: `${(100 / pos) * 100}%`, maxWidth: "none" }} />
+          <img
+            src={item.before_url}
+            alt="before"
+            className="absolute inset-0 h-full object-cover"
+            style={{ width: `${(100 / Math.max(pos, 1)) * 100}%`, maxWidth: "none" }}
+          />
         </div>
         <div
           className="absolute top-0 bottom-0 w-[2px] bg-cream shadow-[0_0_0_1px_rgba(0,0,0,0.15)]"
@@ -436,7 +458,7 @@ function ResultsSlide({
         <span className="absolute top-3 right-3 rounded-full bg-cream/85 text-ink text-[10px] font-semibold px-2 py-0.5 lowercase">after</span>
       </div>
       <div className="mt-3 text-[12px] text-ink-mute lowercase">
-        {clean(item.caption ?? "")}
+        {(item.caption ?? "").replace(/—/g, ",")}
         {item.weeks_between ? ` · ${item.weeks_between} weeks` : ""}
         {item.provider_name ? ` · ${item.provider_name.toLowerCase()}` : ""}
       </div>
@@ -458,10 +480,13 @@ function ResultsSlide({
 }
 
 function CtaSlide({
+  headline,
+  body,
   onFindProviders,
   onScanFirst,
 }: {
-  treatment: Treatment;
+  headline: string;
+  body: string;
   onFindProviders: () => void;
   onScanFirst: () => void;
 }) {
@@ -471,9 +496,11 @@ function CtaSlide({
         className="text-[44px] leading-[1.02] tracking-tight lowercase font-bold"
         style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }}
       >
-        ready when you are.
+        {headline || "ready when you are."}
       </h2>
-      <p className="mt-3 text-[15px] lowercase text-ink">providers near you offer this.</p>
+      <p className="mt-3 text-[15px] lowercase text-ink">
+        {body || "providers near you offer this."}
+      </p>
       <div className="flex-1" />
       <button
         onPointerDown={(e) => e.stopPropagation()}
@@ -492,3 +519,6 @@ function CtaSlide({
     </div>
   );
 }
+
+// Silence unused-import warnings if any tree-shaker complains about Treatment type.
+export type { Treatment };

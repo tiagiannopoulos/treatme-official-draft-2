@@ -4,6 +4,7 @@ import { ArrowRight, MessageCircle, RefreshCcw } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
 import { MARKER_KEYS, MARKER_LABEL, ZONE_POINTS, type MarkerKey } from "@/lib/skin-analysis";
 import { getTreatment } from "@/lib/treatments-data";
+import { useTreatmentStory } from "@/lib/treatment-story-store";
 import { PillButton } from "@/components/treatme/PillButton";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const { photoDataUrl, analysis } = useScan();
   const navigate = useNavigate();
+  const { open: openStory } = useTreatmentStory();
   const [active, setActive] = useState<MarkerKey | "all" | "none">("none");
 
   if (!photoDataUrl || !analysis) {
@@ -133,14 +135,19 @@ function ResultsPage() {
             const t = getTreatment(slug);
             if (!t) return null;
             return (
-              <Link to="/treatments/$slug" params={{ slug }} key={slug} className="rounded-2xl bg-card border border-line p-4 flex items-center justify-between hover:border-ink/40 transition">
+              <button
+                type="button"
+                onClick={() => openStory(slug)}
+                key={slug}
+                className="text-left rounded-2xl bg-card border border-line p-4 flex items-center justify-between hover:border-ink/40 transition"
+              >
                 <div className="pr-3">
                   <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{t.category}</p>
                   <p className="font-bold text-[16px] mt-1">{t.name}</p>
                   <p className="text-[12px] text-ink-mute mt-1">good for {t.improves.slice(0, 3).map((k) => MARKER_LABEL[k as MarkerKey] ?? k).join(" · ")}</p>
                 </div>
                 <ArrowRight className="size-5 text-ink shrink-0" />
-              </Link>
+              </button>
             );
           })}
         </div>
