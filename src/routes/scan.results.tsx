@@ -21,6 +21,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const { photoDataUrl, analysis } = useScan();
   const navigate = useNavigate();
+  const { open: openStory } = useTreatmentStory();
   const [active, setActive] = useState<MarkerKey | "all" | "none">("none");
 
   if (!photoDataUrl || !analysis) {
