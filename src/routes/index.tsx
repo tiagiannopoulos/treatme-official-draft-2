@@ -119,7 +119,7 @@ function TreatmentRail({
         {items.map((t) => (
           <Link
             key={t.slug}
-            to="/treatments/$slug"
+            to="/treatments/$slug/story"
             params={{ slug: t.slug }}
             className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden"
           >
