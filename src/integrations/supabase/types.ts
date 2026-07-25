@@ -72,7 +72,7 @@ export type Database = {
           id?: string
           media_overlay?: Database["public"]["Enums"]["slide_overlay"]
           media_url?: string | null
-          slide_order?: number
+          slide_order: number
           slide_type: Database["public"]["Enums"]["education_slide_type"]
         }
         Update: {
@@ -100,8 +100,10 @@ export type Database = {
       treatment_before_afters: {
         Row: {
           after_url: string
+          approved: boolean
           before_url: string
           caption: string | null
+          consent_confirmed: boolean
           created_at: string
           id: string
           provider_name: string | null
@@ -111,8 +113,10 @@ export type Database = {
         }
         Insert: {
           after_url: string
+          approved?: boolean
           before_url: string
           caption?: string | null
+          consent_confirmed?: boolean
           created_at?: string
           id?: string
           provider_name?: string | null
@@ -122,8 +126,10 @@ export type Database = {
         }
         Update: {
           after_url?: string
+          approved?: boolean
           before_url?: string
           caption?: string | null
+          consent_confirmed?: boolean
           created_at?: string
           id?: string
           provider_name?: string | null
@@ -211,7 +217,7 @@ export type Database = {
           improves?: string[]
           name: string
           price_from: number
-          science?: string
+          science: string
           slug: string
           sort_order?: number
           what_it_is: string
