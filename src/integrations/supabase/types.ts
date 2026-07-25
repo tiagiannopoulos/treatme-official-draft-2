@@ -14,7 +14,246 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      education_stories: {
+        Row: {
+          category: string | null
+          cover_image: string | null
+          cover_tone: Database["public"]["Enums"]["slide_overlay"]
+          created_at: string
+          id: string
+          published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cover_image?: string | null
+          cover_tone?: Database["public"]["Enums"]["slide_overlay"]
+          created_at?: string
+          id?: string
+          published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cover_image?: string | null
+          cover_tone?: Database["public"]["Enums"]["slide_overlay"]
+          created_at?: string
+          id?: string
+          published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      education_story_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_chips: string[]
+          headline: string
+          id: string
+          media_overlay: Database["public"]["Enums"]["slide_overlay"]
+          media_url: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["education_slide_type"]
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["education_slide_type"]
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline?: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type?: Database["public"]["Enums"]["education_slide_type"]
+          story_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_story_slides_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "education_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_before_afters: {
+        Row: {
+          after_url: string
+          approved: boolean
+          before_url: string
+          caption: string | null
+          consent_confirmed: boolean
+          created_at: string
+          id: string
+          provider_name: string | null
+          sort_order: number
+          treatment_slug: string
+          updated_at: string
+          weeks_between: number | null
+        }
+        Insert: {
+          after_url: string
+          approved?: boolean
+          before_url: string
+          caption?: string | null
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          provider_name?: string | null
+          sort_order?: number
+          treatment_slug: string
+          updated_at?: string
+          weeks_between?: number | null
+        }
+        Update: {
+          after_url?: string
+          approved?: boolean
+          before_url?: string
+          caption?: string | null
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          provider_name?: string | null
+          sort_order?: number
+          treatment_slug?: string
+          updated_at?: string
+          weeks_between?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_before_afters_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      treatment_story_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_chips: string[]
+          headline: string
+          id: string
+          media_overlay: Database["public"]["Enums"]["slide_overlay"]
+          media_url: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["slide_type"]
+          treatment_slug: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["slide_type"]
+          treatment_slug: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline?: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type?: Database["public"]["Enums"]["slide_type"]
+          treatment_slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_story_slides_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      treatments: {
+        Row: {
+          category: string
+          created_at: string
+          descriptor: string
+          downtime: string
+          group: Database["public"]["Enums"]["treatment_group"]
+          hero_image: string
+          hero_tone: Database["public"]["Enums"]["slide_overlay"]
+          improves: string[]
+          name: string
+          price_from: number
+          slug: string
+          updated_at: string
+          what_it_is: string
+          what_to_expect: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          descriptor: string
+          downtime: string
+          group: Database["public"]["Enums"]["treatment_group"]
+          hero_image: string
+          hero_tone?: Database["public"]["Enums"]["slide_overlay"]
+          improves?: string[]
+          name: string
+          price_from: number
+          slug: string
+          updated_at?: string
+          what_it_is: string
+          what_to_expect: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          descriptor?: string
+          downtime?: string
+          group?: Database["public"]["Enums"]["treatment_group"]
+          hero_image?: string
+          hero_tone?: Database["public"]["Enums"]["slide_overlay"]
+          improves?: string[]
+          name?: string
+          price_from?: number
+          slug?: string
+          updated_at?: string
+          what_it_is?: string
+          what_to_expect?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +262,31 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      education_slide_type:
+        | "hook"
+        | "concept"
+        | "science"
+        | "myth_vs_fact"
+        | "how_to"
+        | "when_to_scan"
+        | "cta"
+      slide_overlay:
+        | "cream_scrim"
+        | "butter_scrim"
+        | "mint_scrim"
+        | "bubblegum_scrim"
+        | "none"
+      slide_type:
+        | "hook"
+        | "what_it_is"
+        | "how_it_works"
+        | "science"
+        | "what_to_expect"
+        | "downtime"
+        | "results"
+        | "pricing"
+        | "cta"
+      treatment_group: "injectables" | "skin" | "laser" | "body"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +413,35 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      education_slide_type: [
+        "hook",
+        "concept",
+        "science",
+        "myth_vs_fact",
+        "how_to",
+        "when_to_scan",
+        "cta",
+      ],
+      slide_overlay: [
+        "cream_scrim",
+        "butter_scrim",
+        "mint_scrim",
+        "bubblegum_scrim",
+        "none",
+      ],
+      slide_type: [
+        "hook",
+        "what_it_is",
+        "how_it_works",
+        "science",
+        "what_to_expect",
+        "downtime",
+        "results",
+        "pricing",
+        "cta",
+      ],
+      treatment_group: ["injectables", "skin", "laser", "body"],
+    },
   },
 } as const
