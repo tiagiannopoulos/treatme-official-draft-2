@@ -14,7 +14,231 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      education_stories: {
+        Row: {
+          cover_media_url: string | null
+          created_at: string
+          id: string
+          published: boolean
+          slug: string
+          sort_order: number
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_media_url?: string | null
+          created_at?: string
+          id?: string
+          published?: boolean
+          slug: string
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_media_url?: string | null
+          created_at?: string
+          id?: string
+          published?: boolean
+          slug?: string
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      education_story_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_chips: string[]
+          education_story_id: string
+          headline: string
+          id: string
+          media_overlay: Database["public"]["Enums"]["slide_overlay"]
+          media_url: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["education_slide_type"]
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          education_story_id: string
+          headline: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["education_slide_type"]
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          education_story_id?: string
+          headline?: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type?: Database["public"]["Enums"]["education_slide_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_story_slides_education_story_id_fkey"
+            columns: ["education_story_id"]
+            isOneToOne: false
+            referencedRelation: "education_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treatment_before_afters: {
+        Row: {
+          after_url: string
+          approved: boolean
+          before_url: string
+          caption: string | null
+          consent_confirmed: boolean
+          created_at: string
+          id: string
+          provider_name: string | null
+          sort_order: number
+          treatment_slug: string
+          weeks_between: number | null
+        }
+        Insert: {
+          after_url: string
+          approved?: boolean
+          before_url: string
+          caption?: string | null
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          provider_name?: string | null
+          sort_order?: number
+          treatment_slug: string
+          weeks_between?: number | null
+        }
+        Update: {
+          after_url?: string
+          approved?: boolean
+          before_url?: string
+          caption?: string | null
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          provider_name?: string | null
+          sort_order?: number
+          treatment_slug?: string
+          weeks_between?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_before_afters_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      treatment_story_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_chips: string[]
+          headline: string
+          id: string
+          media_overlay: Database["public"]["Enums"]["slide_overlay"]
+          media_url: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["slide_type"]
+          treatment_slug: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["slide_type"]
+          treatment_slug: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline?: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type?: Database["public"]["Enums"]["slide_type"]
+          treatment_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_story_slides_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      treatments: {
+        Row: {
+          category: string
+          created_at: string
+          downtime: string
+          hero_image_url: string | null
+          improves: string[]
+          name: string
+          price_from: number
+          science: string
+          slug: string
+          sort_order: number
+          what_it_is: string
+          what_to_expect: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          downtime: string
+          hero_image_url?: string | null
+          improves?: string[]
+          name: string
+          price_from: number
+          science: string
+          slug: string
+          sort_order?: number
+          what_it_is: string
+          what_to_expect: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          downtime?: string
+          hero_image_url?: string | null
+          improves?: string[]
+          name?: string
+          price_from?: number
+          science?: string
+          slug?: string
+          sort_order?: number
+          what_it_is?: string
+          what_to_expect?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +247,29 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      education_slide_type:
+        | "hook"
+        | "concept"
+        | "science"
+        | "myth"
+        | "takeaway"
+        | "cta"
+      slide_overlay:
+        | "cream_scrim"
+        | "butter_scrim"
+        | "mint_scrim"
+        | "bubblegum_scrim"
+        | "none"
+      slide_type:
+        | "hook"
+        | "what_it_is"
+        | "how_it_works"
+        | "science"
+        | "what_to_expect"
+        | "downtime"
+        | "results"
+        | "pricing"
+        | "cta"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +396,33 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      education_slide_type: [
+        "hook",
+        "concept",
+        "science",
+        "myth",
+        "takeaway",
+        "cta",
+      ],
+      slide_overlay: [
+        "cream_scrim",
+        "butter_scrim",
+        "mint_scrim",
+        "bubblegum_scrim",
+        "none",
+      ],
+      slide_type: [
+        "hook",
+        "what_it_is",
+        "how_it_works",
+        "science",
+        "what_to_expect",
+        "downtime",
+        "results",
+        "pricing",
+        "cta",
+      ],
+    },
   },
 } as const
