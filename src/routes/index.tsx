@@ -47,7 +47,7 @@ function MenuPage() {
 
       {/* 2. For you */}
       <TreatmentRail
-        eyebrow="FOR YOU"
+        eyebrow="For you"
         title="Picked for your skin"
         sub="based on your last scan."
         items={forYou}
@@ -56,7 +56,7 @@ function MenuPage() {
 
       {/* 3. Trending now */}
       <TreatmentRail
-        eyebrow="trending now"
+        eyebrow="Trending now"
         title="What people are booking"
         sub="this week, near you."
         items={trending}
