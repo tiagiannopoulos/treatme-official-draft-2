@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      education_stories: {
+        Row: {
+          cover_media_url: string | null
+          created_at: string
+          id: string
+          published: boolean
+          slug: string
+          sort_order: number
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover_media_url?: string | null
+          created_at?: string
+          id?: string
+          published?: boolean
+          slug: string
+          sort_order?: number
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover_media_url?: string | null
+          created_at?: string
+          id?: string
+          published?: boolean
+          slug?: string
+          sort_order?: number
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      education_story_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_chips: string[]
+          education_story_id: string
+          headline: string
+          id: string
+          media_overlay: Database["public"]["Enums"]["slide_overlay"]
+          media_url: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["education_slide_type"]
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          education_story_id: string
+          headline: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type: Database["public"]["Enums"]["education_slide_type"]
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          education_story_id?: string
+          headline?: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type?: Database["public"]["Enums"]["education_slide_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_story_slides_education_story_id_fkey"
+            columns: ["education_story_id"]
+            isOneToOne: false
+            referencedRelation: "education_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       treatment_before_afters: {
         Row: {
           after_url: string
@@ -158,6 +241,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      education_slide_type:
+        | "hook"
+        | "concept"
+        | "science"
+        | "myth"
+        | "takeaway"
+        | "cta"
       slide_overlay:
         | "cream_scrim"
         | "butter_scrim"
@@ -301,6 +391,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      education_slide_type: [
+        "hook",
+        "concept",
+        "science",
+        "myth",
+        "takeaway",
+        "cta",
+      ],
       slide_overlay: [
         "cream_scrim",
         "butter_scrim",
