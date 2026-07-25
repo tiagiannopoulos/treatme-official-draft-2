@@ -58,6 +58,53 @@ export type Database = {
           },
         ]
       }
+      treatment_story_slides: {
+        Row: {
+          body: string | null
+          created_at: string
+          detail_chips: string[]
+          headline: string
+          id: string
+          media_overlay: Database["public"]["Enums"]["slide_overlay"]
+          media_url: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["slide_type"]
+          treatment_slug: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order: number
+          slide_type: Database["public"]["Enums"]["slide_type"]
+          treatment_slug: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          detail_chips?: string[]
+          headline?: string
+          id?: string
+          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
+          media_url?: string | null
+          slide_order?: number
+          slide_type?: Database["public"]["Enums"]["slide_type"]
+          treatment_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_story_slides_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       treatments: {
         Row: {
           category: string
@@ -111,7 +158,22 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      slide_overlay:
+        | "cream_scrim"
+        | "butter_scrim"
+        | "mint_scrim"
+        | "bubblegum_scrim"
+        | "none"
+      slide_type:
+        | "hook"
+        | "what_it_is"
+        | "how_it_works"
+        | "science"
+        | "what_to_expect"
+        | "downtime"
+        | "results"
+        | "pricing"
+        | "cta"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -238,6 +300,25 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      slide_overlay: [
+        "cream_scrim",
+        "butter_scrim",
+        "mint_scrim",
+        "bubblegum_scrim",
+        "none",
+      ],
+      slide_type: [
+        "hook",
+        "what_it_is",
+        "how_it_works",
+        "science",
+        "what_to_expect",
+        "downtime",
+        "results",
+        "pricing",
+        "cta",
+      ],
+    },
   },
 } as const
