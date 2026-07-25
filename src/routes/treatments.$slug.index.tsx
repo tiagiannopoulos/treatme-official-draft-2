@@ -56,10 +56,7 @@ function TreatmentDetail() {
         every clinic verified. every provider licensed.
       </div>
 
-      <div className="px-6 mt-6 flex flex-col gap-2">
-        <Link to="/treatments/$slug/story" params={{ slug: t.slug }}>
-          <PillButton fullWidth variant="secondary">tap through the story</PillButton>
-        </Link>
+      <div className="px-6 mt-6">
         <Link to="/treatments/$slug/book" params={{ slug: t.slug }}>
           <PillButton fullWidth>book treatment</PillButton>
         </Link>
