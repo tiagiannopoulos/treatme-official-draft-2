@@ -170,11 +170,40 @@ export function SearchMap({
     });
   }, [selectedId, ready, storefronts]);
 
-  // keep the map center in sync with the external location.
+  // keep the map framed on the search location and its radius.
   useEffect(() => {
     if (!ready || !mapRef.current) return;
-    mapRef.current.panTo({ lat: center.lat, lng: center.lng });
-  }, [center.lat, center.lng, ready]);
+    const map = mapRef.current;
+    const point = { lat: center.lat, lng: center.lng };
+
+    if (typeof radiusKm === "number") {
+      if (!circleRef.current) {
+        circleRef.current = new google.maps.Circle({
+          map,
+          strokeColor: HOT,
+          strokeOpacity: 0.55,
+          strokeWeight: 1.5,
+          fillColor: HOT,
+          fillOpacity: 0.06,
+          clickable: false,
+        });
+      }
+      circleRef.current.setCenter(point);
+      circleRef.current.setRadius(radiusKm * 1000);
+      const bounds = circleRef.current.getBounds();
+      if (bounds) map.fitBounds(bounds, 12);
+      return;
+    }
+
+    if (storefronts.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      storefronts.forEach((s) => bounds.extend({ lat: s.lat, lng: s.lng }));
+      map.fitBounds(bounds, 40);
+      return;
+    }
+    map.panTo(point);
+  }, [center.lat, center.lng, ready, radiusKm, storefronts]);
+
 
   const usingGoogleMaps = Boolean(browserKey) && !failed;
 
