@@ -49,7 +49,7 @@ export function BottomNav() {
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] font-semibold tracking-[0.08em] lowercase",
+                      "text-[10px] font-semibold tracking-[0.06em] lowercase whitespace-nowrap",
                       isActive ? "text-ink" : "text-ink-mute",
                     )}
                   >
