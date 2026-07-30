@@ -145,3 +145,56 @@ export function matchProvider(p: Provider, q: string): { hit: boolean; via?: str
   if (s) return { hit: true, via: `works at ${s.name}` };
   return { hit: false };
 }
+
+export interface SearchTreatment {
+  slug: string;
+  name: string;
+  category: string;
+  family: string;
+  price_from: number | null;
+  hero_image_url: string | null;
+  aliases: string[];
+}
+
+export const searchTreatmentsQuery = queryOptions({
+  queryKey: ["search-treatments"],
+  queryFn: async (): Promise<SearchTreatment[]> => {
+    const { data, error } = await supabase
+      .from("treatments")
+      .select("slug, name, category, family, price_from, hero_image_url, aliases")
+      .order("sort_order");
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((t) => ({
+      slug: t.slug,
+      name: t.name,
+      category: t.category ?? "",
+      family: t.family ?? "",
+      price_from: t.price_from === null ? null : Number(t.price_from),
+      hero_image_url: t.hero_image_url ?? null,
+      aliases: (t.aliases ?? []) as string[],
+    }));
+  },
+  staleTime: 5 * 60_000,
+});
+
+/** name first, then alias. returns the alias that matched so the ui can show "matched: morpheus8". */
+export function matchTreatment(t: SearchTreatment, q: string): { hit: boolean; via?: string } {
+  if (!q) return { hit: true };
+  const needle = q.toLowerCase();
+  if (t.name.toLowerCase().includes(needle)) return { hit: true };
+  if (t.category.toLowerCase().includes(needle)) return { hit: true };
+  const alias = t.aliases.find((a) => a.toLowerCase().includes(needle));
+  if (alias) return { hit: true, via: alias.toLowerCase() };
+  return { hit: false };
+}
+
+export function matchStorefront(s: Storefront, q: string): boolean {
+  if (!q) return true;
+  const needle = q.toLowerCase();
+  return (
+    s.name.toLowerCase().includes(needle) ||
+    s.tagline.toLowerCase().includes(needle) ||
+    s.city.toLowerCase().includes(needle) ||
+    s.postcode.toLowerCase().includes(needle)
+  );
+}

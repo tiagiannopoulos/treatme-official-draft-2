@@ -1,19 +1,23 @@
 import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Search as SearchIcon, X, MapPin, Star, Navigation, Loader2 } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Search as SearchIcon, X, MapPin, Star, Navigation, Loader2, ArrowRight } from "lucide-react";
 
 import {
   directoryQuery,
+  searchTreatmentsQuery,
   distanceKm,
   formatDistance,
   matchProvider,
+  matchTreatment,
+  matchStorefront,
   providerFromPrice,
   LOCATION_PRESETS,
   RADIUS_OPTIONS,
   type LatLng,
   type Provider,
   type Storefront,
+  type SearchTreatment,
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
@@ -37,6 +41,7 @@ export const Route = createFileRoute("/search")({
   }),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(directoryQuery);
+    context.queryClient.ensureQueryData(searchTreatmentsQuery);
   },
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
@@ -49,17 +54,24 @@ export const Route = createFileRoute("/search")({
   component: SearchPage,
 });
 
-type Mode = "providers" | "medspas";
+type Scope = "all" | "providers" | "medspas" | "treatments";
+const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
+  const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+
   const [q, setQ] = useState("");
-  const [mode, setMode] = useState<Mode>("providers");
+  const [focused, setFocused] = useState(false);
+  const [scope, setScope] = useState<Scope>("all");
   const [radius, setRadius] = useState<number>(10);
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
   const [locating, setLocating] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const searching = q.trim().length > 0;
 
   const useMyLocation = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
@@ -86,10 +98,10 @@ function SearchPage() {
 
   const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
 
-  const providers = useMemo(() => {
+  const providerResults = useMemo(() => {
     return data.providers
       .map((p) => {
-        const { hit, via } = matchProvider(p, q);
+        const { hit, via } = matchProvider(p, q.trim());
         const shops = p.storefronts.filter((s) => inRangeIds.has(s.id));
         const km = shops.length
           ? Math.min(...shops.map((s) => distanceKm(center, { lat: s.lat, lng: s.lng })))
@@ -100,169 +112,329 @@ function SearchPage() {
       .sort((a, b) => a.km - b.km);
   }, [data.providers, q, inRangeIds, center]);
 
-  const medspas = useMemo(() => {
-    const needle = q.toLowerCase();
-    return storefrontsInRange.filter(
-      (s) =>
-        !q ||
-        s.name.toLowerCase().includes(needle) ||
-        s.city.toLowerCase().includes(needle) ||
-        s.postcode.toLowerCase().includes(needle),
-    );
-  }, [storefrontsInRange, q]);
+  const medspaResults = useMemo(
+    () => storefrontsInRange.filter((s) => matchStorefront(s, q.trim())),
+    [storefrontsInRange, q],
+  );
 
-  const mapStorefronts: Storefront[] = mode === "medspas" ? medspas : storefrontsInRange;
+  const treatmentResults = useMemo(() => {
+    if (!searching) return [];
+    return treatments
+      .map((t) => ({ t, ...matchTreatment(t, q.trim()) }))
+      .filter((r) => r.hit)
+      .slice(0, 20);
+  }, [treatments, q, searching]);
+
+  const showProviders = scope === "all" || scope === "providers";
+  const showMedspas = scope === "all" || scope === "medspas";
+  const showTreatments = scope === "all" || scope === "treatments";
+
+  const mapStorefronts: Storefront[] = scope === "medspas" ? medspaResults : storefrontsInRange;
+
+  const totalResults =
+    (showProviders ? providerResults.length : 0) +
+    (showMedspas ? medspaResults.length : 0) +
+    (showTreatments ? treatmentResults.length : 0);
 
   return (
     <div className="pb-28">
-      <div className="px-6">
-        <p className="brand-eyebrow">who treats you</p>
-        <h1 className="brand-display text-[30px] leading-[0.95] mt-1">
-          find your provider<span className="text-hot">.</span>
-        </h1>
-        <p className="text-[13px] text-ink-mute mt-2 lowercase">
-          real people, tagged to the medspa they work at.
-        </p>
-
-        <div className="relative mt-4">
-          <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-ink-mute" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="search providers, medspas or treatments"
-            className="w-full rounded-pill border border-line bg-white pl-10 pr-9 py-3 text-[14px] lowercase placeholder:text-ink-mute focus:outline-none focus:ring-2 focus:ring-hot/40"
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => setQ("")}
-              aria-label="clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-mute"
-            >
-              <X className="size-4" />
-            </button>
-          )}
+      {/* sticky search + scope pills */}
+      <div className="sticky top-0 z-30 bg-background pt-1 pb-3">
+        <div className="px-6">
+          <div className="relative">
+            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink-mute" />
+            <input
+              ref={inputRef}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder="search providers, medspas, treatments"
+              className="w-full rounded-pill border border-[rgba(17,17,17,0.08)] bg-cream pl-11 pr-10 py-3 text-[14px] lowercase placeholder:text-ink-mute focus:outline-none focus:border-[rgba(17,17,17,0.18)]"
+            />
+            {(focused || searching) && q.length > 0 && (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setQ("");
+                  inputRef.current?.focus();
+                }}
+                aria-label="clear search"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 grid place-items-center size-6 rounded-full bg-muted text-ink-mute"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          <div className="inline-flex rounded-pill border border-line p-0.5 bg-white">
-            {(["providers", "medspas"] as Mode[]).map((m) => (
+        <div className="mt-2.5 flex gap-2 overflow-x-auto no-scrollbar px-6">
+          {SCOPES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setScope(s)}
+              className={cn(
+                "shrink-0 rounded-pill px-4 py-1.5 text-[12.5px] font-semibold lowercase transition-colors",
+                scope === s
+                  ? "bg-hot text-cream border border-hot"
+                  : "bg-transparent text-ink border border-[rgba(17,17,17,0.12)]",
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {searching ? (
+        /* ---------- results state ---------- */
+        <div className="px-6">
+          <p className="text-[12px] text-ink-mute lowercase">
+            {totalResults} result{totalResults === 1 ? "" : "s"} for "{q.trim().toLowerCase()}"
+          </p>
+
+          {showProviders && providerResults.length > 0 && (
+            <section className="mt-4">
+              <p className="brand-eyebrow">providers</p>
+              <div className="mt-2 space-y-3">
+                {providerResults.map(({ p, via, shops, km }) => (
+                  <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showMedspas && medspaResults.length > 0 && (
+            <section className="mt-6">
+              <p className="brand-eyebrow">medspas</p>
+              <div className="mt-2 space-y-3">
+                {medspaResults.map((s) => (
+                  <MedspaCard
+                    key={s.id}
+                    storefront={s}
+                    km={s.km}
+                    providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                    active={selected === s.id}
+                    onSelect={() => setSelected(s.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showTreatments && treatmentResults.length > 0 && (
+            <section className="mt-6">
+              <p className="brand-eyebrow">treatments</p>
+              <div className="mt-2 space-y-2">
+                {treatmentResults.map(({ t, via }) => (
+                  <TreatmentRow key={t.slug} treatment={t} via={via} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {totalResults === 0 && (
+            <div className="mt-6 rounded-2xl border border-line p-5 text-center">
+              <p className="brand-display text-[20px]">no matches for "{q.trim().toLowerCase()}".</p>
+              <p className="text-[13px] text-ink-mute mt-1 lowercase">
+                try a treatment name, a medspa, or widen your radius.
+              </p>
+              <div className="mt-3 flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRadius(25)}
+                  className="rounded-pill bg-ink text-cream px-4 py-2 text-[13px] font-semibold lowercase"
+                >
+                  widen to 25 km
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQ("")}
+                  className="rounded-pill border border-line px-4 py-2 text-[13px] font-semibold lowercase"
+                >
+                  clear search
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ---------- explore state ---------- */
+        <div className="px-6">
+          <p className="brand-eyebrow">who treats you</p>
+          <h1 className="brand-display text-[30px] leading-[0.95] mt-1">
+            find your provider<span className="text-hot">.</span>
+          </h1>
+          <p className="text-[13px] text-ink-mute mt-2 lowercase">
+            real people, tagged to the medspa they work at.
+          </p>
+
+          <div className="mt-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={useMyLocation}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3 py-1.5 text-[12px] font-semibold lowercase"
+            >
+              {locating ? <Loader2 className="size-3.5 animate-spin" /> : <Navigation className="size-3.5" />}
+              use my location
+            </button>
+            <span className="text-[12px] text-ink-mute lowercase">near {locLabel}</span>
+          </div>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
+            {LOCATION_PRESETS.map((l) => (
               <button
-                key={m}
+                key={l.label}
                 type="button"
-                onClick={() => setMode(m)}
+                onClick={() => {
+                  setCenter(l.point);
+                  setLocLabel(l.label);
+                }}
                 className={cn(
-                  "px-3.5 py-1.5 rounded-pill text-[12px] font-semibold lowercase transition-colors",
-                  mode === m ? "bg-ink text-cream" : "text-ink-mute",
+                  "shrink-0 rounded-pill border px-3 py-1.5 text-[12px] lowercase",
+                  locLabel === l.label ? "border-hot bg-hot/10 text-ink font-semibold" : "border-line text-ink-mute",
                 )}
               >
-                {m}
+                {l.label}
               </button>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={useMyLocation}
-            className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3 py-1.5 text-[12px] font-semibold lowercase"
-          >
-            {locating ? <Loader2 className="size-3.5 animate-spin" /> : <Navigation className="size-3.5" />}
-            use my location
-          </button>
-        </div>
 
-        <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
-          {LOCATION_PRESETS.map((l) => (
-            <button
-              key={l.label}
-              type="button"
-              onClick={() => {
-                setCenter(l.point);
-                setLocLabel(l.label);
-              }}
-              className={cn(
-                "shrink-0 rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                locLabel === l.label ? "border-hot bg-hot/10 text-ink font-semibold" : "border-line text-ink-mute",
-              )}
-            >
-              {l.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-2 flex gap-2">
-          {RADIUS_OPTIONS.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => setRadius(r)}
-              className={cn(
-                "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                radius === r ? "border-ink bg-ink text-cream font-semibold" : "border-line text-ink-mute",
-              )}
-            >
-              {r} km
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4">
-          <ClientOnly fallback={<div className="h-[320px] rounded-2xl border border-line bg-muted" />}>
-            <SearchMap
-              storefronts={mapStorefronts}
-              center={center}
-              selectedId={selected}
-              onSelect={(id) => setSelected(id)}
-            />
-          </ClientOnly>
-        </div>
-
-        <p className="mt-4 text-[12px] text-ink-mute lowercase">
-          {mode === "providers"
-            ? `${providers.length} provider${providers.length === 1 ? "" : "s"} within ${radius} km of ${locLabel}`
-            : `${medspas.length} medspa${medspas.length === 1 ? "" : "s"} within ${radius} km of ${locLabel}`}
-        </p>
-      </div>
-
-      <div className="px-6 mt-3 space-y-3">
-        {mode === "providers" &&
-          providers.map(({ p, via, shops, km }) => (
-            <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
-          ))}
-
-        {mode === "medspas" &&
-          medspas.map((s) => (
-            <MedspaCard
-              key={s.id}
-              storefront={s}
-              km={s.km}
-              providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
-              active={selected === s.id}
-              onSelect={() => setSelected(s.id)}
-            />
-          ))}
-
-        {((mode === "providers" && providers.length === 0) || (mode === "medspas" && medspas.length === 0)) && (
-          <div className="rounded-2xl border border-line p-5 text-center">
-            <p className="brand-display text-[20px]">nothing within {radius} km.</p>
-            <p className="text-[13px] text-ink-mute mt-1 lowercase">
-              widen the radius or clear your search to see everyone we cover.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setRadius(25);
-                setQ("");
-              }}
-              className="mt-3 rounded-pill bg-ink text-cream px-4 py-2 text-[13px] font-semibold lowercase"
-            >
-              widen to 25 km
-            </button>
+          <div className="mt-2 flex gap-2">
+            {RADIUS_OPTIONS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRadius(r)}
+                className={cn(
+                  "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
+                  radius === r ? "border-ink bg-ink text-cream font-semibold" : "border-line text-ink-mute",
+                )}
+              >
+                {r} km
+              </button>
+            ))}
           </div>
-        )}
-      </div>
+
+          <div className="mt-4">
+            <ClientOnly fallback={<div className="h-[320px] rounded-2xl border border-line bg-muted" />}>
+              <SearchMap
+                storefronts={mapStorefronts}
+                center={center}
+                selectedId={selected}
+                onSelect={(id) => setSelected(id)}
+              />
+            </ClientOnly>
+          </div>
+
+          {showProviders && (
+            <section className="mt-6">
+              <p className="brand-eyebrow">providers near you</p>
+              <p className="text-[12px] text-ink-mute lowercase mt-0.5">
+                {providerResults.length} within {radius} km of {locLabel}
+              </p>
+              <div className="mt-2 space-y-3">
+                {providerResults.map(({ p, shops, km }) => (
+                  <ProviderCard key={p.id} provider={p} km={km} shopName={shops[0]?.name ?? ""} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showMedspas && (
+            <section className="mt-6">
+              <p className="brand-eyebrow">medspas near you</p>
+              <p className="text-[12px] text-ink-mute lowercase mt-0.5">
+                {medspaResults.length} within {radius} km of {locLabel}
+              </p>
+              <div className="mt-2 space-y-3">
+                {medspaResults.map((s) => (
+                  <MedspaCard
+                    key={s.id}
+                    storefront={s}
+                    km={s.km}
+                    providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                    active={selected === s.id}
+                    onSelect={() => setSelected(s.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {showTreatments && (
+            <section className="mt-6">
+              <p className="brand-eyebrow">popular treatments</p>
+              <div className="mt-2 space-y-2">
+                {treatments.slice(0, 6).map((t) => (
+                  <TreatmentRow key={t.slug} treatment={t} />
+                ))}
+              </div>
+              <Link
+                to="/treatments"
+                className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-hot lowercase"
+              >
+                browse the full library <ArrowRight className="size-3.5" />
+              </Link>
+            </section>
+          )}
+
+          {((showProviders && providerResults.length === 0) || (showMedspas && medspaResults.length === 0)) && (
+            <div className="mt-6 rounded-2xl border border-line p-5 text-center">
+              <p className="brand-display text-[20px]">nothing within {radius} km.</p>
+              <p className="text-[13px] text-ink-mute mt-1 lowercase">
+                widen the radius to see everyone we cover.
+              </p>
+              <button
+                type="button"
+                onClick={() => setRadius(25)}
+                className="mt-3 rounded-pill bg-ink text-cream px-4 py-2 text-[13px] font-semibold lowercase"
+              >
+                widen to 25 km
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
+function TreatmentRow({ treatment, via }: { treatment: SearchTreatment; via?: string }) {
+  return (
+    <Link
+      to="/treatments/$slug"
+      params={{ slug: treatment.slug }}
+      className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3"
+    >
+      {treatment.hero_image_url ? (
+        <img
+          src={treatment.hero_image_url}
+          alt={treatment.name}
+          loading="lazy"
+          className="size-11 rounded-xl object-cover shrink-0"
+        />
+      ) : (
+        <span className="size-11 shrink-0 rounded-xl bg-mint grid place-items-center text-[13px] font-bold">
+          {treatment.name.slice(0, 2).toLowerCase()}
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-semibold lowercase truncate">{treatment.name}</span>
+        <span className="block text-[11.5px] text-ink-mute lowercase truncate">
+          {treatment.category || treatment.family}
+        </span>
+        {via && <span className="block text-[11px] text-hot lowercase">matched: {via}</span>}
+      </span>
+      {treatment.price_from !== null && (
+        <span className="shrink-0 text-[12px] font-semibold lowercase">from ${treatment.price_from}</span>
+      )}
+    </Link>
+  );
+}
+
 
 function Avatar({ name, url, size = "size-14" }: { name: string; url: string | null; size?: string }) {
   const initials = name
