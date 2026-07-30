@@ -49,6 +49,8 @@ export interface Provider {
   rating: number;
   review_count: number;
   verified: boolean;
+  licensing_body: string;
+  languages: string[];
   /** every storefront this human works at. a provider can work at more than one. */
   storefronts: Array<Storefront & { is_primary: boolean }>;
   treatments: ProviderTreatment[];
