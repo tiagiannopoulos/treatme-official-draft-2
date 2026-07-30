@@ -1,7 +1,16 @@
 import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
-import { Search as SearchIcon, X, MapPin, Star, Navigation, Loader2, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Search as SearchIcon,
+  X,
+  MapPin,
+  Star,
+  Navigation,
+  Loader2,
+  ArrowRight,
+  BadgeCheck,
+} from "lucide-react";
 
 import {
   directoryQuery,
@@ -13,6 +22,7 @@ import {
   matchStorefront,
   providerFromPrice,
   LOCATION_PRESETS,
+  neighbourhood,
   RADIUS_OPTIONS,
   type LatLng,
   type Provider,
@@ -57,6 +67,9 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
+/** how many nearby providers to reveal per infinite-scroll page. */
+const PAGE_SIZE = 10;
+
 /** quick-entry chips for the explore state. tapping one seeds the search bar. */
 const TREATMENT_CHIPS = [
   "botox",
@@ -83,6 +96,9 @@ function SearchPage() {
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
   const [locating, setLocating] = useState(false);
+  const [visibleProviders, setVisibleProviders] = useState(PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   const [selected, setSelected] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -124,6 +140,30 @@ function SearchPage() {
     for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
     return counts;
   }, [data.providers]);
+
+  /** featured medspas for the explore rail. */
+  const featuredStorefronts = useMemo(
+    () => data.storefronts.filter((s) => s.featured).slice(0, 10),
+    [data.storefronts],
+  );
+
+  /** reveal another page of providers when the sentinel scrolls into view. */
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisibleProviders((n) => n + PAGE_SIZE);
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [q, scope, radius, center, visibleProviders]);
+
+  useEffect(() => {
+    setVisibleProviders(PAGE_SIZE);
+  }, [q, radius, center]);
 
 
   const providerResults = useMemo(() => {
@@ -388,21 +428,51 @@ function SearchPage() {
               </button>
             ))}
           </div>
+          {/* c) featured storefronts row */}
+          {featuredStorefronts.length > 0 && (
+            <section className="mt-7">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">featured storefronts</p>
+                <button
+                  type="button"
+                  onClick={() => setScope("medspas")}
+                  className="text-[12px] text-hot lowercase font-semibold"
+                >
+                  see all
+                </button>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
+                {featuredStorefronts.map((s) => (
+                  <FeaturedStorefrontCard
+                    key={s.id}
+                    storefront={s}
+                    providerCount={providerCounts[s.id] ?? 0}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-
+          {/* d) nearby providers list */}
           {showProviders && (
-            <section className="mt-6">
+            <section className="mt-7">
               <p className="brand-eyebrow">providers near you</p>
               <p className="text-[12px] text-ink-mute lowercase mt-0.5">
                 {providerResults.length} within {radius} km of {locLabel}
               </p>
               <div className="mt-2 space-y-3">
-                {providerResults.map(({ p, shops, km }) => (
+                {providerResults.slice(0, visibleProviders).map(({ p, shops, km }) => (
                   <ProviderCard key={p.id} provider={p} km={km} shopName={shops[0]?.name ?? ""} />
                 ))}
               </div>
+              {visibleProviders < providerResults.length && (
+                <div ref={loadMoreRef} className="py-6 text-center text-[12px] text-ink-mute lowercase">
+                  loading more providers...
+                </div>
+              )}
             </section>
           )}
+
 
           {showMedspas && (
             <section className="mt-6">
@@ -624,5 +694,57 @@ function MedspaCard({
         ))}
       </div>
     </div>
+  );
+}
+
+/** 260px cover card for the featured storefronts rail. */
+function FeaturedStorefrontCard({
+  storefront,
+  providerCount,
+}: {
+  storefront: Storefront;
+  providerCount: number;
+}) {
+  return (
+    <Link
+      to="/storefront/$id"
+      params={{ id: storefront.id }}
+      className="shrink-0 w-[260px] rounded-[20px] border border-line overflow-hidden bg-white"
+    >
+      {storefront.hero_image_url ? (
+        <img
+          src={storefront.hero_image_url}
+          alt={`${storefront.name} interior`}
+          loading="lazy"
+          className="h-[132px] w-full object-cover"
+        />
+      ) : (
+        <div className="h-[132px] w-full bg-mint grid place-items-center">
+          <span className="brand-display text-[40px] text-ink lowercase">{storefront.name[0]}</span>
+        </div>
+      )}
+      <div className="p-3">
+        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1">
+          {storefront.name}
+          {storefront.claimed && <BadgeCheck className="size-3.5 text-hot" />}
+        </p>
+        <p className="text-[12px] text-ink-mute lowercase mt-0.5">{neighbourhood(storefront)}</p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[12px] text-ink-soft lowercase">
+            {providerCount} {providerCount === 1 ? "provider" : "providers"}
+          </span>
+          {storefront.review_count > 0 ? (
+            <span className="inline-flex items-center gap-1 text-[12px] text-ink-soft">
+              <Star className="size-3 fill-ink text-ink" />
+              {storefront.rating}
+            </span>
+          ) : (
+            <span className="rounded-pill bg-butter px-2 py-0.5 text-[11px] font-semibold lowercase">
+              new to treatme
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
