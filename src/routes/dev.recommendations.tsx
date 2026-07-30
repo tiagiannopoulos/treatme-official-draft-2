@@ -18,7 +18,7 @@ export const Route = createFileRoute("/dev/recommendations")({
 
 const CASES: { concerns: string[]; goals: string[] }[] = [
   { concerns: ["pores", "texture"], goals: [] },
-  { concerns: ["fineLines", "wrinkles", "laxity"], goals: ["lipEnhancement"] },
+  { concerns: ["fineLines", "wrinkles", "laxity"], goals: ["volumeLoss", "bodyContour"] },
   { concerns: ["pigmentation", "darkSpots"], goals: [] },
 ];
 
