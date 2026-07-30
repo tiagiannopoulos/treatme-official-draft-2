@@ -1,7 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import { PillButton } from "@/components/treatme/PillButton";
+import { treatmentAreasQuery } from "@/lib/treatment-areas";
 import { getTreatment } from "@/lib/treatments-data";
+
 
 export const Route = createFileRoute("/treatments/$slug/")({
   head: ({ params }) => ({
@@ -21,6 +25,12 @@ export const Route = createFileRoute("/treatments/$slug/")({
 function TreatmentDetail() {
   const data = Route.useLoaderData() as { treatment: NonNullable<ReturnType<typeof getTreatment>> };
   const t = data.treatment;
+  const { data: areas = [] } = useQuery(treatmentAreasQuery(t.slug));
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const selectedArea = areas.find((a) => a.area_slug === selected) ?? null;
+  const displayPrice = selectedArea?.price_from ?? t.priceFrom;
+
   return (
     <div className="pb-10">
       <div className="px-6 pt-4">
@@ -32,8 +42,39 @@ function TreatmentDetail() {
       <div className="px-6 mt-3">
         <p className="brand-eyebrow">{t.category}</p>
         <h1 className="brand-display text-[36px] mt-2 text-balance">{t.name}<span className="text-hot">.</span></h1>
-        <p className="mt-2 text-ink-mute text-[13px]">from <span className="text-ink font-bold">${t.priceFrom}</span></p>
+        <p className="mt-2 text-ink-mute text-[13px]">
+          from <span className="text-ink font-bold">${displayPrice}</span>
+          {selectedArea ? <span className="lowercase"> · {selectedArea.name}</span> : null}
+        </p>
       </div>
+
+      {areas.length > 0 && (
+        <div className="px-6 mt-5">
+          <p className="brand-eyebrow">choose your area</p>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {areas.map((a) => {
+              const on = a.area_slug === selected;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setSelected(on ? null : a.area_slug)}
+                  aria-pressed={on}
+                  className={`rounded-2xl border p-3 text-left transition-colors ${
+                    on ? "border-hot bg-bubblegum/45" : "border-line bg-card hover:bg-bubblegum/20"
+                  }`}
+                >
+                  <p className="text-[14px] font-bold lowercase text-ink">{a.name}</p>
+                  <p className="text-[12px] text-ink-mute mt-0.5">
+                    {a.price_from != null ? `from $${a.price_from}` : "price at consult"}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[12px] text-ink-mute">optional. your provider confirms the plan at consult.</p>
+        </div>
+      )}
 
       <div className="mx-6 mt-5 rounded-2xl bg-bubblegum/35 p-5">
         <p className="brand-eyebrow">before you book</p>
@@ -58,12 +99,19 @@ function TreatmentDetail() {
       </div>
 
       <div className="px-6 mt-6">
-        <Link to="/treatments/$slug/book" params={{ slug: t.slug }}>
-          <PillButton fullWidth>book treatment</PillButton>
+        <Link
+          to="/treatments/$slug/book"
+          params={{ slug: t.slug }}
+          search={selectedArea ? { area: selectedArea.area_slug } : {}}
+        >
+          <PillButton fullWidth>
+            {selectedArea ? `book ${selectedArea.name.toLowerCase()}` : "book treatment"}
+          </PillButton>
         </Link>
       </div>
     </div>
   );
+
 }
 
 function Section({ title, body, icon }: { title: string; body: string; icon?: React.ReactNode }) {
