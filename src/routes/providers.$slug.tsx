@@ -39,7 +39,7 @@ export const Route = createFileRoute("/providers/$slug")({
   notFoundComponent: () => (
     <div className="px-6 pt-10">
       <h1 className="brand-display text-[26px]">provider not found.</h1>
-      <Link to="/search" className="text-[13px] text-hot lowercase mt-2 inline-block">
+      <Link to="/search" search={{}} className="text-[13px] text-hot lowercase mt-2 inline-block">
         back to search
       </Link>
     </div>
@@ -178,6 +178,7 @@ function ProviderProfile() {
             <Link
               key={t.treatment_slug}
               to="/search"
+      search={{}}
               search={{ q: t.name }}
               className="rounded-pill border border-line px-3 py-1.5 text-[13px] lowercase"
             >

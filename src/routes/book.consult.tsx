@@ -32,7 +32,7 @@ function ConsultStub() {
         <p>provider: {providerId ?? "not set"}</p>
         <p>storefront: {storefrontId ?? "not set"}</p>
       </div>
-      <Link to="/search" className="mt-6 inline-block text-[13px] text-hot lowercase">
+      <Link to="/search" search={{}} className="mt-6 inline-block text-[13px] text-hot lowercase">
         back to search
       </Link>
     </div>

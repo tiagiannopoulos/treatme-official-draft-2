@@ -18,7 +18,7 @@ export const Route = createFileRoute("/storefront/$id")({
   notFoundComponent: () => (
     <div className="px-6 pt-10">
       <h1 className="brand-display text-[24px]">storefront not found.</h1>
-      <Link to="/search" className="text-[13px] text-hot lowercase mt-2 inline-block">
+      <Link to="/search" search={{}} className="text-[13px] text-hot lowercase mt-2 inline-block">
         back to search
       </Link>
     </div>
