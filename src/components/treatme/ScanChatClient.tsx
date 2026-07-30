@@ -17,22 +17,24 @@ import {
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
-import { MARKER_KEYS, MARKER_LABEL } from "@/lib/skin-analysis";
+import { CONCERN_LABEL } from "@/lib/skinAnalysis";
 import { useScan } from "@/lib/scan-store";
 
 export function ScanChatClient() {
-  const { analysis } = useScan();
+  const { result, recommendations } = useScan();
+  const analysis = result;
 
   const scanContext = useMemo(() => {
-    if (!analysis) return "";
+    if (!result) return "";
 
-    const markerLines = MARKER_KEYS.map(
-      (key) =>
-        `- ${MARKER_LABEL[key]}: ${Math.round(analysis.markers[key].score)}/100 (${analysis.markers[key].note})`,
-    ).join("\n");
+    const markerLines = [...result.concerns]
+      .sort((a, b) => b.score - a.score)
+      .map((c) => `- ${CONCERN_LABEL[c.key]}: ${Math.round(c.score)}/100`)
+      .join("\n");
 
-    return `skin type: ${analysis.skinType}\nfitzpatrick: ${analysis.fitzpatrick}\nestimated skin age: ${analysis.skinAge}\n\nmarkers:\n${markerLines}\n\nstrengths: ${analysis.strengths.join("; ")}\nweaknesses: ${analysis.weaknesses.join("; ")}\nrecommended treatments: ${analysis.recommendedTreatments.join(", ")}`;
-  }, [analysis]);
+    return `scan markers:\n${markerLines}\n\nrecommended treatments: ${recommendations.map((r) => r.name).join(", ")}`;
+  }, [result, recommendations]);
+
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
