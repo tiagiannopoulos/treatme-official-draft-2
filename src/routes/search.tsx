@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search as SearchIcon, X, MapPin, Star, Navigation, Loader2 } from "lucide-react";
-import { ClientOnly } from "@tanstack/react-router";
+
 import {
   directoryQuery,
   distanceKm,
