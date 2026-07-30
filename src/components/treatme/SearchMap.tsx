@@ -111,12 +111,23 @@ export function SearchMap({
     };
   }, [browserKey, trackingId, onSelect]);
 
-  // remove google maps error overlay if it falls back to the placeholder.
+  // remove google maps error overlay if the key is restricted and we fall back.
   useEffect(() => {
     if (!failed) return;
-    document.querySelectorAll(".gm-err-container, .gm-err-content, .gm-err-icon, .gm-err-title, .gm-err-message").forEach((el) => {
-      el.remove();
-    });
+    const removeOverlay = () => {
+      document.querySelectorAll(".gm-err-container, .gm-err-content, .gm-err-icon, .gm-err-title, .gm-err-message").forEach((el) => {
+        (el as HTMLElement).style.display = "none";
+        el.remove();
+      });
+    };
+    removeOverlay();
+    const observer = new MutationObserver(() => removeOverlay());
+    observer.observe(document.body, { childList: true, subtree: true });
+    const id = window.setInterval(removeOverlay, 300);
+    return () => {
+      observer.disconnect();
+      window.clearInterval(id);
+    };
   }, [failed]);
 
   // create markers when the map is ready or the storefront list changes.
