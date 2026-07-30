@@ -102,7 +102,17 @@ function SearchPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /** debounced query: matching waits 250ms behind typing. */
+  const [dq, setDq] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDq(q), 250);
+    return () => clearTimeout(id);
+  }, [q]);
+
   const searching = q.trim().length > 0;
+  const needle = dq.trim();
+  /** typing ahead of the debounce -> show skeletons, never a spinner. */
+  const pending = searching && q.trim() !== needle;
 
   const useMyLocation = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
@@ -169,7 +179,7 @@ function SearchPage() {
   const providerResults = useMemo(() => {
     return data.providers
       .map((p) => {
-        const { hit, via } = matchProvider(p, q.trim());
+        const { hit, via } = matchProvider(p, needle);
         const shops = p.storefronts.filter((s) => inRangeIds.has(s.id));
         const km = shops.length
           ? Math.min(...shops.map((s) => distanceKm(center, { lat: s.lat, lng: s.lng })))
@@ -178,20 +188,20 @@ function SearchPage() {
       })
       .filter((r) => r.hit && r.shops.length > 0)
       .sort((a, b) => a.km - b.km);
-  }, [data.providers, q, inRangeIds, center]);
+  }, [data.providers, needle, inRangeIds, center]);
 
   const medspaResults = useMemo(
-    () => storefrontsInRange.filter((s) => matchStorefront(s, q.trim())),
-    [storefrontsInRange, q],
+    () => storefrontsInRange.filter((s) => matchStorefront(s, needle)),
+    [storefrontsInRange, needle],
   );
 
   const treatmentResults = useMemo(() => {
-    if (!searching) return [];
+    if (!needle) return [];
     return treatments
-      .map((t) => ({ t, ...matchTreatment(t, q.trim()) }))
+      .map((t) => ({ t, ...matchTreatment(t, needle) }))
       .filter((r) => r.hit)
       .slice(0, 20);
-  }, [treatments, q, searching]);
+  }, [treatments, needle]);
 
   const showProviders = scope === "all" || scope === "providers";
   const showMedspas = scope === "all" || scope === "medspas";
@@ -203,6 +213,33 @@ function SearchPage() {
     (showProviders ? providerResults.length : 0) +
     (showMedspas ? medspaResults.length : 0) +
     (showTreatments ? treatmentResults.length : 0);
+
+  /** how many providers in range offer each treatment, for treatment rows. */
+  const treatmentProviderCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of data.providers) {
+      if (!p.storefronts.some((s) => inRangeIds.has(s.id))) continue;
+      for (const t of p.treatments) counts[t.treatment_slug] = (counts[t.treatment_slug] ?? 0) + 1;
+    }
+    return counts;
+  }, [data.providers, inRangeIds]);
+
+  /** pins narrowed to whatever the current results reference. */
+  const resultStorefronts = useMemo(() => {
+    const ids = new Set<string>();
+    if (showProviders) for (const r of providerResults) for (const s of r.shops) ids.add(s.id);
+    if (showMedspas) for (const s of medspaResults) ids.add(s.id);
+    const picked = data.storefronts.filter((s) => ids.has(s.id));
+    return picked.length ? picked : storefrontsInRange;
+  }, [showProviders, showMedspas, providerResults, medspaResults, data.storefronts, storefrontsInRange]);
+
+  const countLine = (() => {
+    const where = ` in ${locLabel}`;
+    if (scope === "providers") return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
+    if (scope === "medspas") return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
+    if (scope === "treatments") return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
+    return `${totalResults} result${totalResults === 1 ? "" : "s"}${where}`;
+  })();
 
   return (
     <div className="pb-28">
@@ -259,76 +296,126 @@ function SearchPage() {
       {searching ? (
         /* ---------- results state ---------- */
         <div className="px-6">
-          <p className="text-[12px] text-ink-mute lowercase">
-            {totalResults} result{totalResults === 1 ? "" : "s"} for "{q.trim().toLowerCase()}"
-          </p>
+          {/* map stays pinned at the top, pins filtered to the results */}
+          <div className="mt-1">
+            <ClientOnly fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}>
+              <SearchMap
+                storefronts={resultStorefronts}
+                center={center}
+                selectedId={selected}
+                onSelect={setSelected}
+                providerCounts={providerCounts}
+                height="h-[180px]"
+                expandable
+              />
+            </ClientOnly>
+          </div>
 
-          {showProviders && providerResults.length > 0 && (
-            <section className="mt-4">
-              <p className="brand-eyebrow">providers</p>
-              <div className="mt-2 space-y-3">
-                {providerResults.map(({ p, via, shops, km }) => (
-                  <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {showMedspas && medspaResults.length > 0 && (
-            <section className="mt-6">
-              <p className="brand-eyebrow">medspas</p>
-              <div className="mt-2 space-y-3">
-                {medspaResults.map((s) => (
-                  <MedspaCard
-                    key={s.id}
-                    storefront={s}
-                    km={s.km}
-                    providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
-                    active={selected === s.id}
-                    onSelect={() => setSelected(s.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {showTreatments && treatmentResults.length > 0 && (
-            <section className="mt-6">
-              <p className="brand-eyebrow">treatments</p>
-              <div className="mt-2 space-y-2">
-                {treatmentResults.map(({ t, via }) => (
-                  <TreatmentRow key={t.slug} treatment={t} via={via} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {totalResults === 0 && (
-            <div className="mt-6 rounded-2xl border border-line p-5 text-center">
-              <p className="brand-display text-[20px]">no matches for "{q.trim().toLowerCase()}".</p>
-              <p className="text-[13px] text-ink-mute mt-1 lowercase">
-                try a treatment name, a medspa, or widen your radius.
-              </p>
-              <div className="mt-3 flex justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRadius(25)}
-                  className="rounded-pill bg-ink text-cream px-4 py-2 text-[13px] font-semibold lowercase"
-                >
-                  widen to 25 km
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQ("")}
-                  className="rounded-pill border border-line px-4 py-2 text-[13px] font-semibold lowercase"
-                >
-                  clear search
-                </button>
-              </div>
+          {pending ? (
+            <div className="mt-4 space-y-3">
+              {[0, 1, 2, 3].map((i) => (
+                <CardSkeleton key={i} />
+              ))}
             </div>
+          ) : (
+            <>
+              <p className="mt-4 text-[12px] lowercase text-ink/60">{countLine}</p>
+
+              {showProviders && providerResults.length > 0 && (
+                <section className="mt-3">
+                  {scope === "all" && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="brand-eyebrow">providers</p>
+                      {providerResults.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setScope("providers")}
+                          className="text-[12px] font-semibold text-hot lowercase"
+                        >
+                          see all {providerResults.length} providers
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 space-y-3">
+                    {(scope === "all" ? providerResults.slice(0, 3) : providerResults).map(
+                      ({ p, via, shops, km }) => (
+                        <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
+                      ),
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {showMedspas && medspaResults.length > 0 && (
+                <section className="mt-6">
+                  {scope === "all" && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="brand-eyebrow">medspas</p>
+                      {medspaResults.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setScope("medspas")}
+                          className="text-[12px] font-semibold text-hot lowercase"
+                        >
+                          see all {medspaResults.length} medspas
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 space-y-3">
+                    {(scope === "all" ? medspaResults.slice(0, 3) : medspaResults).map((s) => (
+                      <MedspaCard
+                        key={s.id}
+                        storefront={s}
+                        km={s.km}
+                        providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                        active={selected === s.id}
+                        onSelect={() => setSelected(s.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {showTreatments && treatmentResults.length > 0 && (
+                <section className="mt-6">
+                  {scope === "all" && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="brand-eyebrow">treatments</p>
+                      {treatmentResults.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setScope("treatments")}
+                          className="text-[12px] font-semibold text-hot lowercase"
+                        >
+                          see all {treatmentResults.length} treatments
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 space-y-2">
+                    {(scope === "all" ? treatmentResults.slice(0, 3) : treatmentResults).map(({ t }) => (
+                      <TreatmentResultRow
+                        key={t.slug}
+                        treatment={t}
+                        providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                        onSelect={() => {
+                          setQ(t.name.toLowerCase());
+                          setScope("providers");
+                        }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
+            </>
           )}
         </div>
       ) : (
+
         /* ---------- explore state ---------- */
         <div className="px-6">
           {/* a) map card */}
@@ -746,5 +833,83 @@ function FeaturedStorefrontCard({
         </div>
       </div>
     </Link>
+  );
+}
+
+/** shimmering placeholder in the same shape as a provider card. */
+function CardSkeleton() {
+  return (
+    <div className="flex gap-3 rounded-2xl border border-line bg-white p-3.5">
+      <span className="size-14 shrink-0 rounded-full bg-muted animate-pulse" />
+      <div className="min-w-0 flex-1 space-y-2 py-1">
+        <span className="block h-3.5 w-2/5 rounded-pill bg-muted animate-pulse" />
+        <span className="block h-3 w-3/5 rounded-pill bg-muted animate-pulse" />
+        <span className="block h-3 w-1/2 rounded-pill bg-muted animate-pulse" />
+        <span className="block h-5 w-4/5 rounded-pill bg-muted animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+/** treatment result row: name, one line description, provider count. */
+function TreatmentResultRow({
+  treatment,
+  providerCount,
+  onSelect,
+}: {
+  treatment: SearchTreatment;
+  providerCount: number;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="w-full flex items-center gap-3 rounded-2xl border border-line bg-white p-3 text-left"
+    >
+      {treatment.hero_image_url ? (
+        <img
+          src={treatment.hero_image_url}
+          alt={treatment.name}
+          loading="lazy"
+          className="size-11 shrink-0 rounded-xl object-cover"
+        />
+      ) : (
+        <span className="size-11 shrink-0 rounded-xl bg-mint grid place-items-center text-[13px] font-bold lowercase">
+          {treatment.name.slice(0, 2).toLowerCase()}
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13.5px] font-semibold lowercase truncate">{treatment.name}</span>
+        <span className="block text-[11.5px] text-ink-mute lowercase truncate">
+          {treatment.descriptor || treatment.category || treatment.family}
+        </span>
+      </span>
+      <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[11px] lowercase">
+        {providerCount} provider{providerCount === 1 ? "" : "s"}
+      </span>
+    </button>
+  );
+}
+
+/** shown when the debounced query returns nothing. */
+function EmptyResults({ onClear }: { onClear: () => void }) {
+  return (
+    <div className="mt-10 flex flex-col items-center text-center">
+      <span className="size-16 rounded-full bg-mint grid place-items-center">
+        <SearchIcon className="size-6 text-ink" />
+      </span>
+      <p className="brand-display text-[22px] mt-4">nothing here yet</p>
+      <p className="text-[13px] text-ink-mute lowercase mt-1.5 max-w-[240px]">
+        try a different treatment or widen your area
+      </p>
+      <button
+        type="button"
+        onClick={onClear}
+        className="mt-4 rounded-pill bg-ink text-cream px-5 py-2.5 text-[13px] font-semibold lowercase"
+      >
+        clear search
+      </button>
+    </div>
   );
 }
