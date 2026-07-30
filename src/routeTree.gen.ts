@@ -17,6 +17,7 @@ import { Route as ScanIndexRouteImport } from './routes/scan.index'
 import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
 import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
+import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
 import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
@@ -62,6 +63,11 @@ const ScanAnalyzingRoute = ScanAnalyzingRouteImport.update({
   path: '/scan/analyzing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
+  id: '/dev/recommendations',
+  path: '/dev/recommendations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/api/chat': typeof ApiChatRoute
+  '/dev/recommendations': typeof DevRecommendationsRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/api/chat': typeof ApiChatRoute
+  '/dev/recommendations': typeof DevRecommendationsRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/search': typeof SearchRoute
   '/api/chat': typeof ApiChatRoute
+  '/dev/recommendations': typeof DevRecommendationsRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/search'
     | '/api/chat'
+    | '/dev/recommendations'
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/search'
     | '/api/chat'
+    | '/dev/recommendations'
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/search'
     | '/api/chat'
+    | '/dev/recommendations'
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SearchRoute: typeof SearchRoute
   ApiChatRoute: typeof ApiChatRoute
+  DevRecommendationsRoute: typeof DevRecommendationsRoute
   ScanAnalyzingRoute: typeof ScanAnalyzingRoute
   ScanChatRoute: typeof ScanChatRoute
   ScanResultsRoute: typeof ScanResultsRoute
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScanAnalyzingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/recommendations': {
+      id: '/dev/recommendations'
+      path: '/dev/recommendations'
+      fullPath: '/dev/recommendations'
+      preLoaderRoute: typeof DevRecommendationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -280,6 +300,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SearchRoute: SearchRoute,
   ApiChatRoute: ApiChatRoute,
+  DevRecommendationsRoute: DevRecommendationsRoute,
   ScanAnalyzingRoute: ScanAnalyzingRoute,
   ScanChatRoute: ScanChatRoute,
   ScanResultsRoute: ScanResultsRoute,
