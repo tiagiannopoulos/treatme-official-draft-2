@@ -126,28 +126,52 @@ export function SearchMap({
     };
   }, [storefronts, center]);
 
-  const pos = (p: LatLng) => {
+  const raw = (p: LatLng) => {
     const spanLat = Math.max(bounds.maxLat - bounds.minLat, 0.005);
     const spanLng = Math.max(bounds.maxLng - bounds.minLng, 0.005);
     return {
-      left: `${12 + ((p.lng - bounds.minLng) / spanLng) * 76}%`,
-      top: `${18 + ((bounds.maxLat - p.lat) / spanLat) * 66}%`,
+      left: 12 + ((p.lng - bounds.minLng) / spanLng) * 76,
+      top: 18 + ((bounds.maxLat - p.lat) / spanLat) * 66,
     };
   };
+
+  const pos = (p: LatLng) => {
+    const { left, top } = raw(p);
+    return { left: `${left}%`, top: `${top}%` };
+  };
+
+  const selectedPos = selected ? raw({ lat: selected.lat, lng: selected.lng }) : null;
+  /** flip the card below the pin when there is no room above it inside the card. */
+  const flipBelow = selectedPos !== null && selectedPos.top < 55;
 
   const chrome = (
     <>
       {selected && (
         <div
           className={cn(
-            "absolute z-20 -translate-x-1/2 w-[212px]",
-            failed ? "-translate-y-[calc(100%+18px)]" : "left-1/2 top-3",
+            "absolute z-20 w-[212px]",
+            failed
+              ? flipBelow
+                ? "translate-y-2"
+                : "-translate-y-[calc(100%+30px)]"
+              : "left-1/2 top-3 -translate-x-1/2",
           )}
-          style={failed ? pos({ lat: selected.lat, lng: selected.lng }) : undefined}
+          style={
+            failed && selectedPos
+              ? {
+                  top: `${selectedPos.top}%`,
+                  left: `${Math.min(Math.max(selectedPos.left, 4), 96)}%`,
+                  transform: `translateX(-${Math.min(Math.max(selectedPos.left, 4), 96) > 60 ? 80 : 20}%) ${
+                    flipBelow ? "translateY(8px)" : "translateY(calc(-100% - 30px))"
+                  }`,
+                }
+              : undefined
+          }
         >
           <StorefrontPopover storefront={selected} providerCount={providerCounts[selected.id] ?? 0} />
         </div>
       )}
+
 
       {expandable && (
         <Link
