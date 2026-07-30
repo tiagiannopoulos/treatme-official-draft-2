@@ -259,76 +259,126 @@ function SearchPage() {
       {searching ? (
         /* ---------- results state ---------- */
         <div className="px-6">
-          <p className="text-[12px] text-ink-mute lowercase">
-            {totalResults} result{totalResults === 1 ? "" : "s"} for "{q.trim().toLowerCase()}"
-          </p>
+          {/* map stays pinned at the top, pins filtered to the results */}
+          <div className="mt-1">
+            <ClientOnly fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}>
+              <SearchMap
+                storefronts={resultStorefronts}
+                center={center}
+                selectedId={selected}
+                onSelect={setSelected}
+                providerCounts={providerCounts}
+                height="h-[180px]"
+                expandable
+              />
+            </ClientOnly>
+          </div>
 
-          {showProviders && providerResults.length > 0 && (
-            <section className="mt-4">
-              <p className="brand-eyebrow">providers</p>
-              <div className="mt-2 space-y-3">
-                {providerResults.map(({ p, via, shops, km }) => (
-                  <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {showMedspas && medspaResults.length > 0 && (
-            <section className="mt-6">
-              <p className="brand-eyebrow">medspas</p>
-              <div className="mt-2 space-y-3">
-                {medspaResults.map((s) => (
-                  <MedspaCard
-                    key={s.id}
-                    storefront={s}
-                    km={s.km}
-                    providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
-                    active={selected === s.id}
-                    onSelect={() => setSelected(s.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {showTreatments && treatmentResults.length > 0 && (
-            <section className="mt-6">
-              <p className="brand-eyebrow">treatments</p>
-              <div className="mt-2 space-y-2">
-                {treatmentResults.map(({ t, via }) => (
-                  <TreatmentRow key={t.slug} treatment={t} via={via} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {totalResults === 0 && (
-            <div className="mt-6 rounded-2xl border border-line p-5 text-center">
-              <p className="brand-display text-[20px]">no matches for "{q.trim().toLowerCase()}".</p>
-              <p className="text-[13px] text-ink-mute mt-1 lowercase">
-                try a treatment name, a medspa, or widen your radius.
-              </p>
-              <div className="mt-3 flex justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setRadius(25)}
-                  className="rounded-pill bg-ink text-cream px-4 py-2 text-[13px] font-semibold lowercase"
-                >
-                  widen to 25 km
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQ("")}
-                  className="rounded-pill border border-line px-4 py-2 text-[13px] font-semibold lowercase"
-                >
-                  clear search
-                </button>
-              </div>
+          {pending ? (
+            <div className="mt-4 space-y-3">
+              {[0, 1, 2, 3].map((i) => (
+                <CardSkeleton key={i} />
+              ))}
             </div>
+          ) : (
+            <>
+              <p className="mt-4 text-[12px] lowercase text-ink/60">{countLine}</p>
+
+              {showProviders && providerResults.length > 0 && (
+                <section className="mt-3">
+                  {scope === "all" && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="brand-eyebrow">providers</p>
+                      {providerResults.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setScope("providers")}
+                          className="text-[12px] font-semibold text-hot lowercase"
+                        >
+                          see all {providerResults.length} providers
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 space-y-3">
+                    {(scope === "all" ? providerResults.slice(0, 3) : providerResults).map(
+                      ({ p, via, shops, km }) => (
+                        <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
+                      ),
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {showMedspas && medspaResults.length > 0 && (
+                <section className="mt-6">
+                  {scope === "all" && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="brand-eyebrow">medspas</p>
+                      {medspaResults.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setScope("medspas")}
+                          className="text-[12px] font-semibold text-hot lowercase"
+                        >
+                          see all {medspaResults.length} medspas
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 space-y-3">
+                    {(scope === "all" ? medspaResults.slice(0, 3) : medspaResults).map((s) => (
+                      <MedspaCard
+                        key={s.id}
+                        storefront={s}
+                        km={s.km}
+                        providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                        active={selected === s.id}
+                        onSelect={() => setSelected(s.id)}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {showTreatments && treatmentResults.length > 0 && (
+                <section className="mt-6">
+                  {scope === "all" && (
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="brand-eyebrow">treatments</p>
+                      {treatmentResults.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setScope("treatments")}
+                          className="text-[12px] font-semibold text-hot lowercase"
+                        >
+                          see all {treatmentResults.length} treatments
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-2 space-y-2">
+                    {(scope === "all" ? treatmentResults.slice(0, 3) : treatmentResults).map(({ t }) => (
+                      <TreatmentResultRow
+                        key={t.slug}
+                        treatment={t}
+                        providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                        onSelect={() => {
+                          setQ(t.name.toLowerCase());
+                          setScope("providers");
+                        }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
+            </>
           )}
         </div>
       ) : (
+
         /* ---------- explore state ---------- */
         <div className="px-6">
           {/* a) map card */}
