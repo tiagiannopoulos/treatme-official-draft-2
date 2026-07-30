@@ -128,14 +128,6 @@ function TreatmentsPage() {
 
   return (
     <div className="px-6 pt-6 pb-8">
-      <p className="brand-eyebrow">the menu</p>
-      <h1 className="brand-display text-[36px] mt-2 text-balance">
-        treatment library<span className="text-hot">.</span>
-      </h1>
-      <p className="mt-3 text-ink-mute text-[14px]">
-        {treatments.length} treatments. tap any one to open its story.
-      </p>
-
       {/* search */}
       <div className="mt-5 relative">
         <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-ink-mute" />
