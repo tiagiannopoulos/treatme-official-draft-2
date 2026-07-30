@@ -61,15 +61,19 @@ export interface LatLng {
   lng: number;
 }
 
-/** manual location presets so a patient can search without granting gps. */
+/** manual location presets so a patient can search without granting gps. greater toronto area. */
 export const LOCATION_PRESETS: Array<{ label: string; point: LatLng }> = [
-  { label: "marylebone", point: { lat: 51.5205, lng: -0.1487 } },
-  { label: "shoreditch", point: { lat: 51.5262, lng: -0.081 } },
-  { label: "chelsea", point: { lat: 51.493, lng: -0.1663 } },
-  { label: "soho", point: { lat: 51.5136, lng: -0.1365 } },
+  { label: "downtown toronto", point: TORONTO_CENTROID },
+  { label: "yorkville", point: { lat: 43.6709, lng: -79.3933 } },
+  { label: "queen west", point: { lat: 43.6465, lng: -79.4025 } },
+  { label: "north york", point: { lat: 43.7615, lng: -79.4111 } },
+  { label: "etobicoke", point: { lat: 43.6205, lng: -79.5132 } },
+  { label: "scarborough", point: { lat: 43.7764, lng: -79.2318 } },
+  { label: "mississauga", point: { lat: 43.589, lng: -79.6441 } },
+  { label: "vaughan", point: { lat: 43.8361, lng: -79.4983 } },
 ];
 
-export const RADIUS_OPTIONS = [2, 5, 10, 25] as const;
+export const RADIUS_OPTIONS = [2, 5, 10, 25, 50] as const;
 
 /** great-circle distance in km. */
 export function distanceKm(a: LatLng, b: LatLng): number {

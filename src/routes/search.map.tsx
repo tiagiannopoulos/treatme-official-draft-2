@@ -2,7 +2,7 @@ import { ClientOnly, createFileRoute, Link, useRouter } from "@tanstack/react-ro
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ArrowLeft, MapPin, Star } from "lucide-react";
-import { directoryQuery, LOCATION_PRESETS } from "@/lib/search-data";
+import { directoryQuery, TORONTO_CENTROID } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
 
@@ -52,7 +52,7 @@ function MapView() {
         <ClientOnly fallback={<div className="size-full bg-muted" />}>
           <SearchMap
             storefronts={pinned}
-            center={LOCATION_PRESETS[0].point}
+            center={TORONTO_CENTROID}
             selectedId={selected}
             onSelect={setSelected}
             providerCounts={providerCounts}
