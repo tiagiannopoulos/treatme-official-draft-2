@@ -149,7 +149,7 @@
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.045em;
     line-height: 0.92;
     text-transform: lowercase;
     color: var(--ink);
