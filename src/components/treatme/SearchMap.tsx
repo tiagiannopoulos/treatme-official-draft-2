@@ -41,7 +41,7 @@ export function SearchMap({
   expandable = false,
   className,
 }: Props) {
-  const { data, isLoading } = useQuery(tokenQuery);
+  const { data } = useQuery(tokenQuery);
   const token = data?.token ?? null;
   const [failed, setFailed] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -307,9 +307,7 @@ export function SearchMap({
         </button>
       ))}
       {chrome}
-      <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">
-        {isLoading ? "map loading" : "map loading"}
-      </p>
+      <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">map loading</p>
     </div>
   );
 }
