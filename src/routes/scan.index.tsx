@@ -1,15 +1,20 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Camera, Upload } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { toast } from "sonner";
+import { DevConcernToggle } from "@/components/treatme/DevConcernToggle";
 
 export const Route = createFileRoute("/scan/")({
   head: () => ({
     meta: [
       { title: "scan · treatme" },
       { name: "description", content: "take one photo. we'll read your skin in seconds." },
+      { property: "og:title", content: "scan · treatme" },
+      { property: "og:description", content: "take one photo. we'll read your skin in seconds." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: ScanPage,
@@ -24,8 +29,7 @@ async function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-// downscale a data URL to max 1024px so the API payload stays small.
-// throws if the browser can't decode the image (e.g. HEIC on non-safari).
+// downscale a data URL to max 1024px so the payload stays small.
 async function downscale(dataUrl: string, max = 1024): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -55,6 +59,7 @@ function ScanPage() {
   const uploadRef = useRef<HTMLInputElement>(null);
   const { setPhoto } = useScan();
   const navigate = useNavigate();
+  const [taps, setTaps] = useState(0);
 
   const onFile = async (file?: File | null) => {
     if (!file) return;
@@ -78,19 +83,37 @@ function ScanPage() {
 
   return (
     <div className="px-6 pt-6">
-      <p className="brand-eyebrow">step 01 of 03 · scan</p>
+      {/* tap the eyebrow 5x to reveal the dev toggle */}
+      <button
+        type="button"
+        onClick={() => setTaps((t) => t + 1)}
+        className="brand-eyebrow select-none"
+      >
+        step 01 of 03 · scan
+      </button>
       <h1 className="brand-display text-[40px] mt-3 text-balance">
         let's see what your skin is asking for<span className="text-hot">.</span>
       </h1>
 
       <div className="mt-6 rounded-3xl bg-bubblegum/45 border border-bubblegum p-5">
-        <div className="rounded-2xl bg-cream/80 border border-line/70 aspect-[4/5] grid place-items-center text-center px-6">
-          <div>
-            <div className="size-14 rounded-full bg-ink text-cream grid place-items-center mx-auto">
-              <Camera className="size-6" strokeWidth={2.2} />
+        {/* face guide */}
+        <div className="relative rounded-2xl bg-cream/80 border border-line/70 aspect-[4/5] overflow-hidden">
+          <svg viewBox="0 0 100 125" className="absolute inset-0 w-full h-full" aria-hidden="true">
+            <ellipse
+              cx="50" cy="58" rx="29" ry="40"
+              fill="none" stroke="#FF1F87" strokeWidth="0.9"
+              strokeDasharray="3 3" opacity="0.75"
+            />
+            <line x1="50" y1="20" x2="50" y2="30" stroke="#FF1F87" strokeWidth="0.6" opacity="0.5" />
+            <line x1="21" y1="58" x2="29" y2="58" stroke="#FF1F87" strokeWidth="0.6" opacity="0.5" />
+            <line x1="71" y1="58" x2="79" y2="58" stroke="#FF1F87" strokeWidth="0.6" opacity="0.5" />
+          </svg>
+          <div className="absolute inset-x-0 bottom-0 p-5 text-center">
+            <div className="size-12 rounded-full bg-ink text-cream grid place-items-center mx-auto">
+              <Camera className="size-5" strokeWidth={2.2} />
             </div>
-            <p className="mt-4 font-semibold text-[15px]">center your face. good light. no makeup.</p>
-            <p className="text-ink-mute text-[13px] mt-1">we read it instantly and never store it on a server.</p>
+            <p className="mt-3 font-semibold text-[15px]">line your face up inside the oval.</p>
+            <p className="text-ink-mute text-[13px] mt-1">good light. no makeup. straight on.</p>
           </div>
         </div>
 
@@ -110,9 +133,10 @@ function ScanPage() {
         ))}
       </ul>
 
+      {taps >= 5 && <DevConcernToggle />}
+
       <input ref={cameraRef} type="file" accept="image/jpeg,image/png" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
       <input ref={uploadRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-
     </div>
   );
 }
