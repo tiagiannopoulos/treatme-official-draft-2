@@ -67,6 +67,11 @@ export function SearchMap({
     if (!browserKey || !divRef.current || mapRef.current) return;
     let cancelled = false;
 
+    // google maps calls this global when the key is rejected or restricted.
+    (window as any).gm_authFailure = () => {
+      if (!cancelled) setFailed(true);
+    };
+
     loadGoogleMaps(browserKey, trackingId)
       .then(() => {
         if (cancelled || !divRef.current) return;
