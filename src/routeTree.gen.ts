@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TreatmentsIndexRouteImport } from './routes/treatments.index'
 import { Route as SearchIndexRouteImport } from './routes/search.index'
 import { Route as ScanIndexRouteImport } from './routes/scan.index'
+import { Route as StorefrontIdRouteImport } from './routes/storefront.$id'
 import { Route as SearchMapRouteImport } from './routes/search.map'
 import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
@@ -49,6 +50,11 @@ const SearchIndexRoute = SearchIndexRouteImport.update({
 const ScanIndexRoute = ScanIndexRouteImport.update({
   id: '/scan/',
   path: '/scan/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StorefrontIdRoute = StorefrontIdRouteImport.update({
+  id: '/storefront/$id',
+  path: '/storefront/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchMapRoute = SearchMapRouteImport.update({
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
+  '/storefront/$id': typeof StorefrontIdRoute
   '/scan/': typeof ScanIndexRoute
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
+  '/storefront/$id': typeof StorefrontIdRoute
   '/scan': typeof ScanIndexRoute
   '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
+  '/storefront/$id': typeof StorefrontIdRoute
   '/scan/': typeof ScanIndexRoute
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
+    | '/storefront/$id'
     | '/scan/'
     | '/search/'
     | '/treatments/'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
+    | '/storefront/$id'
     | '/scan'
     | '/search'
     | '/treatments'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
+    | '/storefront/$id'
     | '/scan/'
     | '/search/'
     | '/treatments/'
@@ -230,6 +242,7 @@ export interface RootRouteChildren {
   ScanChatRoute: typeof ScanChatRoute
   ScanResultsRoute: typeof ScanResultsRoute
   SearchMapRoute: typeof SearchMapRoute
+  StorefrontIdRoute: typeof StorefrontIdRoute
   ScanIndexRoute: typeof ScanIndexRoute
   SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan/'
       preLoaderRoute: typeof ScanIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/storefront/$id': {
+      id: '/storefront/$id'
+      path: '/storefront/$id'
+      fullPath: '/storefront/$id'
+      preLoaderRoute: typeof StorefrontIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search/map': {
@@ -366,6 +386,7 @@ const rootRouteChildren: RootRouteChildren = {
   ScanChatRoute: ScanChatRoute,
   ScanResultsRoute: ScanResultsRoute,
   SearchMapRoute: SearchMapRoute,
+  StorefrontIdRoute: StorefrontIdRoute,
   ScanIndexRoute: ScanIndexRoute,
   SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
