@@ -11,6 +11,8 @@ export type ScanState = {
   analysis: SkinAnalysis | null;
   result: ScanResult | null;
   recommendations: Recommendation[];
+  goals: string[];
+  goalRecommendations: Recommendation[];
   startedAt: number | null;
 };
 
@@ -18,7 +20,12 @@ type ScanContextValue = ScanState & {
   setPhoto: (dataUrl: string) => void;
   setPhotoPath: (path: string | null) => void;
   setAnalysis: (analysis: SkinAnalysis) => void;
-  setResult: (result: ScanResult, recommendations: Recommendation[]) => void;
+  setGoals: (goals: string[]) => void;
+  setResult: (
+    result: ScanResult,
+    recommendations: Recommendation[],
+    goalRecommendations?: Recommendation[],
+  ) => void;
   reset: () => void;
 };
 
@@ -30,6 +37,8 @@ const EMPTY: ScanState = {
   analysis: null,
   result: null,
   recommendations: [],
+  goals: [],
+  goalRecommendations: [],
   startedAt: null,
 };
 
@@ -57,7 +66,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const setPhoto = useCallback((dataUrl: string) => {
-    setState({ ...EMPTY, photoDataUrl: dataUrl, startedAt: Date.now() });
+    setState((prev) => ({ ...EMPTY, goals: prev.goals, photoDataUrl: dataUrl, startedAt: Date.now() }));
   }, []);
 
   const setPhotoPath = useCallback((path: string | null) => {
@@ -68,9 +77,20 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, analysis }));
   }, []);
 
-  const setResult = useCallback((result: ScanResult, recommendations: Recommendation[]) => {
-    setState((prev) => ({ ...prev, result, recommendations }));
+  const setGoals = useCallback((goals: string[]) => {
+    setState((prev) => ({ ...prev, goals }));
   }, []);
+
+  const setResult = useCallback(
+    (
+      result: ScanResult,
+      recommendations: Recommendation[],
+      goalRecommendations: Recommendation[] = [],
+    ) => {
+      setState((prev) => ({ ...prev, result, recommendations, goalRecommendations }));
+    },
+    [],
+  );
 
   const reset = useCallback(() => {
     setState(EMPTY);
@@ -79,7 +99,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, setPhoto, setPhotoPath, setAnalysis, setResult, reset }}
+      value={{ ...state, setPhoto, setPhotoPath, setAnalysis, setGoals, setResult, reset }}
     >
       {children}
     </ScanContext.Provider>

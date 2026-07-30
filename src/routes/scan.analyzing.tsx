@@ -28,7 +28,7 @@ const STEPS = [
 ];
 
 function AnalyzingPage() {
-  const { photoDataUrl, setResult, setPhotoPath } = useScan();
+  const { photoDataUrl, goals, setResult, setPhotoPath } = useScan();
   const navigate = useNavigate();
   const started = useRef(false);
   const [step, setStep] = useState(0);
@@ -61,10 +61,10 @@ function AnalyzingPage() {
         }
 
         const concerns = topConcerns(result);
-        const { scanDriven } = await getRecommendations(concerns);
+        const { scanDriven, goalDriven } = await getRecommendations(concerns, goals);
 
         await hold;
-        setResult(result, scanDriven);
+        setResult(result, scanDriven, goalDriven);
         navigate({ to: "/scan/results" });
       } catch (e) {
         console.error(e);
@@ -73,7 +73,7 @@ function AnalyzingPage() {
         navigate({ to: "/scan" });
       }
     })();
-  }, [photoDataUrl, setResult, setPhotoPath, navigate]);
+  }, [photoDataUrl, goals, setResult, setPhotoPath, navigate]);
 
   return (
     <div className="px-6 pt-10 min-h-[70vh] flex flex-col items-center justify-center text-center">

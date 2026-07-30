@@ -7,6 +7,7 @@ import { CONCERN_ZONES, FACE_POINTS } from "@/lib/skinAnalysis/zones";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
 import { PillButton } from "@/components/treatme/PillButton";
 import { cn } from "@/lib/utils";
+import type { Recommendation } from "@/lib/recommendations";
 
 export const Route = createFileRoute("/scan/results")({
   head: () => ({
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/scan/results")({
 });
 
 function ResultsPage() {
-  const { photoDataUrl, result, recommendations } = useScan();
+  const { photoDataUrl, result, recommendations, goalRecommendations } = useScan();
   const navigate = useNavigate();
   const { open: openStory } = useTreatmentStory();
   const [active, setActive] = useState<ConcernKey | "all" | "none">("none");
@@ -136,33 +137,48 @@ function ResultsPage() {
         </Link>
       </div>
 
-      {/* recommended treatments */}
+      {/* scan-driven matches */}
       <div className="mt-8 px-6">
-        <p className="brand-eyebrow">recommended for you</p>
-        <h2 className="brand-display text-[24px] mt-2">your tx, matched<span className="text-hot">.</span></h2>
-        <div className="mt-4 flex flex-col gap-3">
-          {recommendations.map((t) => (
-            <button
-              type="button"
-              onClick={() => openStory(t.slug)}
-              key={t.slug}
-              className="text-left rounded-2xl bg-card border border-line p-4 flex items-center justify-between hover:border-ink/40 transition"
-            >
-              <div className="pr-3">
-                <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{t.category}</p>
-                <p className="font-bold text-[16px] mt-1">{t.name}</p>
-                <p className="text-[12px] text-ink-mute mt-1">
-                  good for {t.matchedConcerns.map((k) => CONCERN_LABEL[k as ConcernKey] ?? k).join(" · ")}
-                </p>
-              </div>
-              <ArrowRight className="size-5 text-ink shrink-0" />
-            </button>
-          ))}
-          {recommendations.length === 0 && (
-            <p className="text-[13px] text-ink-mute">no matches yet. try another scan.</p>
-          )}
-        </div>
+        <p className="brand-eyebrow">matched to your scan</p>
+        <h2 className="brand-display text-[24px] mt-2">your treatment matches<span className="text-hot">.</span></h2>
+
+        {recommendations.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-3">
+            {recommendations.map((t) => (
+              <TreatmentCard key={t.slug} rec={t} onOpen={() => openStory(t.slug)} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl bg-mint p-5">
+            <p className="font-bold text-[16px]">your skin is in good shape.</p>
+            <p className="text-[13px] text-ink/75 mt-1">nothing is loud enough to need treating right now.</p>
+            <Link to="/treatments" className="mt-3 inline-flex items-center gap-2 text-[13px] font-bold lowercase">
+              explore the full library <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* goal-driven matches */}
+      {goalRecommendations.length > 0 && (
+        <div className="mt-8 px-6">
+          <div className="rounded-3xl bg-butter p-5">
+            <p className="brand-eyebrow text-ink/70">you asked for this</p>
+            <h2 className="brand-display text-[22px] mt-2">based on your goals<span className="text-hot">.</span></h2>
+            <p className="text-[12px] text-ink/70 mt-1">picked from what you told us you want, not from the scan.</p>
+            <div className="mt-4 flex flex-col gap-3">
+              {goalRecommendations.map((t) => (
+                <TreatmentCard key={t.slug} rec={t} onOpen={() => openStory(t.slug)} tone="butter" />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <p className="mt-5 px-6 text-[11px] leading-relaxed text-ink-mute">
+        these are educational matches, not a diagnosis. your provider confirms what's right for you at consult.
+      </p>
+
 
       <div className="mt-8 px-6">
         <button onClick={() => navigate({ to: "/scan" })} className="inline-flex items-center gap-2 text-ink-mute text-[13px] font-semibold lowercase">
@@ -170,6 +186,36 @@ function ResultsPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+function TreatmentCard({ rec, onOpen, tone }: { rec: Recommendation; onOpen: () => void; tone?: "butter" }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        "text-left rounded-2xl p-4 flex items-start justify-between gap-3 transition border",
+        tone === "butter" ? "bg-cream border-ink/10 hover:border-ink/40" : "bg-card border-line hover:border-ink/40",
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{rec.category}</p>
+        <p className="font-bold text-[16px] mt-1 lowercase">{rec.name}</p>
+        <p className="text-[13px] font-semibold mt-0.5">from ${Math.round(rec.price_from)}</p>
+        {rec.matchedConcerns.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+            <span className="text-[11px] text-ink-mute lowercase">helps with:</span>
+            {rec.matchedConcerns.map((k) => (
+              <span key={k} className="rounded-full bg-bubblegum/50 text-ink px-2 py-0.5 text-[11px] font-semibold lowercase">
+                {CONCERN_LABEL[k as ConcernKey] ?? k}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <ArrowRight className="size-5 text-ink shrink-0 mt-1" />
+    </button>
   );
 }
 
