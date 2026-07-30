@@ -98,6 +98,19 @@ function SearchPage() {
 
   const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
 
+  /** every storefront with coordinates, for the explore map card. */
+  const pinnedStorefronts = useMemo(
+    () => data.storefronts.filter((s) => typeof s.lat === "number" && typeof s.lng === "number"),
+    [data.storefronts],
+  );
+
+  const providerCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
+    return counts;
+  }, [data.providers]);
+
+
   const providerResults = useMemo(() => {
     return data.providers
       .map((p) => {
