@@ -19,7 +19,8 @@ export const Route = createFileRoute("/treatments/$slug/")({
 });
 
 function TreatmentDetail() {
-  const { treatment: t } = Route.useLoaderData();
+  const data = Route.useLoaderData() as { treatment: NonNullable<ReturnType<typeof getTreatment>> };
+  const t = data.treatment;
   return (
     <div className="pb-10">
       <div className="px-6 pt-4">

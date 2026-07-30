@@ -100,6 +100,41 @@ export type Database = {
           },
         ]
       }
+      treatment_areas: {
+        Row: {
+          area_slug: string
+          id: string
+          name: string
+          price_from: number | null
+          sort_order: number
+          treatment_slug: string
+        }
+        Insert: {
+          area_slug: string
+          id?: string
+          name: string
+          price_from?: number | null
+          sort_order?: number
+          treatment_slug: string
+        }
+        Update: {
+          area_slug?: string
+          id?: string
+          name?: string
+          price_from?: number | null
+          sort_order?: number
+          treatment_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_areas_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       treatment_before_afters: {
         Row: {
           after_url: string
@@ -205,49 +240,67 @@ export type Database = {
       }
       treatments: {
         Row: {
+          aliases: string[]
           category: string
           created_at: string
           descriptor: string
           downtime: string
-          group: Database["public"]["Enums"]["treatment_group"]
+          family: string
+          group: Database["public"]["Enums"]["treatment_group"] | null
           hero_image: string
+          hero_image_url: string | null
           hero_tone: Database["public"]["Enums"]["slide_overlay"]
           improves: string[]
           name: string
           price_from: number
+          rec_mode: string
+          science: string
           slug: string
+          sort_order: number
           updated_at: string
           what_it_is: string
           what_to_expect: string
         }
         Insert: {
+          aliases?: string[]
           category: string
           created_at?: string
-          descriptor: string
-          downtime: string
-          group: Database["public"]["Enums"]["treatment_group"]
-          hero_image: string
+          descriptor?: string
+          downtime?: string
+          family?: string
+          group?: Database["public"]["Enums"]["treatment_group"] | null
+          hero_image?: string
+          hero_image_url?: string | null
           hero_tone?: Database["public"]["Enums"]["slide_overlay"]
           improves?: string[]
           name: string
           price_from: number
+          rec_mode?: string
+          science?: string
           slug: string
+          sort_order?: number
           updated_at?: string
-          what_it_is: string
-          what_to_expect: string
+          what_it_is?: string
+          what_to_expect?: string
         }
         Update: {
+          aliases?: string[]
           category?: string
           created_at?: string
           descriptor?: string
           downtime?: string
-          group?: Database["public"]["Enums"]["treatment_group"]
+          family?: string
+          group?: Database["public"]["Enums"]["treatment_group"] | null
           hero_image?: string
+          hero_image_url?: string | null
           hero_tone?: Database["public"]["Enums"]["slide_overlay"]
           improves?: string[]
           name?: string
           price_from?: number
+          rec_mode?: string
+          science?: string
           slug?: string
+          sort_order?: number
           updated_at?: string
           what_it_is?: string
           what_to_expect?: string
