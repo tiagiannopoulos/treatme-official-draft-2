@@ -83,6 +83,16 @@ function TreatmentsPage() {
   const { data: treatments } = useSuspenseQuery(libraryQuery);
   const [q, setQ] = useState("");
   const [concern, setConcern] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleFamily = (family: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(family)) next.delete(family);
+      else next.add(family);
+      return next;
+    });
+  };
 
   const concerns = useMemo(() => {
     const set = new Set<string>();
