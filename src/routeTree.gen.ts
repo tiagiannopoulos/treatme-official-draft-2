@@ -9,10 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SearchRouteImport } from './routes/search'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TreatmentsIndexRouteImport } from './routes/treatments.index'
+import { Route as SearchIndexRouteImport } from './routes/search.index'
 import { Route as ScanIndexRouteImport } from './routes/scan.index'
 import { Route as SearchMapRouteImport } from './routes/search.map'
 import { Route as ScanResultsRouteImport } from './routes/scan.results'
@@ -26,11 +26,6 @@ import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$sl
 import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -46,15 +41,20 @@ const TreatmentsIndexRoute = TreatmentsIndexRouteImport.update({
   path: '/treatments/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchIndexRoute = SearchIndexRouteImport.update({
+  id: '/search/',
+  path: '/search/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScanIndexRoute = ScanIndexRouteImport.update({
   id: '/scan/',
   path: '/scan/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchMapRoute = SearchMapRouteImport.update({
-  id: '/map',
-  path: '/map',
-  getParentRoute: () => SearchRoute,
+  id: '/search/map',
+  path: '/search/map',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ScanResultsRoute = ScanResultsRouteImport.update({
   id: '/scan/results',
@@ -110,7 +110,6 @@ const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
@@ -120,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
   '/scan/': typeof ScanIndexRoute
+  '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
@@ -128,7 +128,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
@@ -138,6 +137,7 @@ export interface FileRoutesByTo {
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
   '/scan': typeof ScanIndexRoute
+  '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
@@ -147,7 +147,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
@@ -157,6 +156,7 @@ export interface FileRoutesById {
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
   '/scan/': typeof ScanIndexRoute
+  '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
@@ -167,7 +167,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/profile'
-    | '/search'
     | '/api/chat'
     | '/dev/recommendations'
     | '/medspas/$slug'
@@ -177,6 +176,7 @@ export interface FileRouteTypes {
     | '/scan/results'
     | '/search/map'
     | '/scan/'
+    | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
     | '/treatments/$slug/book'
@@ -185,7 +185,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/profile'
-    | '/search'
     | '/api/chat'
     | '/dev/recommendations'
     | '/medspas/$slug'
@@ -195,6 +194,7 @@ export interface FileRouteTypes {
     | '/scan/results'
     | '/search/map'
     | '/scan'
+    | '/search'
     | '/treatments'
     | '/api/public/analyze'
     | '/treatments/$slug/book'
@@ -203,7 +203,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/profile'
-    | '/search'
     | '/api/chat'
     | '/dev/recommendations'
     | '/medspas/$slug'
@@ -213,6 +212,7 @@ export interface FileRouteTypes {
     | '/scan/results'
     | '/search/map'
     | '/scan/'
+    | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
     | '/treatments/$slug/book'
@@ -222,7 +222,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProfileRoute: typeof ProfileRoute
-  SearchRoute: typeof SearchRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   MedspasSlugRoute: typeof MedspasSlugRoute
@@ -230,7 +229,9 @@ export interface RootRouteChildren {
   ScanAnalyzingRoute: typeof ScanAnalyzingRoute
   ScanChatRoute: typeof ScanChatRoute
   ScanResultsRoute: typeof ScanResultsRoute
+  SearchMapRoute: typeof SearchMapRoute
   ScanIndexRoute: typeof ScanIndexRoute
+  SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
   TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
@@ -239,13 +240,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -267,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/search/': {
+      id: '/search/'
+      path: '/search'
+      fullPath: '/search/'
+      preLoaderRoute: typeof SearchIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scan/': {
       id: '/scan/'
       path: '/scan'
@@ -276,10 +277,10 @@ declare module '@tanstack/react-router' {
     }
     '/search/map': {
       id: '/search/map'
-      path: '/map'
+      path: '/search/map'
       fullPath: '/search/map'
       preLoaderRoute: typeof SearchMapRouteImport
-      parentRoute: typeof SearchRoute
+      parentRoute: typeof rootRouteImport
     }
     '/scan/results': {
       id: '/scan/results'
@@ -354,21 +355,9 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface SearchRouteChildren {
-  SearchMapRoute: typeof SearchMapRoute
-}
-
-const SearchRouteChildren: SearchRouteChildren = {
-  SearchMapRoute: SearchMapRoute,
-}
-
-const SearchRouteWithChildren =
-  SearchRoute._addFileChildren(SearchRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProfileRoute: ProfileRoute,
-  SearchRoute: SearchRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   MedspasSlugRoute: MedspasSlugRoute,
@@ -376,7 +365,9 @@ const rootRouteChildren: RootRouteChildren = {
   ScanAnalyzingRoute: ScanAnalyzingRoute,
   ScanChatRoute: ScanChatRoute,
   ScanResultsRoute: ScanResultsRoute,
+  SearchMapRoute: SearchMapRoute,
   ScanIndexRoute: ScanIndexRoute,
+  SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
   TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
