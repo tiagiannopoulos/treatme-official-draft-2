@@ -7,6 +7,7 @@ import { CONCERN_ZONES, FACE_POINTS } from "@/lib/skinAnalysis/zones";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
 import { PillButton } from "@/components/treatme/PillButton";
 import { cn } from "@/lib/utils";
+import type { Recommendation } from "@/lib/recommendations";
 
 export const Route = createFileRoute("/scan/results")({
   head: () => ({
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/scan/results")({
 });
 
 function ResultsPage() {
-  const { photoDataUrl, result, recommendations } = useScan();
+  const { photoDataUrl, result, recommendations, goalRecommendations } = useScan();
   const navigate = useNavigate();
   const { open: openStory } = useTreatmentStory();
   const [active, setActive] = useState<ConcernKey | "all" | "none">("none");
@@ -185,6 +186,36 @@ function ResultsPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+function TreatmentCard({ rec, onOpen, tone }: { rec: Recommendation; onOpen: () => void; tone?: "butter" }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        "text-left rounded-2xl p-4 flex items-start justify-between gap-3 transition border",
+        tone === "butter" ? "bg-cream border-ink/10 hover:border-ink/40" : "bg-card border-line hover:border-ink/40",
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{rec.category}</p>
+        <p className="font-bold text-[16px] mt-1 lowercase">{rec.name}</p>
+        <p className="text-[13px] font-semibold mt-0.5">from ${Math.round(rec.price_from)}</p>
+        {rec.matchedConcerns.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5 items-center">
+            <span className="text-[11px] text-ink-mute lowercase">helps with:</span>
+            {rec.matchedConcerns.map((k) => (
+              <span key={k} className="rounded-full bg-bubblegum/50 text-ink px-2 py-0.5 text-[11px] font-semibold lowercase">
+                {CONCERN_LABEL[k as ConcernKey] ?? k}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <ArrowRight className="size-5 text-ink shrink-0 mt-1" />
+    </button>
   );
 }
 
