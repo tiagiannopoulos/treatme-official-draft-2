@@ -235,6 +235,14 @@ function chipCls(active: boolean) {
   );
 }
 
+/** soft brand tint so cards read intentionally before hero images land */
+const TINTS = ["bg-bubblegum/35", "bg-butter/60", "bg-mint/60", "bg-ink/5"];
+function tintFor(slug: string) {
+  let h = 0;
+  for (const ch of slug) h = (h * 31 + ch.charCodeAt(0)) % 997;
+  return TINTS[h % TINTS.length];
+}
+
 function CoverCard({ t, alias }: { t: LibraryRow; alias: string | null }) {
   const { open } = useTreatmentStory();
   const src = t.hero_image_url || t.hero_image || undefined;
@@ -244,9 +252,13 @@ function CoverCard({ t, alias }: { t: LibraryRow; alias: string | null }) {
       onClick={() => open(t.slug)}
       className="text-left rounded-2xl overflow-hidden border border-line bg-cream active:scale-[0.98] transition"
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink/5">
-        {src && (
+      <div className={cn("relative aspect-[4/5] w-full overflow-hidden", tintFor(t.slug))}>
+        {src ? (
           <img src={src} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 grid place-items-center brand-display text-[40px] text-ink/25 lowercase">
+            {t.name.slice(0, 2)}
+          </span>
         )}
         {alias && (
           <span className="absolute top-2 left-2 right-2 rounded-full bg-hot text-white px-2 py-1 text-[10px] font-bold lowercase truncate">
