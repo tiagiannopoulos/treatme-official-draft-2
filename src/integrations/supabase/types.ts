@@ -151,6 +151,13 @@ export type Database = {
             foreignKeyName: "provider_media_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
+            referencedRelation: "provider_rating_stats"
+            referencedColumns: ["provider_id"]
+          },
+          {
+            foreignKeyName: "provider_media_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
             referencedRelation: "providers"
             referencedColumns: ["id"]
           },
@@ -198,6 +205,13 @@ export type Database = {
             foreignKeyName: "provider_reviews_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
+            referencedRelation: "provider_rating_stats"
+            referencedColumns: ["provider_id"]
+          },
+          {
+            foreignKeyName: "provider_reviews_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
             referencedRelation: "providers"
             referencedColumns: ["id"]
           },
@@ -226,6 +240,13 @@ export type Database = {
           storefront_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "provider_storefronts_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_rating_stats"
+            referencedColumns: ["provider_id"]
+          },
           {
             foreignKeyName: "provider_storefronts_provider_id_fkey"
             columns: ["provider_id"]
@@ -276,6 +297,13 @@ export type Database = {
             foreignKeyName: "provider_treatments_provider_id_fkey"
             columns: ["provider_id"]
             isOneToOne: false
+            referencedRelation: "provider_rating_stats"
+            referencedColumns: ["provider_id"]
+          },
+          {
+            foreignKeyName: "provider_treatments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
             referencedRelation: "providers"
             referencedColumns: ["id"]
           },
@@ -292,6 +320,7 @@ export type Database = {
           languages: string[]
           licensing_body: string
           name: string
+          owner_user_id: string | null
           rating: number
           review_count: number
           slug: string
@@ -311,6 +340,7 @@ export type Database = {
           languages?: string[]
           licensing_body?: string
           name: string
+          owner_user_id?: string | null
           rating?: number
           review_count?: number
           slug: string
@@ -330,6 +360,7 @@ export type Database = {
           languages?: string[]
           licensing_body?: string
           name?: string
+          owner_user_id?: string | null
           rating?: number
           review_count?: number
           slug?: string
@@ -353,6 +384,7 @@ export type Database = {
           lat: number
           lng: number
           name: string
+          owner_user_id: string | null
           postcode: string
           rating: number
           review_count: number
@@ -371,6 +403,7 @@ export type Database = {
           lat: number
           lng: number
           name: string
+          owner_user_id?: string | null
           postcode?: string
           rating?: number
           review_count?: number
@@ -389,6 +422,7 @@ export type Database = {
           lat?: number
           lng?: number
           name?: string
+          owner_user_id?: string | null
           postcode?: string
           rating?: number
           review_count?: number
@@ -667,9 +701,17 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_rating_stats: {
+        Row: {
+          provider_id: string | null
+          rating: number | null
+          review_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      owns_provider: { Args: { _provider_id: string }; Returns: boolean }
     }
     Enums: {
       education_slide_type:
