@@ -1,11 +1,22 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+
+function titleFor(pathname: string) {
+  if (pathname.startsWith("/search")) return "search";
+  if (pathname.startsWith("/treatments")) return "treatments";
+  if (pathname.startsWith("/profile")) return "profile";
+  if (pathname.startsWith("/scan")) return "scan";
+  return "menu";
+}
 
 export function TopBar() {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const title = titleFor(pathname);
+
   return (
-    <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md border-b border-line/60">
+    <header className="bg-white">
       <div className="flex items-center justify-between px-6 h-14">
-        <Link to="/" className="brand-display text-[26px] tracking-[-0.05em] leading-none">
-          treatme<span className="text-hot">.</span>
+        <Link to="/" className="brand-display text-[26px] tracking-[-0.05em] leading-none lowercase">
+          {title}
         </Link>
         <Link
           to="/profile"

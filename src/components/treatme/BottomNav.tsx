@@ -13,7 +13,7 @@ const tabs: Tab[] = [
   { to: "/", label: "menu", icon: Home },
   { to: "/search", label: "search", icon: Search },
   { to: "/scan", label: "scan", icon: Sparkles, primary: true },
-  { to: "/treatments", label: "tx", icon: ListChecks },
+  { to: "/treatments", label: "treatments", icon: ListChecks },
   { to: "/profile", label: "profile", icon: User },
 ];
 
@@ -49,7 +49,7 @@ export function BottomNav() {
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] font-semibold tracking-[0.08em] lowercase",
+                      "text-[10px] font-semibold tracking-[0.06em] lowercase whitespace-nowrap",
                       isActive ? "text-ink" : "text-ink-mute",
                     )}
                   >
