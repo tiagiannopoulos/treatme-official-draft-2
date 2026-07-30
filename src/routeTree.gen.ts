@@ -18,6 +18,7 @@ import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
 import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
 import { Route as ProvidersSlugRouteImport } from './routes/providers.$slug'
+import { Route as MedspasSlugRouteImport } from './routes/medspas.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
@@ -69,6 +70,11 @@ const ProvidersSlugRoute = ProvidersSlugRouteImport.update({
   path: '/providers/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MedspasSlugRoute = MedspasSlugRouteImport.update({
+  id: '/medspas/$slug',
+  path: '/medspas/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
   id: '/dev/recommendations',
   path: '/dev/recommendations',
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
+  '/medspas/$slug': typeof MedspasSlugRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
+  '/medspas/$slug': typeof MedspasSlugRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
+  '/medspas/$slug': typeof MedspasSlugRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/api/chat'
     | '/dev/recommendations'
+    | '/medspas/$slug'
     | '/providers/$slug'
     | '/scan/analyzing'
     | '/scan/chat'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/api/chat'
     | '/dev/recommendations'
+    | '/medspas/$slug'
     | '/providers/$slug'
     | '/scan/analyzing'
     | '/scan/chat'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/api/chat'
     | '/dev/recommendations'
+    | '/medspas/$slug'
     | '/providers/$slug'
     | '/scan/analyzing'
     | '/scan/chat'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   ApiChatRoute: typeof ApiChatRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
+  MedspasSlugRoute: typeof MedspasSlugRoute
   ProvidersSlugRoute: typeof ProvidersSlugRoute
   ScanAnalyzingRoute: typeof ScanAnalyzingRoute
   ScanChatRoute: typeof ScanChatRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProvidersSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/medspas/$slug': {
+      id: '/medspas/$slug'
+      path: '/medspas/$slug'
+      fullPath: '/medspas/$slug'
+      preLoaderRoute: typeof MedspasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/recommendations': {
       id: '/dev/recommendations'
       path: '/dev/recommendations'
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   ApiChatRoute: ApiChatRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
+  MedspasSlugRoute: MedspasSlugRoute,
   ProvidersSlugRoute: ProvidersSlugRoute,
   ScanAnalyzingRoute: ScanAnalyzingRoute,
   ScanChatRoute: ScanChatRoute,
@@ -334,13 +355,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
