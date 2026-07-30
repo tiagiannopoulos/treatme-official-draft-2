@@ -100,6 +100,176 @@ export type Database = {
           },
         ]
       }
+      provider_storefronts: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          provider_id: string
+          storefront_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          provider_id: string
+          storefront_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          provider_id?: string
+          storefront_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_storefronts_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_storefronts_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_treatments: {
+        Row: {
+          created_at: string
+          id: string
+          price_from: number | null
+          provider_id: string
+          treatment_slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price_from?: number | null
+          provider_id: string
+          treatment_slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price_from?: number | null
+          provider_id?: string
+          treatment_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_treatments_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      providers: {
+        Row: {
+          avatar_url: string | null
+          bio: string
+          created_at: string
+          credentials: string
+          id: string
+          name: string
+          rating: number
+          review_count: number
+          slug: string
+          title: string
+          updated_at: string
+          verified: boolean
+          years_experience: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string
+          created_at?: string
+          credentials?: string
+          id?: string
+          name: string
+          rating?: number
+          review_count?: number
+          slug: string
+          title?: string
+          updated_at?: string
+          verified?: boolean
+          years_experience?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string
+          created_at?: string
+          credentials?: string
+          id?: string
+          name?: string
+          rating?: number
+          review_count?: number
+          slug?: string
+          title?: string
+          updated_at?: string
+          verified?: boolean
+          years_experience?: number
+        }
+        Relationships: []
+      }
+      storefronts: {
+        Row: {
+          address_line: string
+          city: string
+          created_at: string
+          hero_image_url: string | null
+          id: string
+          lat: number
+          lng: number
+          name: string
+          postcode: string
+          rating: number
+          review_count: number
+          slug: string
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          address_line?: string
+          city?: string
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          lat: number
+          lng: number
+          name: string
+          postcode?: string
+          rating?: number
+          review_count?: number
+          slug: string
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          address_line?: string
+          city?: string
+          created_at?: string
+          hero_image_url?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          name?: string
+          postcode?: string
+          rating?: number
+          review_count?: number
+          slug?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       treatment_areas: {
         Row: {
           area_slug: string
