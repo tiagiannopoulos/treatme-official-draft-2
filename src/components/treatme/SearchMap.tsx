@@ -32,6 +32,8 @@ interface Props {
   onSelect: (id: string | null) => void;
   /** number of providers working at each storefront, keyed by storefront id. */
   providerCounts?: Record<string, number>;
+  /** when set, draws the search radius and frames the map to it. */
+  radiusKm?: number;
   height?: string;
   /** shows the expand button that pushes to the full screen map. */
   expandable?: boolean;
@@ -44,6 +46,7 @@ export function SearchMap({
   selectedId,
   onSelect,
   providerCounts = {},
+  radiusKm,
   height = "h-[220px]",
   expandable = false,
   className,
@@ -54,6 +57,7 @@ export function SearchMap({
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const circleRef = useRef<google.maps.Circle | null>(null);
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
