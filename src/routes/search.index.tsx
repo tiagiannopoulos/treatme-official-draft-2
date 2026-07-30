@@ -128,6 +128,30 @@ function SearchPage() {
     return counts;
   }, [data.providers]);
 
+  /** featured medspas for the explore rail. */
+  const featuredStorefronts = useMemo(
+    () => data.storefronts.filter((s) => s.featured).slice(0, 10),
+    [data.storefronts],
+  );
+
+  /** reveal another page of providers when the sentinel scrolls into view. */
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisibleProviders((n) => n + PAGE_SIZE);
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [q, scope, radius, center, visibleProviders]);
+
+  useEffect(() => {
+    setVisibleProviders(PAGE_SIZE);
+  }, [q, radius, center]);
+
 
   const providerResults = useMemo(() => {
     return data.providers
