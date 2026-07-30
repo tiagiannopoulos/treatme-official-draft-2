@@ -1,4 +1,4 @@
-import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -181,10 +181,14 @@ function SearchPage() {
       .map((p) => {
         const { hit, via } = matchProvider(p, needle);
         const shops = p.storefronts.filter((s) => inRangeIds.has(s.id));
-        const km = shops.length
-          ? Math.min(...shops.map((s) => distanceKm(center, { lat: s.lat, lng: s.lng })))
+        const ranked = [...shops].sort(
+          (a, b) =>
+            distanceKm(center, { lat: a.lat, lng: a.lng }) - distanceKm(center, { lat: b.lat, lng: b.lng }),
+        );
+        const km = ranked.length
+          ? distanceKm(center, { lat: ranked[0].lat, lng: ranked[0].lng })
           : Infinity;
-        return { p, hit, via, shops, km };
+        return { p, hit, via, shops: ranked, km };
       })
       .filter((r) => r.hit && r.shops.length > 0)
       .sort((a, b) => a.km - b.km);
@@ -337,10 +341,10 @@ function SearchPage() {
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-3">
+                  <div className="mt-2 space-y-2.5">
                     {(scope === "all" ? providerResults.slice(0, 3) : providerResults).map(
                       ({ p, via, shops, km }) => (
-                        <ProviderCard key={p.id} provider={p} via={via} km={km} shopName={shops[0]?.name ?? ""} />
+                        <ProviderCard key={p.id} provider={p} via={via} km={km} shops={shops} />
                       ),
                     )}
                   </div>
@@ -363,7 +367,7 @@ function SearchPage() {
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-3">
+                  <div className="mt-2 space-y-2.5">
                     {(scope === "all" ? medspaResults.slice(0, 3) : medspaResults).map((s) => (
                       <MedspaCard
                         key={s.id}
@@ -547,9 +551,9 @@ function SearchPage() {
               <p className="text-[12px] text-ink-mute lowercase mt-0.5">
                 {providerResults.length} within {radius} km of {locLabel}
               </p>
-              <div className="mt-2 space-y-3">
+              <div className="mt-2 space-y-2.5">
                 {providerResults.slice(0, visibleProviders).map(({ p, shops, km }) => (
-                  <ProviderCard key={p.id} provider={p} km={km} shopName={shops[0]?.name ?? ""} />
+                  <ProviderCard key={p.id} provider={p} km={km} shops={shops} />
                 ))}
               </div>
               {visibleProviders < providerResults.length && (
@@ -567,7 +571,7 @@ function SearchPage() {
               <p className="text-[12px] text-ink-mute lowercase mt-0.5">
                 {medspaResults.length} within {radius} km of {locLabel}
               </p>
-              <div className="mt-2 space-y-3">
+              <div className="mt-2 space-y-2.5">
                 {medspaResults.map((s) => (
                   <MedspaCard
                     key={s.id}
@@ -670,59 +674,95 @@ function Avatar({ name, url, size = "size-14" }: { name: string; url: string | n
   );
 }
 
+/** the core search result unit: a human, always tagged to the storefront they work at. */
 function ProviderCard({
   provider,
   via,
   km,
-  shopName,
+  shops,
 }: {
   provider: Provider;
   via?: string;
   km: number;
-  shopName: string;
+  shops: Array<Storefront & { is_primary: boolean }>;
 }) {
-  const price = providerFromPrice(provider);
+  const navigate = useNavigate();
+  const nearest = shops[0] ?? provider.storefronts[0];
+  const otherCount = Math.max(shops.length - 1, 0);
+  const specialties = provider.treatments.slice(0, 3);
+  const extraSpecialties = Math.max(provider.treatments.length - specialties.length, 0);
+  const reviewed = provider.review_count >= 3;
+
   return (
     <Link
       to="/providers/$slug"
       params={{ slug: provider.slug }}
-      className="flex gap-3 rounded-2xl border border-line p-3.5 bg-white active:scale-[0.995] transition-transform"
+      className="flex gap-3 rounded-2xl bg-cream p-3.5 border border-[rgba(17,17,17,0.06)] active:scale-[0.98] transition-transform"
     >
-      <Avatar name={provider.name} url={provider.avatar_url} />
+      <Avatar name={provider.name} url={provider.avatar_url} size="size-16" />
+
       <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <p className="brand-display text-[17px] leading-tight truncate">{provider.name}</p>
-          <span className="shrink-0 inline-flex items-center gap-1 text-[12px] text-ink-soft">
-            <Star className="size-3 fill-ink text-ink" />
-            {provider.rating}
-          </span>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[16px] font-semibold text-ink lowercase leading-tight truncate">{provider.name}</p>
+            <p className="text-[13px] text-ink/60 lowercase truncate">{provider.title}</p>
+          </div>
+          {Number.isFinite(km) && (
+            <span className="shrink-0 text-[12px] text-ink/50 lowercase">{formatDistance(km)}</span>
+          )}
         </div>
-        <p className="text-[12px] text-ink-mute lowercase">
-          {provider.title} · {provider.years_experience} yrs
-        </p>
-        <p className="mt-1 text-[12px] text-ink-soft lowercase inline-flex items-center gap-1">
-          <MapPin className="size-3.5 text-hot" />
-          {shopName} · {formatDistance(km)}
-        </p>
-        {provider.storefronts.length > 1 && (
-          <p className="text-[11px] text-ink-mute lowercase">
-            + {provider.storefronts.length - 1} other location
-            {provider.storefronts.length - 1 === 1 ? "" : "s"}
-          </p>
+
+        {nearest && (
+          <span
+            role="link"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate({ to: "/storefront/$id", params: { id: nearest.id } });
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              e.stopPropagation();
+              navigate({ to: "/storefront/$id", params: { id: nearest.id } });
+            }}
+            className="mt-1.5 inline-flex items-center gap-1 rounded-pill bg-bubblegum/30 px-2 py-1 text-[12px] text-ink lowercase"
+          >
+            <MapPin className="size-3" />
+            at {nearest.name}
+            {otherCount > 0 && <span className="text-ink/60">+{otherCount} more</span>}
+          </span>
         )}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {provider.treatments.slice(0, 3).map((t) => (
-            <span key={t.treatment_slug} className="rounded-pill bg-muted px-2 py-0.5 text-[11px] lowercase">
+
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {specialties.map((t) => (
+            <span
+              key={t.treatment_slug}
+              className="rounded-pill border border-[rgba(17,17,17,0.12)] px-2 py-0.5 text-[11px] lowercase"
+            >
               {t.name}
             </span>
           ))}
-          {price !== null && (
-            <span className="rounded-pill bg-butter px-2 py-0.5 text-[11px] font-semibold lowercase">
-              from ${price}
-            </span>
+          {extraSpecialties > 0 && (
+            <span className="text-[11px] text-ink/50 lowercase">+{extraSpecialties}</span>
           )}
         </div>
-        {via && <p className="mt-1.5 text-[11px] text-hot lowercase">matched: {via}</p>}
+
+        <div className="mt-2 flex items-center gap-2">
+          {reviewed ? (
+            <span className="inline-flex items-center gap-1 text-[12px] text-ink lowercase">
+              <Star className="size-3 fill-ink text-ink" />
+              {provider.rating.toFixed(1)}
+              <span className="text-ink/60">({provider.review_count})</span>
+            </span>
+          ) : (
+            <span className="rounded-pill bg-butter px-2 py-0.5 text-[11px] font-semibold lowercase">
+              new to treatme
+            </span>
+          )}
+          {via && <span className="text-[11px] text-hot lowercase truncate">matched: {via}</span>}
+        </div>
       </div>
     </Link>
   );
