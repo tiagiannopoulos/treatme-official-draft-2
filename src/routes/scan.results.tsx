@@ -136,33 +136,48 @@ function ResultsPage() {
         </Link>
       </div>
 
-      {/* recommended treatments */}
+      {/* scan-driven matches */}
       <div className="mt-8 px-6">
-        <p className="brand-eyebrow">recommended for you</p>
-        <h2 className="brand-display text-[24px] mt-2">your tx, matched<span className="text-hot">.</span></h2>
-        <div className="mt-4 flex flex-col gap-3">
-          {recommendations.map((t) => (
-            <button
-              type="button"
-              onClick={() => openStory(t.slug)}
-              key={t.slug}
-              className="text-left rounded-2xl bg-card border border-line p-4 flex items-center justify-between hover:border-ink/40 transition"
-            >
-              <div className="pr-3">
-                <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{t.category}</p>
-                <p className="font-bold text-[16px] mt-1">{t.name}</p>
-                <p className="text-[12px] text-ink-mute mt-1">
-                  good for {t.matchedConcerns.map((k) => CONCERN_LABEL[k as ConcernKey] ?? k).join(" · ")}
-                </p>
-              </div>
-              <ArrowRight className="size-5 text-ink shrink-0" />
-            </button>
-          ))}
-          {recommendations.length === 0 && (
-            <p className="text-[13px] text-ink-mute">no matches yet. try another scan.</p>
-          )}
-        </div>
+        <p className="brand-eyebrow">matched to your scan</p>
+        <h2 className="brand-display text-[24px] mt-2">your treatment matches<span className="text-hot">.</span></h2>
+
+        {recommendations.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-3">
+            {recommendations.map((t) => (
+              <TreatmentCard key={t.slug} rec={t} onOpen={() => openStory(t.slug)} />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-2xl bg-mint p-5">
+            <p className="font-bold text-[16px]">your skin is in good shape.</p>
+            <p className="text-[13px] text-ink/75 mt-1">nothing is loud enough to need treating right now.</p>
+            <Link to="/treatments" className="mt-3 inline-flex items-center gap-2 text-[13px] font-bold lowercase">
+              explore the full library <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        )}
       </div>
+
+      {/* goal-driven matches */}
+      {goalRecommendations.length > 0 && (
+        <div className="mt-8 px-6">
+          <div className="rounded-3xl bg-butter p-5">
+            <p className="brand-eyebrow text-ink/70">you asked for this</p>
+            <h2 className="brand-display text-[22px] mt-2">based on your goals<span className="text-hot">.</span></h2>
+            <p className="text-[12px] text-ink/70 mt-1">picked from what you told us you want, not from the scan.</p>
+            <div className="mt-4 flex flex-col gap-3">
+              {goalRecommendations.map((t) => (
+                <TreatmentCard key={t.slug} rec={t} onOpen={() => openStory(t.slug)} tone="butter" />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <p className="mt-5 px-6 text-[11px] leading-relaxed text-ink-mute">
+        these are educational matches, not a diagnosis. your provider confirms what's right for you at consult.
+      </p>
+
 
       <div className="mt-8 px-6">
         <button onClick={() => navigate({ to: "/scan" })} className="inline-flex items-center gap-2 text-ink-mute text-[13px] font-semibold lowercase">
