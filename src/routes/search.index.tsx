@@ -1,7 +1,16 @@
 import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
-import { Search as SearchIcon, X, MapPin, Star, Navigation, Loader2, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Search as SearchIcon,
+  X,
+  MapPin,
+  Star,
+  Navigation,
+  Loader2,
+  ArrowRight,
+  BadgeCheck,
+} from "lucide-react";
 
 import {
   directoryQuery,
@@ -13,6 +22,7 @@ import {
   matchStorefront,
   providerFromPrice,
   LOCATION_PRESETS,
+  neighbourhood,
   RADIUS_OPTIONS,
   type LatLng,
   type Provider,
@@ -56,6 +66,9 @@ export const Route = createFileRoute("/search/")({
 
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
+
+/** how many nearby providers to reveal per infinite-scroll page. */
+const PAGE_SIZE = 10;
 
 /** quick-entry chips for the explore state. tapping one seeds the search bar. */
 const TREATMENT_CHIPS = [
@@ -681,5 +694,57 @@ function MedspaCard({
         ))}
       </div>
     </div>
+  );
+}
+
+/** 260px cover card for the featured storefronts rail. */
+function FeaturedStorefrontCard({
+  storefront,
+  providerCount,
+}: {
+  storefront: Storefront;
+  providerCount: number;
+}) {
+  return (
+    <Link
+      to="/storefront/$id"
+      params={{ id: storefront.id }}
+      className="shrink-0 w-[260px] rounded-[20px] border border-line overflow-hidden bg-white"
+    >
+      {storefront.hero_image_url ? (
+        <img
+          src={storefront.hero_image_url}
+          alt={`${storefront.name} interior`}
+          loading="lazy"
+          className="h-[132px] w-full object-cover"
+        />
+      ) : (
+        <div className="h-[132px] w-full bg-mint grid place-items-center">
+          <span className="brand-display text-[40px] text-ink lowercase">{storefront.name[0]}</span>
+        </div>
+      )}
+      <div className="p-3">
+        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1">
+          {storefront.name}
+          {storefront.claimed && <BadgeCheck className="size-3.5 text-hot" />}
+        </p>
+        <p className="text-[12px] text-ink-mute lowercase mt-0.5">{neighbourhood(storefront)}</p>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[12px] text-ink-soft lowercase">
+            {providerCount} {providerCount === 1 ? "provider" : "providers"}
+          </span>
+          {storefront.review_count > 0 ? (
+            <span className="inline-flex items-center gap-1 text-[12px] text-ink-soft">
+              <Star className="size-3 fill-ink text-ink" />
+              {storefront.rating}
+            </span>
+          ) : (
+            <span className="rounded-pill bg-butter px-2 py-0.5 text-[11px] font-semibold lowercase">
+              new to treatme
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
