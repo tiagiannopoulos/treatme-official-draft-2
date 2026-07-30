@@ -1,0 +1,147 @@
+import { queryOptions } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface Storefront {
+  id: string;
+  slug: string;
+  name: string;
+  tagline: string;
+  address_line: string;
+  city: string;
+  postcode: string;
+  lat: number;
+  lng: number;
+  hero_image_url: string | null;
+  rating: number;
+  review_count: number;
+}
+
+export interface ProviderTreatment {
+  treatment_slug: string;
+  price_from: number | null;
+  name: string;
+  category: string;
+}
+
+export interface Provider {
+  id: string;
+  slug: string;
+  name: string;
+  title: string;
+  credentials: string;
+  years_experience: number;
+  bio: string;
+  avatar_url: string | null;
+  rating: number;
+  review_count: number;
+  verified: boolean;
+  /** every storefront this human works at. a provider can work at more than one. */
+  storefronts: Array<Storefront & { is_primary: boolean }>;
+  treatments: ProviderTreatment[];
+}
+
+export interface LatLng {
+  lat: number;
+  lng: number;
+}
+
+/** manual location presets so a patient can search without granting gps. */
+export const LOCATION_PRESETS: Array<{ label: string; point: LatLng }> = [
+  { label: "marylebone", point: { lat: 51.5205, lng: -0.1487 } },
+  { label: "shoreditch", point: { lat: 51.5262, lng: -0.081 } },
+  { label: "chelsea", point: { lat: 51.493, lng: -0.1663 } },
+  { label: "soho", point: { lat: 51.5136, lng: -0.1365 } },
+];
+
+export const RADIUS_OPTIONS = [2, 5, 10, 25] as const;
+
+/** great-circle distance in km. */
+export function distanceKm(a: LatLng, b: LatLng): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const r = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * r * Math.asin(Math.sqrt(s));
+}
+
+export function formatDistance(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
+  const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes] = await Promise.all([
+    supabase.from("storefronts").select("*").order("name"),
+    supabase.from("providers").select("*").order("name"),
+    supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
+    supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from"),
+    supabase.from("treatments").select("slug, name, category"),
+  ]);
+
+  const err =
+    storefrontsRes.error || providersRes.error || linksRes.error || ptRes.error || treatmentsRes.error;
+  if (err) throw new Error(err.message);
+
+  const storefronts = (storefrontsRes.data ?? []) as unknown as Storefront[];
+  const storeById = new Map(storefronts.map((s) => [s.id, s]));
+  const treatmentBySlug = new Map(
+    (treatmentsRes.data ?? []).map((t) => [t.slug, t as { slug: string; name: string; category: string }]),
+  );
+
+  const providers: Provider[] = (providersRes.data ?? []).map((p) => {
+    const row = p as unknown as Omit<Provider, "storefronts" | "treatments">;
+    const shops = (linksRes.data ?? [])
+      .filter((l) => l.provider_id === row.id)
+      .map((l) => {
+        const s = storeById.get(l.storefront_id);
+        return s ? { ...s, is_primary: l.is_primary } : null;
+      })
+      .filter((s): s is Storefront & { is_primary: boolean } => Boolean(s))
+      .sort((a, b) => Number(b.is_primary) - Number(a.is_primary));
+
+    const treatments = (ptRes.data ?? [])
+      .filter((t) => t.provider_id === row.id)
+      .map((t) => {
+        const meta = treatmentBySlug.get(t.treatment_slug);
+        return {
+          treatment_slug: t.treatment_slug,
+          price_from: t.price_from,
+          name: meta?.name ?? t.treatment_slug.replace(/-/g, " "),
+          category: meta?.category ?? "",
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return { ...row, storefronts: shops, treatments };
+  });
+
+  return { providers, storefronts };
+}
+
+export const directoryQuery = queryOptions({
+  queryKey: ["search-directory"],
+  queryFn: fetchDirectory,
+  staleTime: 5 * 60_000,
+});
+
+/** cheapest price a provider lists, for the "from $x" line. */
+export function providerFromPrice(p: Provider): number | null {
+  const prices = p.treatments.map((t) => t.price_from).filter((n): n is number => typeof n === "number");
+  return prices.length ? Math.min(...prices) : null;
+}
+
+export function matchProvider(p: Provider, q: string): { hit: boolean; via?: string } {
+  if (!q) return { hit: true };
+  const needle = q.toLowerCase();
+  if (p.name.toLowerCase().includes(needle)) return { hit: true };
+  if (p.title.toLowerCase().includes(needle)) return { hit: true };
+  const t = p.treatments.find((x) => x.name.toLowerCase().includes(needle));
+  if (t) return { hit: true, via: `offers ${t.name.toLowerCase()}` };
+  const s = p.storefronts.find(
+    (x) => x.name.toLowerCase().includes(needle) || x.city.toLowerCase().includes(needle),
+  );
+  if (s) return { hit: true, via: `works at ${s.name}` };
+  return { hit: false };
+}
