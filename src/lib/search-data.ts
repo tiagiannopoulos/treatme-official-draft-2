@@ -168,6 +168,8 @@ export interface SearchTreatment {
   price_from: number | null;
   hero_image_url: string | null;
   aliases: string[];
+  /** short one-line description used in treatment result rows. */
+  descriptor: string;
 }
 
 export const searchTreatmentsQuery = queryOptions({
@@ -175,7 +177,7 @@ export const searchTreatmentsQuery = queryOptions({
   queryFn: async (): Promise<SearchTreatment[]> => {
     const { data, error } = await supabase
       .from("treatments")
-      .select("slug, name, category, family, price_from, hero_image_url, aliases")
+      .select("slug, name, category, family, price_from, hero_image_url, aliases, descriptor")
       .order("sort_order");
     if (error) throw new Error(error.message);
     return (data ?? []).map((t) => ({
@@ -186,6 +188,7 @@ export const searchTreatmentsQuery = queryOptions({
       price_from: t.price_from === null ? null : Number(t.price_from),
       hero_image_url: t.hero_image_url ?? null,
       aliases: (t.aliases ?? []) as string[],
+      descriptor: t.descriptor ?? "",
     }));
   },
   staleTime: 5 * 60_000,
@@ -209,6 +212,8 @@ export function matchStorefront(s: Storefront, q: string): boolean {
     s.name.toLowerCase().includes(needle) ||
     s.tagline.toLowerCase().includes(needle) ||
     s.city.toLowerCase().includes(needle) ||
+    s.address_line.toLowerCase().includes(needle) ||
+    neighbourhood(s).toLowerCase().includes(needle) ||
     s.postcode.toLowerCase().includes(needle)
   );
 }
