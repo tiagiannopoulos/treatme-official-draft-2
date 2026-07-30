@@ -14,7 +14,21 @@ export interface Storefront {
   hero_image_url: string | null;
   rating: number;
   review_count: number;
+  featured: boolean;
+  claimed: boolean;
 }
+
+/** neighbourhood is encoded as the trailing segment of the slug (e.g. the-glass-house-marylebone). */
+export function neighbourhood(s: Storefront): string {
+  const nameWords = s.name.split(/\s+/).length;
+  const parts = s.slug.split("-");
+  const tail = parts.slice(nameWords).join(" ");
+  return tail || s.city;
+}
+
+/** hardcoded home centroid used to order nearby providers before gps. */
+export const TORONTO_CENTROID: LatLng = { lat: 43.6532, lng: -79.3832 };
+
 
 export interface ProviderTreatment {
   treatment_slug: string;
