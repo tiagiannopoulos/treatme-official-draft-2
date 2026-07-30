@@ -1,45 +1,22 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getMapboxToken } from "@/lib/map.functions";
 import type { LatLng, Storefront } from "@/lib/search-data";
 
-const BROWSER_KEY = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as string | undefined;
-const TRACKING_ID = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID as string | undefined;
+/** light, minimal basemap with no poi clutter. */
+const MAP_STYLE = "mapbox://styles/mapbox/light-v11";
+const HOT = "#FF1F87";
+const INK = "#111111";
 
-declare global {
-  interface Window {
-    google?: any;
-    __treatmeMapReady?: () => void;
-  }
-}
-
-function loadGoogleMaps(): Promise<any> {
-  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
-  if (window.google?.maps) return Promise.resolve(window.google.maps);
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById("treatme-gmaps") as HTMLScriptElement | null;
-    const done = () => (window.google?.maps ? resolve(window.google.maps) : reject(new Error("maps failed")));
-    if (existing) {
-      existing.addEventListener("load", done);
-      existing.addEventListener("error", () => reject(new Error("maps failed")));
-      return;
-    }
-    window.__treatmeMapReady = () => resolve(window.google.maps);
-    const s = document.createElement("script");
-    s.id = "treatme-gmaps";
-    s.async = true;
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${BROWSER_KEY}&loading=async&callback=__treatmeMapReady${
-      TRACKING_ID ? `&channel=${TRACKING_ID}` : ""
-    }`;
-    s.onerror = () => reject(new Error("maps failed"));
-    document.head.appendChild(s);
-  });
-}
-
-/** bubblegum-hot teardrop pin, drawn as an svg path for google markers. */
-const TEARDROP =
-  "M 0 0 C -6 -9 -10 -13 -10 -19 A 10 10 0 1 1 10 -19 C 10 -13 6 -9 0 0 z";
+const tokenQuery = {
+  queryKey: ["mapbox-token"],
+  queryFn: () => getMapboxToken(),
+  staleTime: Infinity,
+  retry: false,
+} as const;
 
 interface Props {
   storefronts: Storefront[];
@@ -64,56 +41,166 @@ export function SearchMap({
   expandable = false,
   className,
 }: Props) {
-  const [failed, setFailed] = useState(!BROWSER_KEY);
+  const { data, isLoading } = useQuery(tokenQuery);
+  const token = data?.token ?? null;
+  const [failed, setFailed] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const readyRef = useRef(false);
+  const [ready, setReady] = useState(false);
 
   const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
+  const geojson = useMemo(
+    () => ({
+      type: "FeatureCollection" as const,
+      features: storefronts.map((s) => ({
+        type: "Feature" as const,
+        id: s.id,
+        properties: { id: s.id, name: s.name },
+        geometry: { type: "Point" as const, coordinates: [s.lng, s.lat] },
+      })),
+    }),
+    [storefronts],
+  );
+
+  // boot mapbox gl only in the browser, only once we have a token.
   useEffect(() => {
-    if (!BROWSER_KEY || !divRef.current) return;
+    if (!token || !divRef.current || mapRef.current) return;
     let cancelled = false;
-    loadGoogleMaps()
-      .then((maps) => {
+    let map: any = null;
+
+    (async () => {
+      try {
+        const mod = await import("mapbox-gl");
+        const mapboxgl = (mod as any).default ?? mod;
         if (cancelled || !divRef.current) return;
-        mapRef.current = new maps.Map(divRef.current, {
-          center,
-          zoom: 12,
-          disableDefaultUI: true,
-          zoomControl: true,
+        mapboxgl.accessToken = token;
+        map = new mapboxgl.Map({
+          container: divRef.current,
+          style: MAP_STYLE,
+          center: [center.lng, center.lat],
+          zoom: 11,
+          attributionControl: false,
         });
-        mapRef.current.addListener("click", () => onSelect(null));
-      })
-      .catch(() => !cancelled && setFailed(true));
+        mapRef.current = map;
+
+        map.on("load", () => {
+          if (cancelled) return;
+          map.addSource("storefronts", {
+            type: "geojson",
+            data: geojson,
+            cluster: true,
+            clusterRadius: 46,
+            clusterMaxZoom: 11,
+          });
+
+          map.addLayer({
+            id: "clusters",
+            type: "circle",
+            source: "storefronts",
+            filter: ["has", "point_count"],
+            paint: {
+              "circle-color": HOT,
+              "circle-radius": ["step", ["get", "point_count"], 16, 10, 22, 25, 28],
+              "circle-stroke-width": 2,
+              "circle-stroke-color": "#FCFBF7",
+            },
+          });
+          map.addLayer({
+            id: "cluster-count",
+            type: "symbol",
+            source: "storefronts",
+            filter: ["has", "point_count"],
+            layout: {
+              "text-field": ["get", "point_count_abbreviated"],
+              "text-size": 12,
+              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+            },
+            paint: { "text-color": "#FCFBF7" },
+          });
+          map.addLayer({
+            id: "pins",
+            type: "circle",
+            source: "storefronts",
+            filter: ["!", ["has", "point_count"]],
+            paint: {
+              "circle-color": HOT,
+              "circle-radius": 8,
+              "circle-stroke-width": 2.5,
+              "circle-stroke-color": "#FCFBF7",
+            },
+          });
+          map.addLayer({
+            id: "pin-selected",
+            type: "circle",
+            source: "storefronts",
+            filter: ["==", ["get", "id"], selectedId ?? "__none__"],
+            paint: {
+              "circle-color": INK,
+              "circle-radius": 11,
+              "circle-stroke-width": 3,
+              "circle-stroke-color": "#FCFBF7",
+            },
+          });
+
+          map.on("click", "pins", (e: any) => {
+            const id = e.features?.[0]?.properties?.id;
+            if (id) onSelect(id);
+          });
+          map.on("click", "clusters", (e: any) => {
+            const feature = e.features?.[0];
+            const clusterId = feature?.properties?.cluster_id;
+            const source = map.getSource("storefronts");
+            source?.getClusterExpansionZoom?.(clusterId, (err: any, zoom: number) => {
+              if (err) return;
+              map.easeTo({ center: feature.geometry.coordinates, zoom });
+            });
+          });
+          map.on("click", (e: any) => {
+            const hits = map.queryRenderedFeatures(e.point, { layers: ["pins", "clusters"] });
+            if (!hits.length) onSelect(null);
+          });
+          for (const layer of ["pins", "clusters"]) {
+            map.on("mouseenter", layer, () => (map.getCanvas().style.cursor = "pointer"));
+            map.on("mouseleave", layer, () => (map.getCanvas().style.cursor = ""));
+          }
+
+          readyRef.current = true;
+          setReady(true);
+        });
+
+        map.on("error", () => setFailed(true));
+      } catch {
+        if (!cancelled) setFailed(true);
+      }
+    })();
+
     return () => {
       cancelled = true;
+      readyRef.current = false;
+      mapRef.current = null;
+      map?.remove();
     };
-  }, []);
+  }, [token]);
+
+  // keep pins in sync with the filtered results.
+  useEffect(() => {
+    if (!ready) return;
+    mapRef.current?.getSource("storefronts")?.setData(geojson);
+  }, [geojson, ready]);
 
   useEffect(() => {
-    const maps = window.google?.maps;
-    if (!maps || !mapRef.current) return;
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = storefronts.map((s) => {
-      const marker = new maps.Marker({
-        position: { lat: s.lat, lng: s.lng },
-        map: mapRef.current,
-        title: s.name,
-        icon: {
-          path: TEARDROP,
-          scale: s.id === selectedId ? 1.25 : 1,
-          fillColor: "#FF1F87",
-          fillOpacity: 1,
-          strokeColor: "#ffffff",
-          strokeWeight: 1.5,
-          anchor: new maps.Point(0, 0),
-        },
-      });
-      marker.addListener("click", () => onSelect(s.id));
-      return marker;
-    });
-  }, [storefronts, selectedId, failed]);
+    if (!ready) return;
+    mapRef.current?.setFilter("pin-selected", ["==", ["get", "id"], selectedId ?? "__none__"]);
+  }, [selectedId, ready]);
+
+  useEffect(() => {
+    if (!ready) return;
+    mapRef.current?.easeTo({ center: [center.lng, center.lat], duration: 500 });
+  }, [center.lat, center.lng, ready]);
+
+  const usingMapbox = Boolean(token) && !failed;
 
   const bounds = useMemo(() => {
     const lats = storefronts.map((s) => s.lat).concat(center.lat);
@@ -150,14 +237,14 @@ export function SearchMap({
         <div
           className={cn(
             "absolute z-20 w-[212px]",
-            failed
-              ? flipBelow
+            usingMapbox
+              ? "left-1/2 top-3 -translate-x-1/2"
+              : flipBelow
                 ? "translate-y-2"
-                : "-translate-y-[calc(100%+30px)]"
-              : "left-1/2 top-3 -translate-x-1/2",
+                : "-translate-y-[calc(100%+30px)]",
           )}
           style={
-            failed && selectedPos
+            !usingMapbox && selectedPos
               ? {
                   top: `${selectedPos.top}%`,
                   left: `${Math.min(Math.max(selectedPos.left, 4), 96)}%`,
@@ -172,7 +259,6 @@ export function SearchMap({
         </div>
       )}
 
-
       {expandable && (
         <Link
           to="/search/map"
@@ -185,7 +271,7 @@ export function SearchMap({
     </>
   );
 
-  if (!failed) {
+  if (usingMapbox) {
     return (
       <div className={cn("relative w-full rounded-[20px] overflow-hidden border border-line", height, className)}>
         <div ref={divRef} className="absolute inset-0" />
@@ -194,14 +280,14 @@ export function SearchMap({
     );
   }
 
-  // fallback schematic map: keeps the spatial read without a maps key.
+  // no token yet, or mapbox could not start: mint placeholder that still reads spatially.
   return (
     <div
-      className={cn("relative w-full rounded-[20px] overflow-hidden border border-line bg-mint/40", height, className)}
+      className={cn("relative w-full rounded-[20px] overflow-hidden border border-line bg-mint", height, className)}
     >
       <div
         aria-hidden
-        className="absolute inset-0 opacity-[0.18]"
+        className="absolute inset-0 opacity-[0.14]"
         style={{
           backgroundImage:
             "linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px)",
@@ -221,7 +307,9 @@ export function SearchMap({
         </button>
       ))}
       {chrome}
-      <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">approximate view.</p>
+      <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">
+        {isLoading ? "map loading" : "map loading"}
+      </p>
     </div>
   );
 }
@@ -237,7 +325,7 @@ function Teardrop({ active }: { active: boolean }) {
     >
       <path
         d="M12 31C5 22.5 1 17.6 1 12A11 11 0 1 1 23 12c0 5.6-4 10.5-11 19z"
-        fill="#FF1F87"
+        fill={HOT}
         stroke="#fff"
         strokeWidth="2"
       />
