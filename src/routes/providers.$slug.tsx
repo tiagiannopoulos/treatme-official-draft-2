@@ -178,7 +178,6 @@ function ProviderProfile() {
             <Link
               key={t.treatment_slug}
               to="/search"
-      search={{}}
               search={{ q: t.name }}
               className="rounded-pill border border-line px-3 py-1.5 text-[13px] lowercase"
             >
