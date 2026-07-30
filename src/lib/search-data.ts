@@ -146,7 +146,14 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
       })
       .sort((a, b) => a.name.localeCompare(b.name));
 
-    return { ...row, storefronts: shops, treatments };
+    return {
+      ...row,
+      rating: stats.rating,
+      review_count: stats.review_count,
+      storefronts: shops,
+      treatments,
+    };
+
   });
 
   return { providers, storefronts };
