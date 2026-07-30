@@ -22,7 +22,7 @@ import {
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/search")({
+export const Route = createFileRoute("/search/")({
   head: () => ({
     meta: [
       { title: "find a provider · treatme" },
@@ -97,6 +97,19 @@ function SearchPage() {
   );
 
   const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
+
+  /** every storefront with coordinates, for the explore map card. */
+  const pinnedStorefronts = useMemo(
+    () => data.storefronts.filter((s) => typeof s.lat === "number" && typeof s.lng === "number"),
+    [data.storefronts],
+  );
+
+  const providerCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
+    return counts;
+  }, [data.providers]);
+
 
   const providerResults = useMemo(() => {
     return data.providers
@@ -263,8 +276,30 @@ function SearchPage() {
       ) : (
         /* ---------- explore state ---------- */
         <div className="px-6">
-          <p className="brand-eyebrow">who treats you</p>
-          <h1 className="brand-display text-[30px] leading-[0.95] mt-1">
+          {/* a) map card */}
+          <div className="mt-5 flex items-center justify-between gap-2">
+            <p className="brand-eyebrow">near you</p>
+            <span className="inline-flex items-center gap-1 rounded-pill border border-[rgba(17,17,17,0.10)] px-2.5 py-1 text-[11px] text-ink-mute lowercase">
+              <MapPin className="size-3" />
+              toronto, on
+            </span>
+          </div>
+
+          <div className="mt-2">
+            <ClientOnly fallback={<div className="h-[220px] rounded-[20px] border border-line bg-muted" />}>
+              <SearchMap
+                storefronts={pinnedStorefronts}
+                center={center}
+                selectedId={selected}
+                onSelect={setSelected}
+                providerCounts={providerCounts}
+                height="h-[220px]"
+                expandable
+              />
+            </ClientOnly>
+          </div>
+
+          <h1 className="brand-display text-[30px] leading-[0.95] mt-6">
             find your provider<span className="text-hot">.</span>
           </h1>
           <p className="text-[13px] text-ink-mute mt-2 lowercase">
@@ -318,16 +353,6 @@ function SearchPage() {
             ))}
           </div>
 
-          <div className="mt-4">
-            <ClientOnly fallback={<div className="h-[320px] rounded-2xl border border-line bg-muted" />}>
-              <SearchMap
-                storefronts={mapStorefronts}
-                center={center}
-                selectedId={selected}
-                onSelect={(id) => setSelected(id)}
-              />
-            </ClientOnly>
-          </div>
 
           {showProviders && (
             <section className="mt-6">

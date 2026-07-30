@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LatLng, Storefront } from "@/lib/search-data";
 
@@ -35,18 +37,39 @@ function loadGoogleMaps(): Promise<any> {
   });
 }
 
+/** bubblegum-hot teardrop pin, drawn as an svg path for google markers. */
+const TEARDROP =
+  "M 0 0 C -6 -9 -10 -13 -10 -19 A 10 10 0 1 1 10 -19 C 10 -13 6 -9 0 0 z";
+
 interface Props {
   storefronts: Storefront[];
   center: LatLng;
   selectedId: string | null;
-  onSelect: (id: string) => void;
+  onSelect: (id: string | null) => void;
+  /** number of providers working at each storefront, keyed by storefront id. */
+  providerCounts?: Record<string, number>;
+  height?: string;
+  /** shows the expand button that pushes to the full screen map. */
+  expandable?: boolean;
+  className?: string;
 }
 
-export function SearchMap({ storefronts, center, selectedId, onSelect }: Props) {
+export function SearchMap({
+  storefronts,
+  center,
+  selectedId,
+  onSelect,
+  providerCounts = {},
+  height = "h-[220px]",
+  expandable = false,
+  className,
+}: Props) {
   const [failed, setFailed] = useState(!BROWSER_KEY);
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+
+  const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
   useEffect(() => {
     if (!BROWSER_KEY || !divRef.current) return;
@@ -60,6 +83,7 @@ export function SearchMap({ storefronts, center, selectedId, onSelect }: Props) 
           disableDefaultUI: true,
           zoomControl: true,
         });
+        mapRef.current.addListener("click", () => onSelect(null));
       })
       .catch(() => !cancelled && setFailed(true));
     return () => {
@@ -77,12 +101,13 @@ export function SearchMap({ storefronts, center, selectedId, onSelect }: Props) 
         map: mapRef.current,
         title: s.name,
         icon: {
-          path: maps.SymbolPath.CIRCLE,
-          scale: s.id === selectedId ? 10 : 7,
-          fillColor: s.id === selectedId ? "#FF1F87" : "#111111",
+          path: TEARDROP,
+          scale: s.id === selectedId ? 1.25 : 1,
+          fillColor: "#FF1F87",
           fillOpacity: 1,
           strokeColor: "#ffffff",
-          strokeWeight: 2,
+          strokeWeight: 1.5,
+          anchor: new maps.Point(0, 0),
         },
       });
       marker.addListener("click", () => onSelect(s.id));
@@ -101,22 +126,79 @@ export function SearchMap({ storefronts, center, selectedId, onSelect }: Props) 
     };
   }, [storefronts, center]);
 
-  if (!failed) {
-    return <div ref={divRef} className="h-[320px] w-full rounded-2xl overflow-hidden border border-line" />;
-  }
-
-  // fallback schematic map: keeps the spatial read without a maps key.
-  const pos = (p: LatLng) => {
+  const raw = (p: LatLng) => {
     const spanLat = Math.max(bounds.maxLat - bounds.minLat, 0.005);
     const spanLng = Math.max(bounds.maxLng - bounds.minLng, 0.005);
     return {
-      left: `${10 + ((p.lng - bounds.minLng) / spanLng) * 80}%`,
-      top: `${10 + ((bounds.maxLat - p.lat) / spanLat) * 80}%`,
+      left: 12 + ((p.lng - bounds.minLng) / spanLng) * 76,
+      top: 18 + ((bounds.maxLat - p.lat) / spanLat) * 66,
     };
   };
 
+  const pos = (p: LatLng) => {
+    const { left, top } = raw(p);
+    return { left: `${left}%`, top: `${top}%` };
+  };
+
+  const selectedPos = selected ? raw({ lat: selected.lat, lng: selected.lng }) : null;
+  /** flip the card below the pin when there is no room above it inside the card. */
+  const flipBelow = selectedPos !== null && selectedPos.top < 55;
+
+  const chrome = (
+    <>
+      {selected && (
+        <div
+          className={cn(
+            "absolute z-20 w-[212px]",
+            failed
+              ? flipBelow
+                ? "translate-y-2"
+                : "-translate-y-[calc(100%+30px)]"
+              : "left-1/2 top-3 -translate-x-1/2",
+          )}
+          style={
+            failed && selectedPos
+              ? {
+                  top: `${selectedPos.top}%`,
+                  left: `${Math.min(Math.max(selectedPos.left, 4), 96)}%`,
+                  transform: `translateX(-${Math.min(Math.max(selectedPos.left, 4), 96) > 60 ? 80 : 20}%) ${
+                    flipBelow ? "translateY(8px)" : "translateY(calc(-100% - 30px))"
+                  }`,
+                }
+              : undefined
+          }
+        >
+          <StorefrontPopover storefront={selected} providerCount={providerCounts[selected.id] ?? 0} />
+        </div>
+      )}
+
+
+      {expandable && (
+        <Link
+          to="/search/map"
+          aria-label="open full screen map"
+          className="absolute bottom-3 right-3 z-20 grid size-9 place-items-center rounded-full bg-white/95 border border-line shadow-sm"
+        >
+          <Maximize2 className="size-4 text-ink" />
+        </Link>
+      )}
+    </>
+  );
+
+  if (!failed) {
+    return (
+      <div className={cn("relative w-full rounded-[20px] overflow-hidden border border-line", height, className)}>
+        <div ref={divRef} className="absolute inset-0" />
+        {chrome}
+      </div>
+    );
+  }
+
+  // fallback schematic map: keeps the spatial read without a maps key.
   return (
-    <div className="relative h-[320px] w-full rounded-2xl overflow-hidden border border-line bg-mint/40">
+    <div
+      className={cn("relative w-full rounded-[20px] overflow-hidden border border-line bg-mint/40", height, className)}
+    >
       <div
         aria-hidden
         className="absolute inset-0 opacity-[0.18]"
@@ -126,30 +208,78 @@ export function SearchMap({ storefronts, center, selectedId, onSelect }: Props) 
           backgroundSize: "36px 36px",
         }}
       />
-      <div className="absolute -translate-x-1/2 -translate-y-1/2" style={pos(center)}>
-        <span className="block size-3 rounded-full bg-hot ring-4 ring-hot/25" />
-      </div>
       {storefronts.map((s) => (
         <button
           key={s.id}
           type="button"
-          onClick={() => onSelect(s.id)}
-          className="absolute -translate-x-1/2 -translate-y-full"
+          onClick={() => onSelect(s.id === selectedId ? null : s.id)}
+          aria-label={s.name}
+          className="absolute z-10 -translate-x-1/2 -translate-y-full"
           style={pos({ lat: s.lat, lng: s.lng })}
         >
-          <span
-            className={cn(
-              "block rounded-full px-2.5 py-1 text-[10px] font-semibold lowercase whitespace-nowrap shadow-sm border",
-              s.id === selectedId ? "bg-hot text-white border-hot" : "bg-white text-ink border-line",
-            )}
-          >
-            {s.name}
-          </span>
+          <Teardrop active={s.id === selectedId} />
         </button>
       ))}
-      <p className="absolute bottom-2 left-3 text-[10px] text-ink-mute lowercase">
-        approximate view. connect a maps key for the live map.
-      </p>
+      {chrome}
+      <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">approximate view.</p>
+    </div>
+  );
+}
+
+function Teardrop({ active }: { active: boolean }) {
+  return (
+    <svg
+      width={active ? 26 : 21}
+      height={active ? 34 : 27}
+      viewBox="0 0 24 32"
+      fill="none"
+      className="drop-shadow-sm"
+    >
+      <path
+        d="M12 31C5 22.5 1 17.6 1 12A11 11 0 1 1 23 12c0 5.6-4 10.5-11 19z"
+        fill="#FF1F87"
+        stroke="#fff"
+        strokeWidth="2"
+      />
+      <circle cx="12" cy="12" r="3.6" fill="#fff" />
+    </svg>
+  );
+}
+
+export function StorefrontPopover({
+  storefront,
+  providerCount,
+}: {
+  storefront: Storefront;
+  providerCount: number;
+}) {
+  const isNew = !storefront.review_count;
+  return (
+    <div className="rounded-2xl border border-line bg-white p-3 shadow-lg">
+      <p className="brand-display text-[15px] leading-tight truncate">{storefront.name}</p>
+      <p className="text-[11px] text-ink-mute lowercase truncate">{storefront.city.toLowerCase()}</p>
+      <div className="mt-1.5 flex items-center gap-2">
+        <span className="text-[11px] text-ink-soft lowercase">
+          {providerCount} provider{providerCount === 1 ? "" : "s"}
+        </span>
+        {isNew ? (
+          <span className="rounded-pill bg-butter px-2 py-0.5 text-[10px] font-semibold lowercase">
+            new to treatme
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
+            <Star className="size-3 fill-ink text-ink" />
+            {storefront.rating}
+          </span>
+        )}
+      </div>
+      <Link
+        to="/medspas/$slug"
+        params={{ slug: storefront.slug }}
+        className="mt-2 inline-block text-[12px] font-semibold text-hot lowercase"
+      >
+        view storefront
+      </Link>
     </div>
   );
 }
