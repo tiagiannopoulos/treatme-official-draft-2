@@ -143,12 +143,6 @@ function SearchPage() {
 
   const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
 
-  /** every storefront with coordinates, for the explore map card. */
-  const pinnedStorefronts = useMemo(
-    () => data.storefronts.filter((s) => typeof s.lat === "number" && typeof s.lng === "number"),
-    [data.storefronts],
-  );
-
   const providerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
@@ -310,6 +304,7 @@ function SearchPage() {
               <SearchMap
                 storefronts={resultStorefronts}
                 center={center}
+                radiusKm={radius}
                 selectedId={selected}
                 onSelect={setSelected}
                 providerCounts={providerCounts}
@@ -438,8 +433,9 @@ function SearchPage() {
           <div className="mt-2">
             <ClientOnly fallback={<div className="h-[220px] rounded-[20px] border border-line bg-muted" />}>
               <SearchMap
-                storefronts={pinnedStorefronts}
+                storefronts={storefrontsInRange}
                 center={center}
+                radiusKm={radius}
                 selectedId={selected}
                 onSelect={setSelected}
                 providerCounts={providerCounts}

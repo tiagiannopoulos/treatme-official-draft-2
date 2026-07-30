@@ -111,6 +111,8 @@ export function SearchMap({
       cancelled = true;
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      circleRef.current?.setMap(null);
+      circleRef.current = null;
       mapRef.current = null;
     };
   }, [browserKey, trackingId, onSelect]);
