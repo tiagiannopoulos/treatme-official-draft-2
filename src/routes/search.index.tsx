@@ -33,6 +33,9 @@ import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/search/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "find a provider · treatme" },
@@ -89,9 +92,10 @@ function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
 
-  const [q, setQ] = useState("");
+  const initialQ = Route.useSearch().q ?? "";
+  const [q, setQ] = useState(initialQ);
   const [focused, setFocused] = useState(false);
-  const [scope, setScope] = useState<Scope>("all");
+  const [scope, setScope] = useState<Scope>(initialQ ? "providers" : "all");
   const [radius, setRadius] = useState<number>(10);
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
@@ -103,7 +107,7 @@ function SearchPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   /** debounced query: matching waits 250ms behind typing. */
-  const [dq, setDq] = useState("");
+  const [dq, setDq] = useState(initialQ);
   useEffect(() => {
     const id = setTimeout(() => setDq(q), 250);
     return () => clearTimeout(id);

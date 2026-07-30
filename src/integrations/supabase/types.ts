@@ -100,6 +100,106 @@ export type Database = {
           },
         ]
       }
+      provider_media: {
+        Row: {
+          after_url: string
+          approved: boolean
+          before_url: string
+          consent_confirmed: boolean
+          created_at: string
+          id: string
+          provider_id: string
+          sort_order: number
+          treatment_name: string
+          treatment_slug: string
+          updated_at: string
+          weeks_between: number | null
+        }
+        Insert: {
+          after_url: string
+          approved?: boolean
+          before_url: string
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          provider_id: string
+          sort_order?: number
+          treatment_name: string
+          treatment_slug: string
+          updated_at?: string
+          weeks_between?: number | null
+        }
+        Update: {
+          after_url?: string
+          approved?: boolean
+          before_url?: string
+          consent_confirmed?: boolean
+          created_at?: string
+          id?: string
+          provider_id?: string
+          sort_order?: number
+          treatment_name?: string
+          treatment_slug?: string
+          updated_at?: string
+          weeks_between?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_media_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      provider_reviews: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          provider_id: string
+          published: boolean
+          rating: number
+          reviewed_at: string
+          reviewer_name: string
+          treatment_name: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          provider_id: string
+          published?: boolean
+          rating?: number
+          reviewed_at?: string
+          reviewer_name: string
+          treatment_name?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          provider_id?: string
+          published?: boolean
+          rating?: number
+          reviewed_at?: string
+          reviewer_name?: string
+          treatment_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_reviews_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_storefronts: {
         Row: {
           created_at: string
@@ -178,6 +278,8 @@ export type Database = {
           created_at: string
           credentials: string
           id: string
+          languages: string[]
+          licensing_body: string
           name: string
           rating: number
           review_count: number
@@ -193,6 +295,8 @@ export type Database = {
           created_at?: string
           credentials?: string
           id?: string
+          languages?: string[]
+          licensing_body?: string
           name: string
           rating?: number
           review_count?: number
@@ -208,6 +312,8 @@ export type Database = {
           created_at?: string
           credentials?: string
           id?: string
+          languages?: string[]
+          licensing_body?: string
           name?: string
           rating?: number
           review_count?: number
