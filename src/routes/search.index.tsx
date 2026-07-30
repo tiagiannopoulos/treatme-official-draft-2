@@ -388,21 +388,51 @@ function SearchPage() {
               </button>
             ))}
           </div>
+          {/* c) featured storefronts row */}
+          {featuredStorefronts.length > 0 && (
+            <section className="mt-7">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">featured storefronts</p>
+                <button
+                  type="button"
+                  onClick={() => setScope("medspas")}
+                  className="text-[12px] text-hot lowercase font-semibold"
+                >
+                  see all
+                </button>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
+                {featuredStorefronts.map((s) => (
+                  <FeaturedStorefrontCard
+                    key={s.id}
+                    storefront={s}
+                    providerCount={providerCounts[s.id] ?? 0}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
-
+          {/* d) nearby providers list */}
           {showProviders && (
-            <section className="mt-6">
+            <section className="mt-7">
               <p className="brand-eyebrow">providers near you</p>
               <p className="text-[12px] text-ink-mute lowercase mt-0.5">
                 {providerResults.length} within {radius} km of {locLabel}
               </p>
               <div className="mt-2 space-y-3">
-                {providerResults.map(({ p, shops, km }) => (
+                {providerResults.slice(0, visibleProviders).map(({ p, shops, km }) => (
                   <ProviderCard key={p.id} provider={p} km={km} shopName={shops[0]?.name ?? ""} />
                 ))}
               </div>
+              {visibleProviders < providerResults.length && (
+                <div ref={loadMoreRef} className="py-6 text-center text-[12px] text-ink-mute lowercase">
+                  loading more providers...
+                </div>
+              )}
             </section>
           )}
+
 
           {showMedspas && (
             <section className="mt-6">
