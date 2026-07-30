@@ -1,7 +1,11 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 import { PillButton } from "@/components/treatme/PillButton";
+import { treatmentAreasQuery } from "@/lib/treatment-areas";
 import { getTreatment } from "@/lib/treatments-data";
+
 
 export const Route = createFileRoute("/treatments/$slug/")({
   head: ({ params }) => ({
