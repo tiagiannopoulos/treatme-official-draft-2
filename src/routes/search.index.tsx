@@ -299,6 +299,27 @@ function SearchPage() {
             </ClientOnly>
           </div>
 
+          {/* b) treatment chips row */}
+          <section className="mt-6">
+            <p className="brand-eyebrow">explore treatments</p>
+            <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
+              {TREATMENT_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    setQ(chip);
+                    setScope("providers");
+                  }}
+                  className="shrink-0 rounded-pill bg-butter text-ink px-3.5 py-2 text-[14px] lowercase"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </section>
+
+
           <h1 className="brand-display text-[30px] leading-[0.95] mt-6">
             find your provider<span className="text-hot">.</span>
           </h1>
