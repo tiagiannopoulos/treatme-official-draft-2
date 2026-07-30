@@ -3,6 +3,8 @@ import { ArrowLeft, MapPin, Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PillButton } from "@/components/treatme/PillButton";
+import { useQuery } from "@tanstack/react-query";
+import { treatmentAreasQuery } from "@/lib/treatment-areas";
 import { CLINICS, getTreatment } from "@/lib/treatments-data";
 
 export const Route = createFileRoute("/treatments/$slug/book")({
@@ -11,6 +13,9 @@ export const Route = createFileRoute("/treatments/$slug/book")({
       { title: "book · treatme" },
       { name: "description", content: "verified providers near you. first visit is always a free 15-min consult." },
     ],
+  }),
+  validateSearch: (search: Record<string, unknown>) => ({
+    area: typeof search.area === "string" ? search.area : undefined,
   }),
   loader: ({ params }) => {
     const t = getTreatment(params.slug);
@@ -22,6 +27,10 @@ export const Route = createFileRoute("/treatments/$slug/book")({
 
 function BookPage() {
   const { treatment } = Route.useLoaderData();
+  const { area } = Route.useSearch();
+  const { data: areas = [] } = useQuery(treatmentAreasQuery(treatment.slug));
+  const selectedArea = areas.find((a) => a.area_slug === area) ?? null;
+  const basePrice = selectedArea?.price_from ?? treatment.priceFrom;
   const [unit, setUnit] = useState<"km" | "mi">("km");
   const [radius, setRadius] = useState(25);
 
@@ -42,7 +51,7 @@ function BookPage() {
       </div>
 
       <div className="px-6 mt-3">
-        <p className="brand-eyebrow">book · {treatment.name}</p>
+        <p className="brand-eyebrow">book · {treatment.name}{selectedArea ? ` · ${selectedArea.name.toLowerCase()}` : ""}</p>
         <h1 className="brand-display text-[30px] mt-2">verified hands near you<span className="text-hot">.</span></h1>
       </div>
 
@@ -69,7 +78,7 @@ function BookPage() {
           <p className="text-ink-mute text-[14px]">no verified clinics within {radius} {unit}. widen your radius.</p>
         )}
         {clinics.map((c) => {
-          const price = Math.round(treatment.priceFrom * c.basePriceMultiplier);
+          const price = Math.round(basePrice * c.basePriceMultiplier);
           return (
             <div key={c.id} className="rounded-2xl bg-card border border-line p-4">
               <div className="flex items-start justify-between gap-3">
@@ -91,7 +100,7 @@ function BookPage() {
 
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-[12px] text-ink-mute">next · {c.nextSlot}</span>
-                <PillButton onClick={() => toast.success(`consult requested at ${c.name}. we'll text you to confirm.`)} className="h-10 px-5 text-[13px]">
+                <PillButton onClick={() => toast.success(`consult requested at ${c.name}${selectedArea ? ` for ${selectedArea.name.toLowerCase()}` : ""}. we'll text you to confirm.`)} className="h-10 px-5 text-[13px]">
                   book consult
                 </PillButton>
               </div>
