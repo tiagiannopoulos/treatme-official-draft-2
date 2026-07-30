@@ -14,6 +14,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TreatmentsIndexRouteImport } from './routes/treatments.index'
 import { Route as ScanIndexRouteImport } from './routes/scan.index'
+import { Route as SearchMapRouteImport } from './routes/search.map'
 import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
 import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
@@ -49,6 +50,11 @@ const ScanIndexRoute = ScanIndexRouteImport.update({
   id: '/scan/',
   path: '/scan/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SearchMapRoute = SearchMapRouteImport.update({
+  id: '/map',
+  path: '/map',
+  getParentRoute: () => SearchRoute,
 } as any)
 const ScanResultsRoute = ScanResultsRouteImport.update({
   id: '/scan/results',
@@ -104,7 +110,7 @@ const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRoute
+  '/search': typeof SearchRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
+  '/search/map': typeof SearchMapRoute
   '/scan/': typeof ScanIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
@@ -121,7 +128,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRoute
+  '/search': typeof SearchRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
+  '/search/map': typeof SearchMapRoute
   '/scan': typeof ScanIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
@@ -139,7 +147,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
-  '/search': typeof SearchRoute
+  '/search': typeof SearchRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/scan/analyzing': typeof ScanAnalyzingRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
+  '/search/map': typeof SearchMapRoute
   '/scan/': typeof ScanIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
+    | '/search/map'
     | '/scan/'
     | '/treatments/'
     | '/api/public/analyze'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
+    | '/search/map'
     | '/scan'
     | '/treatments'
     | '/api/public/analyze'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/scan/analyzing'
     | '/scan/chat'
     | '/scan/results'
+    | '/search/map'
     | '/scan/'
     | '/treatments/'
     | '/api/public/analyze'
@@ -210,7 +222,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProfileRoute: typeof ProfileRoute
-  SearchRoute: typeof SearchRoute
+  SearchRoute: typeof SearchRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   MedspasSlugRoute: typeof MedspasSlugRoute
@@ -261,6 +273,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/scan/'
       preLoaderRoute: typeof ScanIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/search/map': {
+      id: '/search/map'
+      path: '/map'
+      fullPath: '/search/map'
+      preLoaderRoute: typeof SearchMapRouteImport
+      parentRoute: typeof SearchRoute
     }
     '/scan/results': {
       id: '/scan/results'
@@ -335,10 +354,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface SearchRouteChildren {
+  SearchMapRoute: typeof SearchMapRoute
+}
+
+const SearchRouteChildren: SearchRouteChildren = {
+  SearchMapRoute: SearchMapRoute,
+}
+
+const SearchRouteWithChildren =
+  SearchRoute._addFileChildren(SearchRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProfileRoute: ProfileRoute,
-  SearchRoute: SearchRoute,
+  SearchRoute: SearchRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   MedspasSlugRoute: MedspasSlugRoute,

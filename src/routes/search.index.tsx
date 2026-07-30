@@ -22,7 +22,7 @@ import {
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/search")({
+export const Route = createFileRoute("/search/")({
   head: () => ({
     meta: [
       { title: "find a provider · treatme" },
