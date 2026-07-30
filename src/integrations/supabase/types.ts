@@ -223,7 +223,9 @@ export type Database = {
         Row: {
           address_line: string
           city: string
+          claimed: boolean
           created_at: string
+          featured: boolean
           hero_image_url: string | null
           id: string
           lat: number
@@ -239,7 +241,9 @@ export type Database = {
         Insert: {
           address_line?: string
           city?: string
+          claimed?: boolean
           created_at?: string
+          featured?: boolean
           hero_image_url?: string | null
           id?: string
           lat: number
@@ -255,7 +259,9 @@ export type Database = {
         Update: {
           address_line?: string
           city?: string
+          claimed?: boolean
           created_at?: string
+          featured?: boolean
           hero_image_url?: string | null
           id?: string
           lat?: number
