@@ -142,6 +142,7 @@ function ProviderProfile() {
         <Link
           to="/treatments/$slug/book"
           params={{ slug: provider.treatments[0]?.treatment_slug ?? "hydrafacial" }}
+          search={{ area: undefined }}
           className="flex items-center justify-center rounded-pill bg-hot text-white py-3.5 text-[14px] font-semibold lowercase shadow-lg"
         >
           book with {provider.name.split(" ").slice(-1)[0]}
