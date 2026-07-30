@@ -205,19 +205,33 @@ function TreatmentsPage() {
         </div>
       ) : (
         <div className="mt-6 space-y-10">
-          {grouped.map(({ family, items }) => (
-            <section key={family}>
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="brand-display text-[22px] lowercase">{family}</h2>
-                <p className="text-[11px] text-ink-mute lowercase shrink-0">{items.length} treatments</p>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                {items.map(({ t, alias }) => (
-                  <CoverCard key={t.slug} t={t} alias={alias} />
-                ))}
-              </div>
-            </section>
-          ))}
+          {grouped.map(({ family, items }) => {
+            const isExpanded = expanded.has(family) || items.length <= PREVIEW_COUNT;
+            const visible = isExpanded ? items : items.slice(0, PREVIEW_COUNT);
+            const remaining = items.length - PREVIEW_COUNT;
+            return (
+              <section key={family}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className="brand-display text-[22px] lowercase">{family}</h2>
+                  <p className="text-[11px] text-ink-mute lowercase shrink-0">{items.length} treatments</p>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  {visible.map(({ t, alias }) => (
+                    <CoverCard key={t.slug} t={t} alias={alias} />
+                  ))}
+                </div>
+                {!isExpanded && remaining > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => toggleFamily(family)}
+                    className="mt-3 w-full h-11 rounded-full border border-line bg-cream text-[13px] font-semibold lowercase text-ink-soft hover:border-ink/40 transition"
+                  >
+                    show {remaining} more
+                  </button>
+                )}
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
