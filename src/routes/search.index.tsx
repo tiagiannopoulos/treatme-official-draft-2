@@ -57,6 +57,21 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
+/** quick-entry chips for the explore state. tapping one seeds the search bar. */
+const TREATMENT_CHIPS = [
+  "botox",
+  "lip filler",
+  "cheek filler",
+  "morpheus8",
+  "hydrafacial",
+  "laser hair removal",
+  "chemical peel",
+  "microneedling",
+  "prp",
+  "skin boosters",
+];
+
+
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
