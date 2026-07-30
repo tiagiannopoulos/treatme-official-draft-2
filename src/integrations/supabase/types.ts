@@ -114,6 +114,7 @@ export type Database = {
           treatment_slug: string
           updated_at: string
           weeks_between: number | null
+          weeks_elapsed: number | null
         }
         Insert: {
           after_url: string
@@ -128,6 +129,7 @@ export type Database = {
           treatment_slug: string
           updated_at?: string
           weeks_between?: number | null
+          weeks_elapsed?: number | null
         }
         Update: {
           after_url?: string
@@ -142,6 +144,7 @@ export type Database = {
           treatment_slug?: string
           updated_at?: string
           weeks_between?: number | null
+          weeks_elapsed?: number | null
         }
         Relationships: [
           {
@@ -234,6 +237,13 @@ export type Database = {
             foreignKeyName: "provider_storefronts_storefront_id_fkey"
             columns: ["storefront_id"]
             isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_storefronts_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
             referencedRelation: "storefronts"
             referencedColumns: ["id"]
           },
@@ -275,6 +285,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string
+          claimed: boolean
           created_at: string
           credentials: string
           id: string
@@ -284,6 +295,7 @@ export type Database = {
           rating: number
           review_count: number
           slug: string
+          specialties: string[]
           title: string
           updated_at: string
           verified: boolean
@@ -292,6 +304,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string
+          claimed?: boolean
           created_at?: string
           credentials?: string
           id?: string
@@ -301,6 +314,7 @@ export type Database = {
           rating?: number
           review_count?: number
           slug: string
+          specialties?: string[]
           title?: string
           updated_at?: string
           verified?: boolean
@@ -309,6 +323,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string
+          claimed?: boolean
           created_at?: string
           credentials?: string
           id?: string
@@ -318,6 +333,7 @@ export type Database = {
           rating?: number
           review_count?: number
           slug?: string
+          specialties?: string[]
           title?: string
           updated_at?: string
           verified?: boolean
@@ -537,6 +553,7 @@ export type Database = {
           price_from: number
           rec_mode: string
           science: string
+          short_description: string
           slug: string
           sort_order: number
           updated_at: string
@@ -559,6 +576,7 @@ export type Database = {
           price_from: number
           rec_mode?: string
           science?: string
+          short_description?: string
           slug: string
           sort_order?: number
           updated_at?: string
@@ -581,6 +599,7 @@ export type Database = {
           price_from?: number
           rec_mode?: string
           science?: string
+          short_description?: string
           slug?: string
           sort_order?: number
           updated_at?: string
@@ -591,7 +610,63 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      clinics: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          claimed: boolean | null
+          created_at: string | null
+          featured: boolean | null
+          hero_image_url: string | null
+          id: string | null
+          lat: number | null
+          lng: number | null
+          name: string | null
+          postcode: string | null
+          rating: number | null
+          review_count: number | null
+          slug: string | null
+          tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          claimed?: boolean | null
+          created_at?: string | null
+          featured?: boolean | null
+          hero_image_url?: string | null
+          id?: string | null
+          lat?: number | null
+          lng?: number | null
+          name?: string | null
+          postcode?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          claimed?: boolean | null
+          created_at?: string | null
+          featured?: boolean | null
+          hero_image_url?: string | null
+          id?: string | null
+          lat?: number | null
+          lng?: number | null
+          name?: string | null
+          postcode?: string | null
+          rating?: number | null
+          review_count?: number | null
+          slug?: string | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
