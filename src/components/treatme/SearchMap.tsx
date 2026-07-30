@@ -75,16 +75,14 @@ export function SearchMap({
           zoom: 11,
           disableDefaultUI: true,
           zoomControl: true,
+          clickableIcons: false,
           gestureHandling: "greedy",
           styles: MAP_STYLE,
           mapTypeId: "roadmap",
         });
         mapRef.current = map;
 
-        map.addListener("click", (e: google.maps.MapMouseEvent) => {
-          if (e.placeId) return;
-          onSelect(null);
-        });
+        map.addListener("click", () => onSelect(null));
 
         setReady(true);
       })
