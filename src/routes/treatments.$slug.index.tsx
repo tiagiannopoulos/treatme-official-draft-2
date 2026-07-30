@@ -112,8 +112,6 @@ function TreatmentDetail() {
     </div>
   );
 
-    </div>
-  );
 }
 
 function Section({ title, body, icon }: { title: string; body: string; icon?: React.ReactNode }) {
