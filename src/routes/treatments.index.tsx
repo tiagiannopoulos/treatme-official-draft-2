@@ -79,6 +79,8 @@ function norm(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+const PREVIEW_COUNT = 2;
+
 function TreatmentsPage() {
   const { data: treatments } = useSuspenseQuery(libraryQuery);
   const [q, setQ] = useState("");
