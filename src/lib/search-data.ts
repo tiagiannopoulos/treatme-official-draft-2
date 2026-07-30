@@ -88,16 +88,23 @@ export function formatDistance(km: number): string {
 }
 
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
-  const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes] = await Promise.all([
+  const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes] = await Promise.all([
     supabase.from("storefronts").select("*").order("name"),
     supabase.from("providers").select("*").order("name"),
     supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
     supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from"),
     supabase.from("treatments").select("slug, name, category"),
+    // treatme ratings are derived live from the treatme reviews table, never stored.
+    supabase.from("provider_rating_stats").select("provider_id, rating, review_count"),
   ]);
 
   const err =
-    storefrontsRes.error || providersRes.error || linksRes.error || ptRes.error || treatmentsRes.error;
+    storefrontsRes.error ||
+    providersRes.error ||
+    linksRes.error ||
+    ptRes.error ||
+    treatmentsRes.error ||
+    statsRes.error;
   if (err) throw new Error(err.message);
 
   const storefronts = (storefrontsRes.data ?? []) as unknown as Storefront[];
@@ -105,9 +112,18 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
   const treatmentBySlug = new Map(
     (treatmentsRes.data ?? []).map((t) => [t.slug, t as { slug: string; name: string; category: string }]),
   );
+  const statsByProvider = new Map(
+    ((statsRes.data ?? []) as Array<{ provider_id: string | null; rating: number | null; review_count: number | null }>)
+      .filter((s): s is { provider_id: string; rating: number | null; review_count: number | null } =>
+        Boolean(s.provider_id),
+      )
+      .map((s) => [s.provider_id, { rating: Number(s.rating ?? 0), review_count: Number(s.review_count ?? 0) }]),
+  );
 
   const providers: Provider[] = (providersRes.data ?? []).map((p) => {
     const row = p as unknown as Omit<Provider, "storefronts" | "treatments">;
+    const stats = statsByProvider.get(row.id) ?? { rating: 0, review_count: 0 };
+
     const shops = (linksRes.data ?? [])
       .filter((l) => l.provider_id === row.id)
       .map((l) => {
