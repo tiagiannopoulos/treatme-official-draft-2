@@ -90,6 +90,14 @@ export function SearchMap({
         map.addListener("click", () => onSelect(null));
 
         setReady(true);
+
+        // referrer-restricted keys render an error overlay instead of tiles.
+        // if the overlay appears, fall back to the spatial placeholder.
+        window.setTimeout(() => {
+          if (cancelled) return;
+          const hasErrorOverlay = divRef.current?.querySelector(".gm-err-container, .gm-err-message") !== null;
+          if (hasErrorOverlay) setFailed(true);
+        }, 1500);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
