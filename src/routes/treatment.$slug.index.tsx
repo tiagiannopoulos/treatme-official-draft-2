@@ -103,12 +103,13 @@ function TreatmentDetailPage() {
 
       {/* stats */}
       {stats.length > 0 && (
-        <div className="mt-4 flex gap-3 overflow-x-auto px-5 no-scrollbar">
+        <div className="mt-4 grid grid-cols-3 gap-2.5 px-5">
           {stats.map((s) => (
             <div
               key={s.label}
-              className="min-w-[112px] flex-1 rounded-[16px] border border-[rgba(17,17,17,0.10)] bg-white px-4 py-3"
+              className="min-w-0 rounded-[16px] border border-[rgba(17,17,17,0.10)] bg-white px-3 py-3"
             >
+
               <p className="flex items-center gap-1 text-[13px] lowercase text-ink/55">
                 {s.icon && <Clock className="size-3.5" />}
                 {s.label}
