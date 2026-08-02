@@ -435,35 +435,6 @@ function SearchPage() {
             </ClientOnly>
           </div>
 
-          {/* b) treatment identity rail */}
-          <section className="mt-6">
-            <div className="-mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
-              {(catalog.length ? catalog.slice(0, CHIP_COUNT) : []).map((t) => (
-                <Link
-                  key={t.slug}
-                  to="/treatment/$slug"
-                  params={{ slug: t.slug }}
-                  className="shrink-0"
-                >
-                  <TreatmentIcon name={t.name} iconUrl={t.icon_url} accentColor={t.accent_color} />
-                </Link>
-              ))}
-              {catalog.length === 0 &&
-                treatments.slice(0, CHIP_COUNT).map((t) => (
-                  <button
-                    key={t.slug}
-                    type="button"
-                    onClick={() => {
-                      setQ(t.name);
-                      setScope("providers");
-                    }}
-                    className="shrink-0 rounded-pill bg-butter px-3.5 py-2 text-[14px] lowercase text-ink whitespace-nowrap"
-                  >
-                    {t.name}
-                  </button>
-                ))}
-            </div>
-          </section>
 
 
           <h1 className="brand-display text-[30px] leading-[0.95] mt-6">
