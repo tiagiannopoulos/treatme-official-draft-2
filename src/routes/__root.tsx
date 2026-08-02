@@ -17,6 +17,7 @@ import { TopBar } from "@/components/treatme/TopBar";
 import { BottomNav } from "@/components/treatme/BottomNav";
 import { TreatmentStoryProvider } from "@/lib/treatment-story-store";
 import { TreatmentStory } from "@/components/treatme/TreatmentStory";
+import { TreatmentSheetProvider } from "@/lib/treatment-sheet-store";
 
 function NotFoundComponent() {
   return (
@@ -99,6 +100,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ScanProvider>
         <TreatmentStoryProvider>
+          <TreatmentSheetProvider>
           <div className="min-h-screen flex flex-col bg-white">
             <TopBar />
             <main className="flex-1 pb-28">
@@ -108,6 +110,7 @@ function RootComponent() {
           </div>
           <TreatmentStory />
           <Toaster position="top-center" />
+          </TreatmentSheetProvider>
         </TreatmentStoryProvider>
       </ScanProvider>
     </QueryClientProvider>
