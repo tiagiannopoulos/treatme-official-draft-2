@@ -424,12 +424,6 @@ function SearchPage() {
 
 
 
-          <h1 className="brand-display text-[30px] leading-[0.95] mt-6">
-            find your provider<span className="text-hot">.</span>
-          </h1>
-          <p className="text-[13px] text-ink-mute mt-2 lowercase">
-            real people, tagged to the medspa they work at.
-          </p>
 
           <div className="mt-4 flex items-center gap-2">
             <button
