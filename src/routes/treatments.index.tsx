@@ -285,35 +285,57 @@ function tintFor(slug: string) {
   return TINTS[h % TINTS.length];
 }
 
-function CoverCard({
+function CompactCard({
   t,
   alias,
   catalog,
 }: {
   t: LibraryRow;
   alias: string | null;
-  catalog?: { poster_url: string | null; accent_color: string; has_story: boolean; downtime_label: string };
+  catalog?: { icon_url: string | null; accent_color: string; has_story: boolean; downtime_label: string; avg_price_low: number | null; avg_price_high: number | null };
 }) {
   const navigate = useNavigate();
-  const poster = null;
   const hasStory = catalog?.has_story ?? false;
+  const accent = catalog?.accent_color || "#F8A1C6";
+  const meta = catalog?.downtime_label || t.category;
+  const price = t.price_from ?? catalog?.avg_price_low ?? null;
   return (
     <div className="relative">
-      <PosterCard
-        name={t.name}
-        posterUrl={poster}
-        accentColor={catalog?.accent_color}
-        hasStory={hasStory}
-        meta={catalog?.downtime_label || t.category}
-        className="w-full"
-        onPress={() =>
+      <button
+        type="button"
+        onClick={() =>
           hasStory
             ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })
             : navigate({ to: "/treatment/$slug", params: { slug: t.slug } })
         }
-      />
+        className="flex w-full flex-col text-left active:scale-[0.98] transition-transform"
+      >
+        <div
+          className="aspect-square w-full rounded-2xl flex items-center justify-center overflow-hidden"
+          style={{ backgroundColor: accent }}
+        >
+          {catalog?.icon_url ? (
+            <img src={catalog.icon_url} alt="" className="size-14 object-cover" />
+          ) : (
+            <Sparkles className="size-8" style={{ color: "#111111" }} strokeWidth={1.6} />
+          )}
+        </div>
+        <div className="mt-3">
+          <p className="text-[15px] font-bold lowercase leading-tight" style={{ color: "#111111" }}>
+            {t.name}
+          </p>
+          <p className="mt-1 text-[11px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
+            {meta}
+          </p>
+          {price !== null && (
+            <p className="mt-1 text-sm font-bold" style={{ color: "#FF1F87" }}>
+              from ${Math.round(price)}
+            </p>
+          )}
+        </div>
+      </button>
       {alias && (
-        <span className="absolute left-2 right-2 top-2 truncate rounded-pill bg-hot px-2 py-1 text-[10px] font-bold lowercase text-white">
+        <span className="absolute left-2 right-2 top-2 truncate rounded-full bg-hot px-2 py-1 text-[10px] font-bold lowercase text-white">
           matched your search
         </span>
       )}
