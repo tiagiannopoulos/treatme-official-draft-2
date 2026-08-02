@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+
 
 export interface Recommendation {
   slug: string;
