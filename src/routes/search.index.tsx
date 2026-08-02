@@ -552,16 +552,21 @@ function SearchPage() {
                 {providerResults.length} within {radius} km of {locLabel}
               </p>
               <div className="mt-2 space-y-2.5">
-                {providerResults.slice(0, visibleProviders).map(({ p, shops, km }) => (
+                {providerResults.slice(0, expandProviders ? providerResults.length : NEARBY_PREVIEW).map(({ p, shops, km }) => (
                   <ProviderCard key={p.id} provider={p} km={km} shops={shops} />
                 ))}
               </div>
-              {visibleProviders < providerResults.length && (
-                <div ref={loadMoreRef} className="py-6 text-center text-[12px] text-ink-mute lowercase">
-                  loading more providers...
-                </div>
+              {providerResults.length > NEARBY_PREVIEW && (
+                <button
+                  type="button"
+                  onClick={() => setExpandProviders((v) => !v)}
+                  className="mt-3 w-full rounded-2xl border border-line py-2.5 text-[12px] font-semibold lowercase text-ink active:scale-[0.98] transition-transform"
+                >
+                  {expandProviders ? "show fewer providers" : `see all ${providerResults.length} providers`}
+                </button>
               )}
             </section>
+
           )}
 
 
