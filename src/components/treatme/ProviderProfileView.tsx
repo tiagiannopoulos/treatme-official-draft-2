@@ -1,7 +1,18 @@
 import { Link, notFound, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronLeft, MapPin, Star, BadgeCheck, Check, ShieldCheck } from "lucide-react";
+import {
+  ChevronLeft,
+  MapPin,
+  Star,
+  Check,
+  ShieldCheck,
+  Languages,
+  Zap,
+  Sparkles,
+  Droplet,
+} from "lucide-react";
+
 import { ClientOnly } from "@tanstack/react-router";
 import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/lib/search-data";
 import {
