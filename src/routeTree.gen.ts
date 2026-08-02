@@ -25,6 +25,7 @@ import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendat
 import { Route as BookConsultRouteImport } from './routes/book.consult'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
+import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug.index'
 import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
 import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
@@ -109,6 +110,11 @@ const TreatmentsSlugIndexRoute = TreatmentsSlugIndexRouteImport.update({
   path: '/treatments/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TreatmentSlugIndexRoute = TreatmentSlugIndexRouteImport.update({
+  id: '/treatment/$slug/',
+  path: '/treatment/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TreatmentsSlugBookRoute = TreatmentsSlugBookRouteImport.update({
   id: '/treatments/$slug/book',
   path: '/treatments/$slug/book',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
+  '/treatment/$slug/': typeof TreatmentSlugIndexRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
+  '/treatment/$slug': typeof TreatmentSlugIndexRoute
   '/treatments/$slug': typeof TreatmentsSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
+  '/treatment/$slug/': typeof TreatmentSlugIndexRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/treatment/$slug/story'
     | '/treatments/$slug/book'
+    | '/treatment/$slug/'
     | '/treatments/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/treatment/$slug/story'
     | '/treatments/$slug/book'
+    | '/treatment/$slug'
     | '/treatments/$slug'
   id:
     | '__root__'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/treatment/$slug/story'
     | '/treatments/$slug/book'
+    | '/treatment/$slug/'
     | '/treatments/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
   TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
   TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
+  TreatmentSlugIndexRoute: typeof TreatmentSlugIndexRoute
   TreatmentsSlugIndexRoute: typeof TreatmentsSlugIndexRoute
 }
 
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentsSlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/treatment/$slug/': {
+      id: '/treatment/$slug/'
+      path: '/treatment/$slug'
+      fullPath: '/treatment/$slug/'
+      preLoaderRoute: typeof TreatmentSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/treatments/$slug/book': {
       id: '/treatments/$slug/book'
       path: '/treatments/$slug/book'
@@ -434,6 +454,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
   TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
   TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
+  TreatmentSlugIndexRoute: TreatmentSlugIndexRoute,
   TreatmentsSlugIndexRoute: TreatmentsSlugIndexRoute,
 }
 export const routeTree = rootRouteImport

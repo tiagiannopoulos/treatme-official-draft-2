@@ -5,7 +5,6 @@ import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { PosterCard } from "@/components/treatme/PosterCard";
-import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
 
@@ -297,7 +296,6 @@ function CoverCard({
   catalog?: { poster_url: string | null; accent_color: string; has_story: boolean; downtime_label: string };
 }) {
   const navigate = useNavigate();
-  const { openSheet } = useTreatmentSheet();
   const poster = catalog?.poster_url || t.hero_image_url || t.hero_image || null;
   const hasStory = catalog?.has_story ?? false;
   return (
@@ -310,7 +308,9 @@ function CoverCard({
         meta={catalog?.downtime_label || t.category}
         className="w-full"
         onPress={() =>
-          hasStory ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } }) : openSheet(t.slug)
+          hasStory
+            ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })
+            : navigate({ to: "/treatment/$slug", params: { slug: t.slug } })
         }
       />
       {alias && (

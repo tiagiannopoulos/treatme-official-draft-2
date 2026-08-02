@@ -5,7 +5,6 @@ import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
 import { PosterCard } from "@/components/treatme/PosterCard";
 import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
-import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
@@ -187,7 +186,6 @@ function EduCard({ title, sub }: { title: string; sub: string }) {
 /** horizontal poster rail. only treatments with a real story appear here. */
 function StoryRail() {
   const navigate = useNavigate();
-  const { openSheet } = useTreatmentSheet();
   const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
   const posters = catalog.filter((t) => t.has_story).slice(0, 10);
   if (posters.length === 0) return null;
@@ -208,9 +206,7 @@ function StoryRail() {
             hasStory
             meta={t.downtime_label}
             className="w-[150px] shrink-0"
-            onPress={() =>
-              t.has_story ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } }) : openSheet(t.slug)
-            }
+            onPress={() => navigate({ to: "/treatment/$slug", params: { slug: t.slug } })}
           />
         ))}
       </div>
