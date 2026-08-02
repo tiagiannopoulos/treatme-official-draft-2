@@ -241,9 +241,9 @@ function TreatmentsPage() {
                   <h2 className="brand-display text-[22px] lowercase">{family}</h2>
                   <p className="text-[11px] text-ink-mute lowercase shrink-0">{items.length} treatments</p>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-4">
                   {visible.map(({ t, alias }) => (
-                    <CoverCard key={t.slug} t={t} alias={alias} catalog={catalogBySlug.get(t.slug)} />
+                    <CompactCard key={t.slug} t={t} alias={alias} catalog={catalogBySlug.get(t.slug)} />
                   ))}
                 </div>
                 {!isExpanded && remaining > 0 && (
