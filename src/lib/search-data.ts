@@ -1,5 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+
 
 export interface Storefront {
   id: string;
