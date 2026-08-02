@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useScan } from "@/lib/scan-store";
 import { PillButton } from "@/components/treatme/PillButton";
 import { Link } from "@tanstack/react-router";
+import { SavedTreatments } from "@/components/treatme/profile/SavedTreatments";
+import { TxLog } from "@/components/treatme/profile/TxLog";
+import { AboutYourSkin } from "@/components/treatme/profile/AboutYourSkin";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({ meta: [{ title: "profile · treatme" }, { name: "description", content: "your treatment journey." }] }),
