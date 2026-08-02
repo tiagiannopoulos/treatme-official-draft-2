@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, X } from "lucide-react";
+import { Bell, NotebookPen, X } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { INK } from "@/lib/treatment-catalog";
+import { PillButton } from "@/components/treatme/PillButton";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 
 interface LogMedia {
@@ -106,9 +107,29 @@ export function TxLog() {
       </h2>
 
       {entries.length === 0 ? (
-        <p className="mt-2 text-[12.5px] lowercase" style={{ color: "rgba(17,17,17,0.55)" }}>
-          your record starts with your first booking.
-        </p>
+        <div
+          className="mt-3 rounded-[18px] border p-6"
+          style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
+        >
+          <div className="flex flex-col items-center text-center">
+            <span className="grid size-14 place-items-center rounded-full" style={{ backgroundColor: "#FFEDB4" }}>
+              <NotebookPen className="size-6" style={{ color: INK }} strokeWidth={1.6} />
+            </span>
+            <p className="mt-3 text-[15px] font-medium lowercase" style={{ color: INK }}>
+              your record starts with your first booking
+            </p>
+            <p className="mt-1 max-w-[280px] text-[12.5px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
+              book through treatme and your provider records what they did, what they used, and when you are due again. it stays yours, wherever you go next.
+            </p>
+            <PillButton
+              className="mt-4 h-10 px-5 text-[13px]"
+              variant="outline"
+              onClick={() => navigate({ to: "/search" })}
+            >
+              find a provider
+            </PillButton>
+          </div>
+        </div>
       ) : (
         <div className="mt-3 flex flex-col gap-3">
           {entries.map((e) => {
