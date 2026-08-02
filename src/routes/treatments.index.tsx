@@ -70,10 +70,15 @@ const libraryQuery = queryOptions({
       .order("sort_order", { ascending: true })
       .returns<LibraryRow[]>();
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []).map((t) => ({
+      ...t,
+      name: displayTreatmentName(t.name, t.slug),
+      category: displayTreatmentCategory(t.category, t.slug),
+    }));
   },
   staleTime: 5 * 60_000,
 });
+
 
 function norm(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
