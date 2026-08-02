@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Sparkles, Lock, BookOpen, TrendingUp, ArrowRight } from "lucide-react";
+import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
 import { PosterCard } from "@/components/treatme/PosterCard";
