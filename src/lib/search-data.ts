@@ -146,10 +146,11 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
         return {
           treatment_slug: t.treatment_slug,
           price_from: t.price_from,
-          name: meta?.name ?? t.treatment_slug.replace(/-/g, " "),
-          category: meta?.category ?? "",
+          name: displayTreatmentName(meta?.name ?? t.treatment_slug.replace(/-/g, " "), t.treatment_slug),
+          category: displayTreatmentCategory(meta?.category ?? "", t.treatment_slug),
         };
       })
+
       .sort((a, b) => a.name.localeCompare(b.name));
 
     return {
