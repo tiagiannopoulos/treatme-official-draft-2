@@ -1,5 +1,5 @@
 import { ClientOnly, createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Search as SearchIcon,
