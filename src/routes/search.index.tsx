@@ -83,7 +83,6 @@ const NEARBY_PREVIEW = 3;
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
-  const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
 
   const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
