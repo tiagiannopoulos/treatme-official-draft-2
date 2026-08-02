@@ -37,6 +37,7 @@ export interface Storefront {
 
 /** neighbourhood is encoded as the trailing segment of the slug (e.g. the-glass-house-marylebone). */
 export function neighbourhood(s: Storefront): string {
+  if (s.neighbourhood) return s.neighbourhood.toLowerCase();
   const nameWords = s.name.split(/\s+/).length;
   const parts = s.slug.split("-");
   const tail = parts.slice(nameWords).join(" ");

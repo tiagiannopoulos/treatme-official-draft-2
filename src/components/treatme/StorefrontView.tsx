@@ -392,7 +392,7 @@ function RosterRow({ provider, storefront }: { provider: Provider; storefront: S
       <ProviderCard provider={provider} km={km} shops={shops} />
       <Link
         to="/book/consult"
-        search={{ provider: provider.slug }}
+        search={{ providerId: provider.id, storefrontId: storefront.id }}
         onClick={(e) => e.stopPropagation()}
         className="absolute bottom-3.5 right-3.5 rounded-pill bg-ink px-3.5 py-1.5 text-[12px] font-semibold lowercase text-cream"
       >
