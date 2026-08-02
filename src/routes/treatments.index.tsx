@@ -277,14 +277,6 @@ function chipCls(active: boolean) {
   );
 }
 
-/** soft brand tint so cards read intentionally before hero images land */
-const TINTS = ["bg-bubblegum/35", "bg-butter/60", "bg-mint/60", "bg-ink/5"];
-function tintFor(slug: string) {
-  let h = 0;
-  for (const ch of slug) h = (h * 31 + ch.charCodeAt(0)) % 997;
-  return TINTS[h % TINTS.length];
-}
-
 function CompactCard({
   t,
   alias,
