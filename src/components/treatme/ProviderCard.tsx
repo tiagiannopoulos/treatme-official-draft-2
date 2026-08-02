@@ -118,3 +118,54 @@ export function ProviderCard({
     </Link>
   );
 }
+
+/** compact horizontal-rail card for search results. */
+export function ProviderCardCompact({
+  provider,
+  via,
+  km,
+  shops,
+}: {
+  provider: Provider;
+  via?: string;
+  km: number;
+  shops: Array<Storefront & { is_primary: boolean }>;
+}) {
+  const nearest = shops[0] ?? provider.storefronts[0];
+  const otherCount = Math.max(shops.length - 1, 0);
+  const reviewed = provider.review_count >= 3;
+
+  return (
+    <Link
+      to="/providers/$slug"
+      params={{ slug: provider.slug }}
+      className="shrink-0 w-[172px] rounded-[20px] border border-line bg-white p-3.5 active:scale-[0.98] transition-transform"
+    >
+      <Avatar name={provider.name} url={provider.avatar_url} size="size-12" />
+      <p className="mt-3 text-[14px] font-semibold lowercase leading-tight truncate">{provider.name}</p>
+      <p className="text-[12px] text-ink/60 lowercase truncate">{provider.title}</p>
+      <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink/70 lowercase">
+        {Number.isFinite(km) && <span>{formatDistance(km)}</span>}
+        {Number.isFinite(km) && nearest && <span className="text-ink/30">·</span>}
+        {nearest && (
+          <span className="truncate">
+            {nearest.name}
+            {otherCount > 0 && <span className="text-ink/50"> +{otherCount}</span>}
+          </span>
+        )}
+      </div>
+      <div className="mt-2.5 flex items-center gap-2">
+        {reviewed ? (
+          <span className="inline-flex items-center gap-1 text-[11px] text-ink lowercase">
+            <Star className="size-3 fill-ink text-ink" />
+            {provider.rating.toFixed(1)}
+          </span>
+        ) : (
+          <span className="rounded-pill bg-butter px-2 py-0.5 text-[10px] font-semibold lowercase">new</span>
+        )}
+        {via && <span className="text-[10px] text-hot lowercase truncate">{via}</span>}
+      </div>
+    </Link>
+  );
+}
+

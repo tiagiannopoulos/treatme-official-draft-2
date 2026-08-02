@@ -30,8 +30,9 @@ import {
   type SearchTreatment,
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
-import { Avatar, ProviderCard } from "@/components/treatme/ProviderCard";
+import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/search/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -72,15 +73,8 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
-/** how many providers to reveal in the nearby preview before asking to expand. */
-const NEARBY_PREVIEW = 3;
-
-
-
-
-
-
 function SearchPage() {
+
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
 
@@ -98,10 +92,8 @@ function SearchPage() {
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
   const [locating, setLocating] = useState(false);
-  const [expandProviders, setExpandProviders] = useState(false);
-
-
   const [selected, setSelected] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   /** debounced query: matching waits 250ms behind typing. */
@@ -153,10 +145,6 @@ function SearchPage() {
     [data.storefronts],
   );
 
-  /** reset provider preview when filters change. */
-  useEffect(() => {
-    setExpandProviders(false);
-  }, [q, radius, center]);
 
 
 
@@ -311,7 +299,7 @@ function SearchPage() {
               <p className="mt-4 text-[12px] lowercase text-ink/60">{countLine}</p>
 
               {showProviders && providerResults.length > 0 && (
-                <section className="mt-3">
+                <section className="mt-6">
                   {scope === "all" && (
                     <div className="flex items-baseline justify-between gap-3">
                       <p className="brand-eyebrow">providers</p>
@@ -321,20 +309,21 @@ function SearchPage() {
                           onClick={() => setScope("providers")}
                           className="text-[12px] font-semibold text-hot lowercase"
                         >
-                          see all {providerResults.length} providers
+                          see all {providerResults.length}
                         </button>
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-2.5">
-                    {(scope === "all" ? providerResults.slice(0, 3) : providerResults).map(
+                  <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                    {(scope === "all" ? providerResults.slice(0, 6) : providerResults).map(
                       ({ p, via, shops, km }) => (
-                        <ProviderCard key={p.id} provider={p} via={via} km={km} shops={shops} />
+                        <ProviderCardCompact key={p.id} provider={p} via={via} km={km} shops={shops} />
                       ),
                     )}
                   </div>
                 </section>
               )}
+
 
               {showMedspas && medspaResults.length > 0 && (
                 <section className="mt-6">
@@ -347,14 +336,14 @@ function SearchPage() {
                           onClick={() => setScope("medspas")}
                           className="text-[12px] font-semibold text-hot lowercase"
                         >
-                          see all {medspaResults.length} medspas
+                          see all {medspaResults.length}
                         </button>
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-2.5">
-                    {(scope === "all" ? medspaResults.slice(0, 3) : medspaResults).map((s) => (
-                      <MedspaCard
+                  <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                    {(scope === "all" ? medspaResults.slice(0, 6) : medspaResults).map((s) => (
+                      <MedspaCardCompact
                         key={s.id}
                         storefront={s}
                         km={s.km}
@@ -367,6 +356,7 @@ function SearchPage() {
                 </section>
               )}
 
+
               {showTreatments && treatmentResults.length > 0 && (
                 <section className="mt-6">
                   {scope === "all" && (
@@ -378,18 +368,18 @@ function SearchPage() {
                           onClick={() => setScope("treatments")}
                           className="text-[12px] font-semibold text-hot lowercase"
                         >
-                          see all {treatmentResults.length} treatments
+                          see all {treatmentResults.length}
                         </button>
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-2">
-                    {(scope === "all" ? treatmentResults.slice(0, 3) : treatmentResults).map(({ t }) => (
-                      <TreatmentResultRow
+                  <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(({ t }) => (
+                      <TreatmentCardCompact
                         key={t.slug}
                         treatment={t}
                         providerCount={treatmentProviderCounts[t.slug] ?? 0}
-                        onSelect={() => {
+                        onClick={() => {
                           setQ(t.name.toLowerCase());
                           setScope("providers");
                         }}
@@ -398,6 +388,7 @@ function SearchPage() {
                   </div>
                 </section>
               )}
+
 
               {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
             </>
@@ -511,41 +502,34 @@ function SearchPage() {
             </section>
           )}
 
-          {/* d) nearby providers list */}
+          {/* d) nearby providers rail */}
           {showProviders && (
             <section className="mt-7">
-              <p className="brand-eyebrow">providers near you</p>
-              <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-                {providerResults.length} within {radius} km of {locLabel}
-              </p>
-              <div className="mt-2 space-y-2.5">
-                {providerResults.slice(0, expandProviders ? providerResults.length : NEARBY_PREVIEW).map(({ p, shops, km }) => (
-                  <ProviderCard key={p.id} provider={p} km={km} shops={shops} />
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">providers near you</p>
+                <span className="text-[12px] text-ink-mute lowercase">
+                  {providerResults.length} within {radius} km
+                </span>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                {providerResults.map(({ p, shops, km }) => (
+                  <ProviderCardCompact key={p.id} provider={p} km={km} shops={shops} />
                 ))}
               </div>
-              {providerResults.length > NEARBY_PREVIEW && (
-                <button
-                  type="button"
-                  onClick={() => setExpandProviders((v) => !v)}
-                  className="mt-3 w-full rounded-2xl border border-line py-2.5 text-[12px] font-semibold lowercase text-ink active:scale-[0.98] transition-transform"
-                >
-                  {expandProviders ? "show fewer providers" : `see all ${providerResults.length} providers`}
-                </button>
-              )}
             </section>
-
           )}
-
 
           {showMedspas && (
             <section className="mt-6">
-              <p className="brand-eyebrow">medspas near you</p>
-              <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-                {medspaResults.length} within {radius} km of {locLabel}
-              </p>
-              <div className="mt-2 space-y-2.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">medspas near you</p>
+                <span className="text-[12px] text-ink-mute lowercase">
+                  {medspaResults.length} within {radius} km
+                </span>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                 {medspaResults.map((s) => (
-                  <MedspaCard
+                  <MedspaCardCompact
                     key={s.id}
                     storefront={s}
                     km={s.km}
@@ -558,22 +542,26 @@ function SearchPage() {
             </section>
           )}
 
+
           {showTreatments && (
             <section className="mt-6">
-              <p className="brand-eyebrow">popular treatments</p>
-              <div className="mt-2 space-y-2">
-                {treatments.slice(0, 6).map((t) => (
-                  <TreatmentRow key={t.slug} treatment={t} />
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">popular treatments</p>
+                <Link
+                  to="/treatments"
+                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-hot lowercase"
+                >
+                  browse all <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                {treatments.slice(0, 8).map((t) => (
+                  <TreatmentCardCompact key={t.slug} treatment={t} />
                 ))}
               </div>
-              <Link
-                to="/treatments"
-                className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-semibold text-hot lowercase"
-              >
-                browse the full library <ArrowRight className="size-3.5" />
-              </Link>
             </section>
           )}
+
 
           {((showProviders && providerResults.length === 0) || (showMedspas && medspaResults.length === 0)) && (
             <div className="mt-6 rounded-2xl border border-line p-5 text-center">
@@ -596,35 +584,65 @@ function SearchPage() {
   );
 }
 
-function TreatmentRow({ treatment, via }: { treatment: SearchTreatment; via?: string }) {
-  return (
-    <Link
-      to="/treatment/$slug"
-      params={{ slug: treatment.slug }}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3"
-    >
+
+/** compact horizontal-rail card for treatments. */
+function TreatmentCardCompact({
+  treatment,
+  providerCount,
+  onClick,
+}: {
+  treatment: SearchTreatment;
+  providerCount?: number;
+  onClick?: () => void;
+}) {
+  const body = (
+    <>
       {treatment.hero_image_url ? (
         <img
           src={treatment.hero_image_url}
           alt={treatment.name}
           loading="lazy"
-          className="size-11 rounded-xl object-cover shrink-0"
+          className="size-12 rounded-xl object-cover"
         />
       ) : (
-        <span className="size-11 shrink-0 rounded-xl bg-mint grid place-items-center text-[13px] font-bold">
+        <span className="size-12 rounded-xl bg-mint grid place-items-center text-[13px] font-bold lowercase">
           {treatment.name.slice(0, 2).toLowerCase()}
         </span>
       )}
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-semibold lowercase truncate">{treatment.name}</span>
-        <span className="block text-[11.5px] text-ink-mute lowercase truncate">
-          {treatment.category || treatment.family}
-        </span>
-        {via && <span className="block text-[11px] text-hot lowercase">matched: {via}</span>}
-      </span>
-      {treatment.price_from !== null && (
-        <span className="shrink-0 text-[12px] font-semibold lowercase">from ${treatment.price_from}</span>
-      )}
+      <p className="mt-2.5 text-[14px] font-semibold lowercase leading-tight truncate">{treatment.name}</p>
+      <p className="text-[11px] text-ink-mute lowercase truncate">
+        {treatment.descriptor || treatment.category || treatment.family}
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        {providerCount !== undefined && (
+          <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[10px] lowercase">
+            {providerCount} provider{providerCount === 1 ? "" : "s"}
+          </span>
+        )}
+        {treatment.price_from !== null && (
+          <span className="text-[11px] font-semibold lowercase">from ${treatment.price_from}</span>
+        )}
+      </div>
+    </>
+  );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="shrink-0 w-[158px] rounded-[20px] border border-line bg-white p-3 text-left active:scale-[0.98] transition-transform"
+      >
+        {body}
+      </button>
+    );
+  }
+  return (
+    <Link
+      to="/treatment/$slug"
+      params={{ slug: treatment.slug }}
+      className="shrink-0 w-[158px] rounded-[20px] border border-line bg-white p-3 text-left active:scale-[0.98] transition-transform"
+    >
+      {body}
     </Link>
   );
 }
@@ -643,6 +661,7 @@ function MedspaCard({
   active: boolean;
   onSelect: () => void;
 }) {
+
   return (
     <div
       onClick={onSelect}
@@ -686,7 +705,63 @@ function MedspaCard({
   );
 }
 
-/** 260px cover card for the featured storefronts rail. */
+/** compact horizontal-rail card for medspas. */
+function MedspaCardCompact({
+  storefront,
+  km,
+  providers,
+  active,
+  onSelect,
+}: {
+  storefront: Storefront;
+  km: number;
+  providers: Provider[];
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      onClick={onSelect}
+      className={cn(
+        "shrink-0 w-[220px] rounded-[20px] border overflow-hidden bg-white",
+        active ? "border-hot" : "border-line",
+      )}
+    >
+      {storefront.hero_image_url ? (
+        <img
+          src={storefront.hero_image_url}
+          alt={`${storefront.name} interior`}
+          loading="lazy"
+          className="h-[110px] w-full object-cover"
+        />
+      ) : (
+        <div className="h-[110px] w-full bg-mint grid place-items-center">
+          <span className="brand-display text-[34px] text-ink lowercase">{storefront.name[0]}</span>
+        </div>
+      )}
+      <div className="p-3">
+        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1 truncate">
+          {storefront.name}
+          {storefront.claimed && <BadgeCheck className="size-3.5 text-hot shrink-0" />}
+        </p>
+        <p className="text-[11px] text-ink-mute lowercase mt-0.5 truncate">{storefront.tagline}</p>
+        <p className="mt-1.5 text-[11px] text-ink-soft lowercase inline-flex items-center gap-1">
+          <MapPin className="size-3 text-hot" />
+          {storefront.address_line}, {storefront.city} · {formatDistance(km)}
+        </p>
+        <div className="mt-2.5 flex items-center gap-2 border-t border-line pt-2">
+          {providers.slice(0, 3).map((p) => (
+            <Avatar key={p.id} name={p.name} url={p.avatar_url} size="size-7" />
+          ))}
+          <span className="text-[11px] text-ink-mute lowercase">
+            {providers.length} provider{providers.length === 1 ? "" : "s"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FeaturedStorefrontCard({
   storefront,
   providerCount,
@@ -750,47 +825,6 @@ function CardSkeleton() {
         <span className="block h-5 w-4/5 rounded-pill bg-muted animate-pulse" />
       </div>
     </div>
-  );
-}
-
-/** treatment result row: name, one line description, provider count. */
-function TreatmentResultRow({
-  treatment,
-  providerCount,
-  onSelect,
-}: {
-  treatment: SearchTreatment;
-  providerCount: number;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="w-full flex items-center gap-3 rounded-2xl border border-line bg-white p-3 text-left"
-    >
-      {treatment.hero_image_url ? (
-        <img
-          src={treatment.hero_image_url}
-          alt={treatment.name}
-          loading="lazy"
-          className="size-11 shrink-0 rounded-xl object-cover"
-        />
-      ) : (
-        <span className="size-11 shrink-0 rounded-xl bg-mint grid place-items-center text-[13px] font-bold lowercase">
-          {treatment.name.slice(0, 2).toLowerCase()}
-        </span>
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-semibold lowercase truncate">{treatment.name}</span>
-        <span className="block text-[11.5px] text-ink-mute lowercase truncate">
-          {treatment.descriptor || treatment.category || treatment.family}
-        </span>
-      </span>
-      <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[11px] lowercase">
-        {providerCount} provider{providerCount === 1 ? "" : "s"}
-      </span>
-    </button>
   );
 }
 
