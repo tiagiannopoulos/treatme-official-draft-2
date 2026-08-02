@@ -77,7 +77,13 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   const reviewed = storefront.review_count >= 3;
   const rows = hoursRows(storefront.hours);
   const today = todayKey();
-  const fullAddress = `${storefront.address_line}, ${storefront.city} ${storefront.postcode}`;
+  // some rows already carry the city and postcode inside address_line, so only add what is missing.
+  const line = storefront.address_line.trim().replace(/,\s*$/, "");
+  const lower = line.toLowerCase();
+  const extras = [storefront.city, storefront.postcode]
+    .filter((part) => part && !lower.includes(part.toLowerCase()))
+    .join(" ");
+  const fullAddress = extras ? `${line}, ${extras}` : line;
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(`${storefront.name} ${fullAddress}`)}`;
 
   const shownRoster = filterSlug

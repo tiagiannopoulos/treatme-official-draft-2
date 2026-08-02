@@ -51,6 +51,7 @@ const DAY_LABEL: Record<DayKey, string> = {
 /** no dashes in visible copy: any range separator becomes the word "to". */
 export function noDash(value: string): string {
   return value
+    .replace(/\s*&\s*/g, " and ")
     .replace(/(\S)\s*[-–—]\s*(\S)/g, "$1 to $2")
     .replace(/[-–—]+/g, " ")
     .replace(/\s{2,}/g, " ")
