@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { MapPin, Star } from "lucide-react";
 import { formatDistance, type Provider, type Storefront } from "@/lib/search-data";
 import { cn } from "@/lib/utils";
+import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 
 export function Avatar({
   name,
@@ -40,6 +41,7 @@ export function ProviderCard({
   shops: Array<Storefront & { is_primary: boolean }>;
 }) {
   const navigate = useNavigate();
+  const { openTreatment } = useTreatmentSheet();
   const nearest = shops[0] ?? provider.storefronts[0];
   const otherCount = Math.max(shops.length - 1, 0);
   const specialties = provider.treatments.slice(0, 3);
@@ -92,6 +94,19 @@ export function ProviderCard({
           {specialties.map((t) => (
             <span
               key={t.treatment_slug}
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                openTreatment(t.treatment_slug);
+              }}
+              onKeyDown={(e) => {
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                e.stopPropagation();
+                openTreatment(t.treatment_slug);
+              }}
               className="rounded-pill border border-[rgba(17,17,17,0.12)] px-2 py-0.5 text-[11px] lowercase"
             >
               {t.name}
@@ -131,6 +146,7 @@ export function ProviderCardCompact({
   km: number;
   shops: Array<Storefront & { is_primary: boolean }>;
 }) {
+  const navigate = useNavigate();
   const nearest = shops[0] ?? provider.storefronts[0];
   const otherCount = Math.max(shops.length - 1, 0);
   const reviewed = provider.review_count >= 3;
@@ -148,7 +164,22 @@ export function ProviderCardCompact({
         {Number.isFinite(km) && <span>{formatDistance(km)}</span>}
         {Number.isFinite(km) && nearest && <span className="text-ink/30">·</span>}
         {nearest && (
-          <span className="truncate">
+          <span
+            role="link"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate({ to: "/storefront/$id", params: { id: nearest.id } });
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              e.stopPropagation();
+              navigate({ to: "/storefront/$id", params: { id: nearest.id } });
+            }}
+            className="truncate underline decoration-ink/20"
+          >
             {nearest.name}
             {otherCount > 0 && <span className="text-ink/50"> +{otherCount}</span>}
           </span>
