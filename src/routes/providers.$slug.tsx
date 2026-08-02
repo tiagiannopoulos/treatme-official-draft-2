@@ -1,17 +1,21 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronLeft, MapPin, Star, BadgeCheck, Check } from "lucide-react";
+import { ChevronLeft, MapPin, Star, BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { ClientOnly } from "@tanstack/react-router";
-import { directoryQuery } from "@/lib/search-data";
+import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/lib/search-data";
 import {
   providerMediaQuery,
   providerReviewsQuery,
   elapsedLabel,
   reviewDate,
 } from "@/lib/provider-profile";
+import { providerFit, licenseLine } from "@/lib/provider-fit";
+import { usePatient } from "@/lib/patient-store";
+import { TreatmentSheet } from "@/components/treatme/TreatmentSheet";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/providers/$slug")({
   head: ({ params }) => {
@@ -59,6 +63,8 @@ function ProviderProfile() {
 
   const [bioOpen, setBioOpen] = useState(false);
   const [allReviews, setAllReviews] = useState(false);
+  const [sheetSlug, setSheetSlug] = useState<string | null>(null);
+  const { profile } = usePatient();
 
   const base = provider.storefronts[0] ?? null;
   const hasRating = provider.review_count >= 3;
@@ -78,7 +84,12 @@ function ProviderProfile() {
     `speaks ${langs}`,
   ].filter(Boolean);
 
+  const license = licenseLine(provider);
+  const fit = providerFit(provider, profile);
+  const away = base ? formatDistance(distanceKm(TORONTO_CENTROID, { lat: base.lat, lng: base.lng })) : null;
+
   const shownReviews = allReviews ? reviews : reviews.slice(0, 3);
+
 
   return (
     <div className="pb-36">
@@ -125,15 +136,48 @@ function ProviderProfile() {
                   new to treatme
                 </span>
               )}
-              {provider.verified && (
-                <span className="inline-flex items-center gap-1 text-hot">
-                  <BadgeCheck className="size-3.5" /> verified
-                </span>
-              )}
+              {away && <span className="text-ink-mute">{away} away</span>}
             </div>
           </div>
         </div>
+
+        {/* license verified against the public college registry. no unverified state. */}
+        {license && (
+          <p className="mt-4 inline-flex items-center gap-1.5 text-[12px] lowercase text-ink-soft">
+            <ShieldCheck className="size-4 text-hot shrink-0" />
+            {license}
+          </p>
+        )}
       </div>
+
+      {/* who this provider is right for */}
+      {fit.length > 0 && (
+        <section className="px-6 mt-7">
+          <p className="brand-eyebrow">who this provider is right for</p>
+          <ul className="mt-2 space-y-2">
+            {fit.map((f) => (
+              <li
+                key={f.id}
+                className={cn(
+                  "rounded-2xl px-3 py-2 text-[13px] lowercase leading-snug",
+                  f.tone === "match" && "bg-mint text-ink",
+                  f.tone === "conflict" && "border border-line text-ink-soft",
+                  f.tone === "neutral" && "bg-cream text-ink-soft",
+                )}
+              >
+                {f.tone === "match" && (
+                  <BadgeCheck className="mr-1.5 inline size-3.5 -mt-[2px] text-hot" />
+                )}
+                {f.label}
+                {f.tone === "match" && (
+                  <span className="ml-1 font-semibold">· matches your answers</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
 
       {/* about */}
       <section className="px-6 mt-7">
@@ -170,22 +214,26 @@ function ProviderProfile() {
         </ul>
       </section>
 
-      {/* treatments offered */}
+      {/* treatments offered. only treatments that exist in the treatments table. */}
       <section className="px-6 mt-7">
         <p className="brand-eyebrow">treatments offered</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {provider.treatments.map((t) => (
-            <Link
+            <button
               key={t.treatment_slug}
-              to="/search"
-              search={{ q: t.name }}
-              className="rounded-pill border border-line px-3 py-1.5 text-[13px] lowercase"
+              type="button"
+              onClick={() => setSheetSlug(t.treatment_slug)}
+              className="rounded-pill border border-line px-3 py-1.5 text-left text-[13px] lowercase"
             >
               {t.name}
-            </Link>
+              {t.price_from !== null && (
+                <span className="ml-1.5 text-hot">from ${t.price_from}</span>
+              )}
+            </button>
           ))}
         </div>
       </section>
+
 
       {/* before and afters */}
       {media.length > 0 && (
@@ -237,8 +285,26 @@ function ProviderProfile() {
               </Link>
             </div>
           </div>
+          {provider.storefronts.length > 1 && (
+            <div className="mt-2 space-y-1.5">
+              {provider.storefronts.slice(1).map((s) => (
+                <Link
+                  key={s.id}
+                  to="/storefront/$id"
+                  params={{ id: s.id }}
+                  className="flex items-center justify-between rounded-2xl border border-line px-3 py-2 text-[13px] lowercase"
+                >
+                  <span>{s.name}</span>
+                  <span className="text-ink-mute">
+                    {formatDistance(distanceKm(TORONTO_CENTROID, { lat: s.lat, lng: s.lng }))}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       )}
+
 
       {/* reviews */}
       <section className="px-6 mt-7">
@@ -291,6 +357,9 @@ function ProviderProfile() {
           book a consult
         </Link>
       </div>
+
+      {sheetSlug && <TreatmentSheet slug={sheetSlug} onClose={() => setSheetSlug(null)} />}
     </div>
   );
+
 }

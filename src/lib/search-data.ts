@@ -53,6 +53,7 @@ export interface Provider {
   verified: boolean;
   licensing_body: string;
   languages: string[];
+  specialties: string[];
   /** every storefront this human works at. a provider can work at more than one. */
   storefronts: Array<Storefront & { is_primary: boolean }>;
   treatments: ProviderTreatment[];
