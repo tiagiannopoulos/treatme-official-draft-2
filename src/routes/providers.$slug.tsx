@@ -136,15 +136,48 @@ function ProviderProfile() {
                   new to treatme
                 </span>
               )}
-              {provider.verified && (
-                <span className="inline-flex items-center gap-1 text-hot">
-                  <BadgeCheck className="size-3.5" /> verified
-                </span>
-              )}
+              {away && <span className="text-ink-mute">{away} away</span>}
             </div>
           </div>
         </div>
+
+        {/* license verified against the public college registry. no unverified state. */}
+        {license && (
+          <p className="mt-4 inline-flex items-center gap-1.5 text-[12px] lowercase text-ink-soft">
+            <ShieldCheck className="size-4 text-hot shrink-0" />
+            {license}
+          </p>
+        )}
       </div>
+
+      {/* who this provider is right for */}
+      {fit.length > 0 && (
+        <section className="px-6 mt-7">
+          <p className="brand-eyebrow">who this provider is right for</p>
+          <ul className="mt-2 space-y-2">
+            {fit.map((f) => (
+              <li
+                key={f.id}
+                className={cn(
+                  "rounded-2xl px-3 py-2 text-[13px] lowercase leading-snug",
+                  f.tone === "match" && "bg-mint text-ink",
+                  f.tone === "conflict" && "border border-line text-ink-soft",
+                  f.tone === "neutral" && "bg-cream text-ink-soft",
+                )}
+              >
+                {f.tone === "match" && (
+                  <BadgeCheck className="mr-1.5 inline size-3.5 -mt-[2px] text-hot" />
+                )}
+                {f.label}
+                {f.tone === "match" && (
+                  <span className="ml-1 font-semibold">· matches your answers</span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
 
       {/* about */}
       <section className="px-6 mt-7">
