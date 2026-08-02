@@ -18,6 +18,8 @@ export const INK = "#111111";
 export function clean(input: string | null | undefined): string {
   if (!input) return "";
   return input
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/_+/g, " ")
     .replace(/\s*&\s*/g, " and ")
     .replace(/(\d)\s*[-–—]\s*(\d)/g, "$1 to $2")
     .replace(/[-–—]+/g, " ")
