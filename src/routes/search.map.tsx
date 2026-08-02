@@ -57,7 +57,9 @@ function MapView() {
             onSelect={setSelected}
             providerCounts={providerCounts}
             height="h-full"
+            gestureHandling="greedy"
             className="rounded-none border-0"
+
           />
         </ClientOnly>
       </div>

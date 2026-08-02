@@ -41,14 +41,24 @@ function TreatmentStoryInner({ slug, onClose }: { slug: string; onClose: () => v
     queryFn: async () => {
       const { data, error } = await supabase
         .from("treatment_story_slides")
-        .select("id, slide_order, slide_type, headline, body, detail_chips, media_url, media_overlay")
+        .select("id, slide_index, kind, headline, body, overlay, image_url")
         .eq("treatment_slug", slug)
-        .order("slide_order", { ascending: true });
+        .order("slide_index", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as DbSlide[];
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        slide_order: row.slide_index,
+        slide_type: row.kind as StorySlideType,
+        headline: row.headline ?? "",
+        body: row.body,
+        detail_chips: [],
+        media_url: row.image_url,
+        media_overlay: (row.overlay ?? "cream_scrim") as StoryOverlay,
+      })) satisfies DbSlide[];
     },
     staleTime: 5 * 60_000,
   });
+
 
   const { data: beforeAfters = [] } = useQuery({
     queryKey: ["treatment-before-afters", slug],

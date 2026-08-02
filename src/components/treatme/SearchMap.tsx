@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsKey } from "@/lib/map.functions";
 import type { LatLng, Storefront } from "@/lib/search-data";
+
 
 const HOT = "#FF1F87";
 const INK = "#111111";
@@ -37,6 +39,8 @@ interface Props {
   height?: string;
   /** shows the expand button that pushes to the full screen map. */
   expandable?: boolean;
+  /** cooperative keeps the page scrolling inside the small card; greedy suits full screen. */
+  gestureHandling?: "greedy" | "cooperative";
   className?: string;
 }
 
@@ -49,15 +53,19 @@ export function SearchMap({
   radiusKm,
   height = "h-[220px]",
   expandable = false,
+  gestureHandling = "cooperative",
   className,
 }: Props) {
+
   const { data } = useQuery(keyQuery);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
+
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
@@ -85,7 +93,7 @@ export function SearchMap({
           disableDefaultUI: true,
           zoomControl: true,
           clickableIcons: false,
-          gestureHandling: "greedy",
+          gestureHandling,
           styles: MAP_STYLE,
           mapTypeId: "roadmap",
         });
@@ -111,11 +119,14 @@ export function SearchMap({
       cancelled = true;
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      clustererRef.current?.clearMarkers();
+      clustererRef.current?.setMap(null);
+      clustererRef.current = null;
       circleRef.current?.setMap(null);
       circleRef.current = null;
       mapRef.current = null;
     };
-  }, [browserKey, trackingId, onSelect]);
+  }, [browserKey, trackingId, onSelect, gestureHandling]);
 
   // remove google maps error overlay if the key is restricted and we fall back.
   useEffect(() => {
@@ -140,6 +151,7 @@ export function SearchMap({
   useEffect(() => {
     if (!ready || !mapRef.current) return;
 
+    clustererRef.current?.clearMarkers();
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
 
@@ -148,7 +160,6 @@ export function SearchMap({
     storefronts.forEach((s) => {
       const marker = new google.maps.Marker({
         position: { lat: s.lat, lng: s.lng },
-        map,
         icon: createPinIcon(false),
         title: s.name,
       });
@@ -159,7 +170,34 @@ export function SearchMap({
       markers.push(marker);
     });
     markersRef.current = markers;
+
+    // cluster pins so the gta reads clean when zoomed out.
+    if (!clustererRef.current) {
+      clustererRef.current = new MarkerClusterer({
+        map,
+        renderer: {
+          render: ({ count, position }) =>
+            new google.maps.Marker({
+              position,
+              icon: createClusterIcon(count),
+              label: {
+                text: String(count),
+                color: CREAM,
+                fontSize: "12px",
+                fontWeight: "600",
+              },
+              zIndex: 200,
+            }),
+        },
+      });
+    }
+    clustererRef.current.addMarkers(markers);
+
+    return () => {
+      clustererRef.current?.clearMarkers();
+    };
   }, [storefronts, ready, onSelect]);
+
 
   // update marker icons when selection changes.
   useEffect(() => {
@@ -317,6 +355,18 @@ export function SearchMap({
       <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">map loading</p>
     </div>
   );
+}
+
+/** hot pink cluster bubble so clusters stay on brand. */
+function createClusterIcon(count: number): google.maps.Icon {
+  const size = count > 50 ? 52 : count > 20 ? 46 : 40;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="${HOT}" fill-opacity="0.92" stroke="${CREAM}" stroke-width="2.5"/></svg>`;
+  return {
+    url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+    scaledSize: new google.maps.Size(size, size),
+    anchor: new google.maps.Point(size / 2, size / 2),
+    labelOrigin: new google.maps.Point(20, 20),
+  };
 }
 
 function createPinIcon(active: boolean): google.maps.Icon {
