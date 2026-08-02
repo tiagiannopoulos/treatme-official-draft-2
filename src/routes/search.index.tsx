@@ -157,23 +157,11 @@ function SearchPage() {
     [data.storefronts],
   );
 
-  /** reveal another page of providers when the sentinel scrolls into view. */
+  /** reset provider preview when filters change. */
   useEffect(() => {
-    const el = loadMoreRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisibleProviders((n) => n + PAGE_SIZE);
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [q, scope, radius, center, visibleProviders]);
-
-  useEffect(() => {
-    setVisibleProviders(PAGE_SIZE);
+    setExpandProviders(false);
   }, [q, radius, center]);
+
 
 
   const providerResults = useMemo(() => {
