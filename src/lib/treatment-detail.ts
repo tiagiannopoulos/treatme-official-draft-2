@@ -65,7 +65,10 @@ export const treatmentDetailQuery = (slug: string) =>
         price_from: t.price_from === null ? null : Number(t.price_from),
         session_minutes: t.session_minutes ?? null,
         downtime_days: t.downtime_days ?? null,
-        improves: (t.improves ?? []).filter(Boolean).map((v: string) => noDash(v)),
+        improves: Array.from(
+          new Set((t.improves ?? []).filter(Boolean).map((v: string) => noDash(v))),
+        ),
+
         what_it_is: t.what_it_is ? noDash(t.what_it_is) : null,
         who_its_for: (t.who_its_for ?? []).filter(Boolean).map((v: string) => noDash(v)),
         sensation: t.sensation ? noDash(t.sensation) : null,
