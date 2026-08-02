@@ -201,7 +201,7 @@ function StoryRail() {
           <PosterCard
             key={t.slug}
             name={t.name}
-            posterUrl={t.poster_url}
+            posterUrl={null}
             accentColor={t.accent_color}
             hasStory
             meta={t.downtime_label}
