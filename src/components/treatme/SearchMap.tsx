@@ -63,7 +63,9 @@ export function SearchMap({
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
+  const clustererRef = useRef<MarkerClusterer | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
+
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
