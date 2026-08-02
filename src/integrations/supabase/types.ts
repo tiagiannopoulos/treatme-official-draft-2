@@ -379,6 +379,7 @@ export type Database = {
           claimed: boolean
           created_at: string
           featured: boolean
+          google_place_id: string | null
           hero_image_url: string | null
           id: string
           lat: number
@@ -398,6 +399,7 @@ export type Database = {
           claimed?: boolean
           created_at?: string
           featured?: boolean
+          google_place_id?: string | null
           hero_image_url?: string | null
           id?: string
           lat: number
@@ -417,6 +419,7 @@ export type Database = {
           claimed?: boolean
           created_at?: string
           featured?: boolean
+          google_place_id?: string | null
           hero_image_url?: string | null
           id?: string
           lat?: number

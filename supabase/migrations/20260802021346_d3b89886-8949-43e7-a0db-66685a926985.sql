@@ -1,0 +1,2 @@
+ALTER TABLE public.storefronts ADD COLUMN IF NOT EXISTS google_place_id text;
+CREATE UNIQUE INDEX IF NOT EXISTS storefronts_google_place_id_key ON public.storefronts (google_place_id) WHERE google_place_id IS NOT NULL;
