@@ -1,17 +1,21 @@
 import { createFileRoute, Link, notFound, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ChevronLeft, MapPin, Star, BadgeCheck, Check } from "lucide-react";
+import { ChevronLeft, MapPin, Star, BadgeCheck, Check, ShieldCheck } from "lucide-react";
 import { ClientOnly } from "@tanstack/react-router";
-import { directoryQuery } from "@/lib/search-data";
+import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/lib/search-data";
 import {
   providerMediaQuery,
   providerReviewsQuery,
   elapsedLabel,
   reviewDate,
 } from "@/lib/provider-profile";
+import { providerFit, licenseLine } from "@/lib/provider-fit";
+import { usePatient } from "@/lib/patient-store";
+import { TreatmentSheet } from "@/components/treatme/TreatmentSheet";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/providers/$slug")({
   head: ({ params }) => {
