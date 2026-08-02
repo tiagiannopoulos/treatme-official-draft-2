@@ -1,8 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Sparkles, Lock, BookOpen, TrendingUp, ArrowRight } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
+import { PosterCard } from "@/components/treatme/PosterCard";
+import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
+import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -77,6 +81,9 @@ function MenuPage() {
         tone="mint"
         icon={<TrendingUp className="size-[18px] text-ink" strokeWidth={2.2} />}
       />
+
+      {/* 3b. learn about treatments */}
+      <StoryRail />
 
       {/* 4. Education */}
       <section className="px-6">
@@ -174,5 +181,39 @@ function EduCard({ title, sub }: { title: string; sub: string }) {
       <p className="font-bold text-[13px] tracking-tight leading-tight lowercase">{title}</p>
       <p className="text-[11px] text-ink-mute mt-1 leading-snug">{sub}</p>
     </div>
+  );
+}
+
+/** horizontal poster rail. only treatments with a real story appear here. */
+function StoryRail() {
+  const navigate = useNavigate();
+  const { openSheet } = useTreatmentSheet();
+  const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
+  const posters = catalog.filter((t) => t.has_story).slice(0, 10);
+  if (posters.length === 0) return null;
+
+  return (
+    <section>
+      <div className="px-6">
+        <p className="brand-eyebrow">learn about treatments</p>
+        <p className="mt-1 text-[13px] lowercase text-ink-mute">a minute each, no pressure.</p>
+      </div>
+      <div className="mt-4 flex gap-3 overflow-x-auto px-6 no-scrollbar">
+        {posters.map((t) => (
+          <PosterCard
+            key={t.slug}
+            name={t.name}
+            posterUrl={t.poster_url}
+            accentColor={t.accent_color}
+            hasStory
+            meta={t.downtime_label}
+            className="w-[150px] shrink-0"
+            onPress={() =>
+              t.has_story ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } }) : openSheet(t.slug)
+            }
+          />
+        ))}
+      </div>
+    </section>
   );
 }
