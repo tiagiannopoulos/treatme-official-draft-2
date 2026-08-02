@@ -3,6 +3,8 @@ import { useScan } from "@/lib/scan-store";
 import { PillButton } from "@/components/treatme/PillButton";
 import { Link } from "@tanstack/react-router";
 import { SavedTreatments } from "@/components/treatme/profile/SavedTreatments";
+import { TreatmentJourney } from "@/components/treatme/profile/TreatmentJourney";
+import { UpcomingAppointments } from "@/components/treatme/profile/UpcomingAppointments";
 import { TxLog } from "@/components/treatme/profile/TxLog";
 import { AboutYourSkin } from "@/components/treatme/profile/AboutYourSkin";
 
@@ -34,6 +36,8 @@ function ProfilePage() {
         <PillButton fullWidth variant="outline" onClick={reset}>clear session</PillButton>
       </div>
       <SavedTreatments />
+      <TreatmentJourney />
+      <UpcomingAppointments />
       <TxLog />
       <AboutYourSkin />
     </div>
