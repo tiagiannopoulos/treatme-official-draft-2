@@ -1,5 +1,5 @@
 import { ClientOnly, createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Search as SearchIcon,
@@ -31,8 +31,6 @@ import {
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCard } from "@/components/treatme/ProviderCard";
-import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
-import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/search/")({
@@ -77,8 +75,7 @@ const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 /** how many providers to reveal in the nearby preview before asking to expand. */
 const NEARBY_PREVIEW = 3;
 
-/** how many treatments to surface as quick-entry chips in the explore state. */
-const CHIP_COUNT = 12;
+
 
 
 
@@ -86,7 +83,6 @@ const CHIP_COUNT = 12;
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
-  const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
 
   const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
@@ -435,35 +431,6 @@ function SearchPage() {
             </ClientOnly>
           </div>
 
-          {/* b) treatment identity rail */}
-          <section className="mt-6">
-            <div className="-mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
-              {(catalog.length ? catalog.slice(0, CHIP_COUNT) : []).map((t) => (
-                <Link
-                  key={t.slug}
-                  to="/treatment/$slug"
-                  params={{ slug: t.slug }}
-                  className="shrink-0"
-                >
-                  <TreatmentIcon name={t.name} iconUrl={t.icon_url} accentColor={t.accent_color} />
-                </Link>
-              ))}
-              {catalog.length === 0 &&
-                treatments.slice(0, CHIP_COUNT).map((t) => (
-                  <button
-                    key={t.slug}
-                    type="button"
-                    onClick={() => {
-                      setQ(t.name);
-                      setScope("providers");
-                    }}
-                    className="shrink-0 rounded-pill bg-butter px-3.5 py-2 text-[14px] lowercase text-ink whitespace-nowrap"
-                  >
-                    {t.name}
-                  </button>
-                ))}
-            </div>
-          </section>
 
 
           <h1 className="brand-display text-[30px] leading-[0.95] mt-6">
