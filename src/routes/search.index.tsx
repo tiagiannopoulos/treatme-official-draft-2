@@ -6,8 +6,6 @@ import {
   X,
   MapPin,
   Star,
-  Navigation,
-  Loader2,
   ArrowRight,
   BadgeCheck,
 } from "lucide-react";
@@ -91,7 +89,6 @@ function SearchPage() {
   const [radius, setRadius] = useState<number>(10);
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
-  const [locating, setLocating] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -107,20 +104,6 @@ function SearchPage() {
   const needle = dq.trim();
   /** typing ahead of the debounce -> show skeletons, never a spinner. */
   const pending = searching && q.trim() !== needle;
-
-  const useMyLocation = () => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocLabel("your location");
-        setLocating(false);
-      },
-      () => setLocating(false),
-      { enableHighAccuracy: false, timeout: 8000 },
-    );
-  };
 
   const storefrontsInRange = useMemo(
     () =>
