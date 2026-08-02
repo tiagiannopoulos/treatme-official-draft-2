@@ -828,47 +828,6 @@ function CardSkeleton() {
   );
 }
 
-/** treatment result row: name, one line description, provider count. */
-function TreatmentResultRow({
-  treatment,
-  providerCount,
-  onSelect,
-}: {
-  treatment: SearchTreatment;
-  providerCount: number;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="w-full flex items-center gap-3 rounded-2xl border border-line bg-white p-3 text-left"
-    >
-      {treatment.hero_image_url ? (
-        <img
-          src={treatment.hero_image_url}
-          alt={treatment.name}
-          loading="lazy"
-          className="size-11 shrink-0 rounded-xl object-cover"
-        />
-      ) : (
-        <span className="size-11 shrink-0 rounded-xl bg-mint grid place-items-center text-[13px] font-bold lowercase">
-          {treatment.name.slice(0, 2).toLowerCase()}
-        </span>
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-semibold lowercase truncate">{treatment.name}</span>
-        <span className="block text-[11.5px] text-ink-mute lowercase truncate">
-          {treatment.descriptor || treatment.category || treatment.family}
-        </span>
-      </span>
-      <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[11px] lowercase">
-        {providerCount} provider{providerCount === 1 ? "" : "s"}
-      </span>
-    </button>
-  );
-}
-
 /** shown when the debounced query returns nothing. */
 function EmptyResults({ onClear }: { onClear: () => void }) {
   return (
