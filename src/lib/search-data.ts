@@ -137,7 +137,12 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
     statsRes.error;
   if (err) throw new Error(err.message);
 
-  const storefronts = (storefrontsRes.data ?? []) as unknown as Storefront[];
+  const storefronts = ((storefrontsRes.data ?? []) as unknown as Storefront[]).map((s) => ({
+    ...s,
+    // brand rule: no dash characters in visible copy.
+    name: s.name ? s.name.replace(/[\u2010-\u2015-]/g, " ").replace(/\s+/g, " ").trim() : s.name,
+  }));
+
   const storeById = new Map(storefronts.map((s) => [s.id, s]));
   const treatmentBySlug = new Map(
     (treatmentsRes.data ?? []).map((t) => [t.slug, t as { slug: string; name: string; category: string }]),
