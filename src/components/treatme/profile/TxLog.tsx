@@ -49,6 +49,8 @@ function monthYear(iso: string) {
 }
 
 async function fetchLog(): Promise<LogEntry[]> {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) return [];
   const { data, error } = await supabase
     .from("treatment_log")
     .select(
