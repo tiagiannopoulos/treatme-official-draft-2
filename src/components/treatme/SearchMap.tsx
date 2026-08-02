@@ -146,6 +146,7 @@ export function SearchMap({
   useEffect(() => {
     if (!ready || !mapRef.current) return;
 
+    clustererRef.current?.clearMarkers();
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
 
@@ -154,7 +155,6 @@ export function SearchMap({
     storefronts.forEach((s) => {
       const marker = new google.maps.Marker({
         position: { lat: s.lat, lng: s.lng },
-        map,
         icon: createPinIcon(false),
         title: s.name,
       });
@@ -165,7 +165,34 @@ export function SearchMap({
       markers.push(marker);
     });
     markersRef.current = markers;
+
+    // cluster pins so the gta reads clean when zoomed out.
+    if (!clustererRef.current) {
+      clustererRef.current = new MarkerClusterer({
+        map,
+        renderer: {
+          render: ({ count, position }) =>
+            new google.maps.Marker({
+              position,
+              icon: createClusterIcon(count),
+              label: {
+                text: String(count),
+                color: CREAM,
+                fontSize: "12px",
+                fontWeight: "600",
+              },
+              zIndex: 200,
+            }),
+        },
+      });
+    }
+    clustererRef.current.addMarkers(markers);
+
+    return () => {
+      clustererRef.current?.clearMarkers();
+    };
   }, [storefronts, ready, onSelect]);
+
 
   // update marker icons when selection changes.
   useEffect(() => {
