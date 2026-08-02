@@ -481,9 +481,15 @@ export type Database = {
           claimed: boolean
           created_at: string
           credentials: string
+          devices: string[]
+          fitzpatrick_max: number | null
+          fitzpatrick_min: number | null
           id: string
           is_seed_data: boolean
           languages: string[]
+          license_number: string | null
+          license_verified: boolean
+          license_verified_at: string | null
           licensing_body: string
           name: string
           owner_user_id: string | null
@@ -492,6 +498,7 @@ export type Database = {
           slug: string
           specialties: string[]
           title: string
+          treats: string[]
           updated_at: string
           verified: boolean
           years_experience: number
@@ -502,9 +509,15 @@ export type Database = {
           claimed?: boolean
           created_at?: string
           credentials?: string
+          devices?: string[]
+          fitzpatrick_max?: number | null
+          fitzpatrick_min?: number | null
           id?: string
           is_seed_data?: boolean
           languages?: string[]
+          license_number?: string | null
+          license_verified?: boolean
+          license_verified_at?: string | null
           licensing_body?: string
           name: string
           owner_user_id?: string | null
@@ -513,6 +526,7 @@ export type Database = {
           slug: string
           specialties?: string[]
           title?: string
+          treats?: string[]
           updated_at?: string
           verified?: boolean
           years_experience?: number
@@ -523,9 +537,15 @@ export type Database = {
           claimed?: boolean
           created_at?: string
           credentials?: string
+          devices?: string[]
+          fitzpatrick_max?: number | null
+          fitzpatrick_min?: number | null
           id?: string
           is_seed_data?: boolean
           languages?: string[]
+          license_number?: string | null
+          license_verified?: boolean
+          license_verified_at?: string | null
           licensing_body?: string
           name?: string
           owner_user_id?: string | null
@@ -534,6 +554,7 @@ export type Database = {
           slug?: string
           specialties?: string[]
           title?: string
+          treats?: string[]
           updated_at?: string
           verified?: boolean
           years_experience?: number
@@ -709,6 +730,30 @@ export type Database = {
           },
         ]
       }
+      treatment_faqs: {
+        Row: {
+          answer: string
+          id: string
+          question: string
+          sort_order: number
+          treatment_slug: string
+        }
+        Insert: {
+          answer: string
+          id?: string
+          question: string
+          sort_order: number
+          treatment_slug: string
+        }
+        Update: {
+          answer?: string
+          id?: string
+          question?: string
+          sort_order?: number
+          treatment_slug?: string
+        }
+        Relationships: []
+      }
       treatment_log: {
         Row: {
           amount: number | null
@@ -848,6 +893,7 @@ export type Database = {
           created_at: string
           descriptor: string
           downtime: string
+          downtime_days: number | null
           downtime_label: string | null
           family: string
           group: Database["public"]["Enums"]["treatment_group"] | null
@@ -867,12 +913,15 @@ export type Database = {
           rec_mode: string
           science: string
           search_synonyms: string[]
+          sensation: string | null
+          session_minutes: number | null
           short_description: string
           slug: string
           sort_order: number
           updated_at: string
           what_it_is: string
           what_to_expect: string
+          who_its_for: string[] | null
         }
         Insert: {
           accent_color?: string | null
@@ -884,6 +933,7 @@ export type Database = {
           created_at?: string
           descriptor?: string
           downtime?: string
+          downtime_days?: number | null
           downtime_label?: string | null
           family?: string
           group?: Database["public"]["Enums"]["treatment_group"] | null
@@ -903,12 +953,15 @@ export type Database = {
           rec_mode?: string
           science?: string
           search_synonyms?: string[]
+          sensation?: string | null
+          session_minutes?: number | null
           short_description?: string
           slug: string
           sort_order?: number
           updated_at?: string
           what_it_is?: string
           what_to_expect?: string
+          who_its_for?: string[] | null
         }
         Update: {
           accent_color?: string | null
@@ -920,6 +973,7 @@ export type Database = {
           created_at?: string
           descriptor?: string
           downtime?: string
+          downtime_days?: number | null
           downtime_label?: string | null
           family?: string
           group?: Database["public"]["Enums"]["treatment_group"] | null
@@ -939,12 +993,15 @@ export type Database = {
           rec_mode?: string
           science?: string
           search_synonyms?: string[]
+          sensation?: string | null
+          session_minutes?: number | null
           short_description?: string
           slug?: string
           sort_order?: number
           updated_at?: string
           what_it_is?: string
           what_to_expect?: string
+          who_its_for?: string[] | null
         }
         Relationships: []
       }
