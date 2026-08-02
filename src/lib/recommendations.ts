@@ -45,8 +45,9 @@ function rank(rows: Row[], keys: string[], limit: number): Recommendation[] {
       );
       return {
         slug: r.slug,
-        name: r.name,
-        category: r.category,
+        name: displayTreatmentName(r.name, r.slug),
+        category: displayTreatmentCategory(r.category, r.slug),
+
         price_from: Number(r.price_from),
         hero_image_url: r.hero_image_url,
         matchedConcerns,
