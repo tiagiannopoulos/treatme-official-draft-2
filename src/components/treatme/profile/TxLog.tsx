@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, NotebookPen, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { BUTTER, INK } from "@/lib/treatment-catalog";
+import { INK } from "@/lib/treatment-catalog";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 
 interface LogMedia {
