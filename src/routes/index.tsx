@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Sparkles, Lock, BookOpen, TrendingUp, ArrowRight } from "lucide-react";
-import { TREATMENTS } from "@/lib/treatments-data";
+import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
 
 export const Route = createFileRoute("/")({
@@ -10,12 +11,24 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "your tx, matched. scan your skin, find verified providers nearby." },
     ],
   }),
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(searchTreatmentsQuery);
+  },
+  errorComponent: ({ error }) => (
+    <div className="px-6 pt-10" role="alert">
+      <h1 className="brand-display text-[26px]">couldn't load treatments.</h1>
+      <p className="text-[13px] text-ink-mute mt-2">{error.message}</p>
+    </div>
+  ),
+  notFoundComponent: () => <div className="px-6 pt-10">nothing here.</div>,
   component: MenuPage,
 });
 
 function MenuPage() {
-  const forYou = TREATMENTS.slice(0, 4);
-  const trending = TREATMENTS.slice(1, 5);
+  const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+  const forYou = treatments.slice(0, 4);
+  const trending = treatments.slice(4, 8);
+
 
   return (
     <div className="pt-5 pb-4 space-y-10">
@@ -95,7 +108,7 @@ function TreatmentRail({
   eyebrow: string;
   title: string;
   sub: string;
-  items: typeof TREATMENTS;
+  items: SearchTreatment[];
   tone: "butter" | "mint" | "bubblegum";
   icon?: React.ReactNode;
 }) {
@@ -125,7 +138,7 @@ function TreatmentRail({
   );
 }
 
-function StoryCard({ t, bg }: { t: (typeof TREATMENTS)[number]; bg: string }) {
+function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
   const { open } = useTreatmentStory();
   return (
     <button
@@ -133,17 +146,24 @@ function StoryCard({ t, bg }: { t: (typeof TREATMENTS)[number]; bg: string }) {
       onClick={() => open(t.slug)}
       className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden text-left"
     >
-      <div className={`h-28 ${bg} grid place-items-center`}>
-        <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+      <div className={`h-28 ${bg} grid place-items-center overflow-hidden`}>
+        {t.hero_image_url ? (
+          <img src={t.hero_image_url} alt="" loading="lazy" className="size-full object-cover" />
+        ) : (
+          <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+        )}
       </div>
       <div className="p-3">
         <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
-        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category}</p>
-        <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${t.priceFrom}</p>
+        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category || t.family}</p>
+        {t.price_from !== null && (
+          <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${Math.round(t.price_from)}</p>
+        )}
       </div>
     </button>
   );
 }
+
 
 function EduCard({ title, sub }: { title: string; sub: string }) {
   return (

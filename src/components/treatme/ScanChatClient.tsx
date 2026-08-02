@@ -68,7 +68,7 @@ export function ScanChatClient() {
           {messages.length === 0 && (
             <ConversationEmptyState
               title="ask anything."
-              description={analysis ? "i've got your scan in mind. ask about treatments, what they improve, where to start." : "ask about treatments — botox, fillers, lasers, peels, hydrafacials."}
+              description={analysis ? "i've got your scan in mind. ask about treatments, what they improve, where to start." : "ask about treatments — neuromodulators, fillers, lasers, peels, facials."}
             />
           )}
 

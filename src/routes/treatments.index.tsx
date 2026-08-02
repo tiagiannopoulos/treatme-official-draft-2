@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
+import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
 
@@ -70,10 +72,15 @@ const libraryQuery = queryOptions({
       .order("sort_order", { ascending: true })
       .returns<LibraryRow[]>();
     if (error) throw error;
-    return data ?? [];
+    return (data ?? []).map((t) => ({
+      ...t,
+      name: displayTreatmentName(t.name, t.slug),
+      category: displayTreatmentCategory(t.category, t.slug),
+    }));
   },
   staleTime: 5 * 60_000,
 });
+
 
 function norm(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
@@ -280,9 +287,10 @@ function CoverCard({ t, alias }: { t: LibraryRow; alias: string | null }) {
         )}
         {alias && (
           <span className="absolute top-2 left-2 right-2 rounded-full bg-hot text-white px-2 py-1 text-[10px] font-bold lowercase truncate">
-            matched: {alias}
+            matched your search
           </span>
         )}
+
       </div>
       <div className="p-3">
         <p className="font-bold text-[14px] tracking-tight leading-tight lowercase line-clamp-2">{t.name}</p>

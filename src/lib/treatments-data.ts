@@ -28,7 +28,7 @@ const IMG = (id: string) =>
 export const TREATMENTS: Treatment[] = [
   {
     slug: "hydrafacial",
-    name: "hydrafacial",
+    name: "hydradermabrasion facial",
     category: "deep cleansing & hydration",
     group: "skin",
     improves: ["hydration", "pores", "texture", "dullness"],
@@ -44,7 +44,7 @@ export const TREATMENTS: Treatment[] = [
   },
   {
     slug: "botox",
-    name: "neuromodulator (botox / dysport)",
+    name: "neuromodulators",
     category: "fine lines & wrinkles",
     group: "injectables",
     improves: ["fineLines", "wrinkles"],
@@ -171,7 +171,7 @@ export const TREATMENTS: Treatment[] = [
   },
   {
     slug: "skin-booster",
-    name: "skin booster (profhilo / volite)",
+    name: "skin booster",
     category: "deep hydration",
     group: "injectables",
     improves: ["hydration", "fineLines", "texture", "volumeLoss"],

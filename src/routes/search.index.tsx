@@ -73,19 +73,9 @@ const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 /** how many nearby providers to reveal per infinite-scroll page. */
 const PAGE_SIZE = 10;
 
-/** quick-entry chips for the explore state. tapping one seeds the search bar. */
-const TREATMENT_CHIPS = [
-  "botox",
-  "lip filler",
-  "cheek filler",
-  "morpheus8",
-  "hydrafacial",
-  "laser hair removal",
-  "chemical peel",
-  "microneedling",
-  "prp",
-  "skin boosters",
-];
+/** how many treatments to surface as quick-entry chips in the explore state. */
+const CHIP_COUNT = 12;
+
 
 
 function SearchPage() {
@@ -449,19 +439,20 @@ function SearchPage() {
           <section className="mt-6">
             <p className="brand-eyebrow">explore treatments</p>
             <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
-              {TREATMENT_CHIPS.map((chip) => (
+              {treatments.slice(0, CHIP_COUNT).map((t) => (
                 <button
-                  key={chip}
+                  key={t.slug}
                   type="button"
                   onClick={() => {
-                    setQ(chip);
+                    setQ(t.name);
                     setScope("providers");
                   }}
-                  className="shrink-0 rounded-pill bg-butter text-ink px-3.5 py-2 text-[14px] lowercase"
+                  className="shrink-0 rounded-pill bg-butter text-ink px-3.5 py-2 text-[14px] lowercase whitespace-nowrap"
                 >
-                  {chip}
+                  {t.name}
                 </button>
               ))}
+
             </div>
           </section>
 

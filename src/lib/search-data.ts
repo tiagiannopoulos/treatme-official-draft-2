@@ -1,5 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+
 
 export interface Storefront {
   id: string;
@@ -144,10 +146,11 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
         return {
           treatment_slug: t.treatment_slug,
           price_from: t.price_from,
-          name: meta?.name ?? t.treatment_slug.replace(/-/g, " "),
-          category: meta?.category ?? "",
+          name: displayTreatmentName(meta?.name ?? t.treatment_slug.replace(/-/g, " "), t.treatment_slug),
+          category: displayTreatmentCategory(meta?.category ?? "", t.treatment_slug),
         };
       })
+
       .sort((a, b) => a.name.localeCompare(b.name));
 
     return {
@@ -206,13 +209,13 @@ export const searchTreatmentsQuery = queryOptions({
   queryFn: async (): Promise<SearchTreatment[]> => {
     const { data, error } = await supabase
       .from("treatments")
-      .select("slug, name, category, family, price_from, hero_image_url, aliases, descriptor")
+      .select("slug, name, category, family, price_from, hero_image_url, aliases, descriptor, sort_order")
       .order("sort_order");
     if (error) throw new Error(error.message);
     return (data ?? []).map((t) => ({
       slug: t.slug,
-      name: t.name,
-      category: t.category ?? "",
+      name: displayTreatmentName(t.name, t.slug),
+      category: displayTreatmentCategory(t.category, t.slug),
       family: t.family ?? "",
       price_from: t.price_from === null ? null : Number(t.price_from),
       hero_image_url: t.hero_image_url ?? null,
@@ -222,6 +225,7 @@ export const searchTreatmentsQuery = queryOptions({
   },
   staleTime: 5 * 60_000,
 });
+
 
 /** name first, then alias. returns the alias that matched so the ui can show "matched: morpheus8". */
 export function matchTreatment(t: SearchTreatment, q: string): { hit: boolean; via?: string } {
