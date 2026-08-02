@@ -285,8 +285,26 @@ function ProviderProfile() {
               </Link>
             </div>
           </div>
+          {provider.storefronts.length > 1 && (
+            <div className="mt-2 space-y-1.5">
+              {provider.storefronts.slice(1).map((s) => (
+                <Link
+                  key={s.id}
+                  to="/storefront/$id"
+                  params={{ id: s.id }}
+                  className="flex items-center justify-between rounded-2xl border border-line px-3 py-2 text-[13px] lowercase"
+                >
+                  <span>{s.name}</span>
+                  <span className="text-ink-mute">
+                    {formatDistance(distanceKm(TORONTO_CENTROID, { lat: s.lat, lng: s.lng }))}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       )}
+
 
       {/* reviews */}
       <section className="px-6 mt-7">
