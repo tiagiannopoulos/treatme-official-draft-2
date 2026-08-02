@@ -448,8 +448,7 @@ function SearchPage() {
 
           {/* b) treatment identity rail */}
           <section className="mt-6">
-            <p className="brand-eyebrow">explore treatments</p>
-            <div className="mt-3 -mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
+            <div className="-mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
               {(catalog.length ? catalog.slice(0, CHIP_COUNT) : []).map((t) => (
                 <Link
                   key={t.slug}
