@@ -18,6 +18,21 @@ export interface Storefront {
   review_count: number;
   featured: boolean;
   claimed: boolean;
+  google_place_id: string | null;
+  /** clinic detail fields. arrays default to empty, text fields may be null. */
+  cover_url: string | null;
+  neighbourhood: string | null;
+  phone: string | null;
+  hours: unknown;
+  parking: string | null;
+  transit_note: string | null;
+  accessibility: string[];
+  devices: string[];
+  product_lines: string[];
+  peel_depths: string[];
+  cancellation_policy: string | null;
+  deposit_policy: string | null;
+  late_policy: string | null;
 }
 
 /** neighbourhood is encoded as the trailing segment of the slug (e.g. the-glass-house-marylebone). */
