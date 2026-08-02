@@ -111,7 +111,7 @@ function TreatmentRail({
 }: {
   eyebrow: string;
   title: string;
-  sub: string;
+  sub?: string;
   items: SearchTreatment[];
   tone: "butter" | "mint" | "bubblegum";
   icon?: React.ReactNode;
@@ -126,7 +126,7 @@ function TreatmentRail({
             <p className="brand-eyebrow">{eyebrow}</p>
           </div>
           <h2 className="brand-display text-[24px] mt-1">{title}</h2>
-          <p className="text-[12px] text-ink-mute">{sub}</p>
+          {sub && <p className="text-[12px] text-ink-mute">{sub}</p>}
         </div>
         <Link to="/treatments" className="text-[12px] font-semibold lowercase text-ink-soft inline-flex items-center gap-0.5">
           see all <ArrowRight className="size-3" />
