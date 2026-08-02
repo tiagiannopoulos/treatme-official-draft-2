@@ -85,6 +85,8 @@ const CHIP_COUNT = 12;
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+  const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
+  const { openSheet } = useTreatmentSheet();
 
   const initialQ = Route.useSearch().q ?? "";
   const [q, setQ] = useState(initialQ);
@@ -439,24 +441,29 @@ function SearchPage() {
             </ClientOnly>
           </div>
 
-          {/* b) treatment chips row */}
+          {/* b) treatment identity rail */}
           <section className="mt-6">
             <p className="brand-eyebrow">explore treatments</p>
-            <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
-              {treatments.slice(0, CHIP_COUNT).map((t) => (
-                <button
-                  key={t.slug}
-                  type="button"
-                  onClick={() => {
-                    setQ(t.name);
-                    setScope("providers");
-                  }}
-                  className="shrink-0 rounded-pill bg-butter text-ink px-3.5 py-2 text-[14px] lowercase whitespace-nowrap"
-                >
-                  {t.name}
+            <div className="mt-3 -mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
+              {(catalog.length ? catalog.slice(0, CHIP_COUNT) : []).map((t) => (
+                <button key={t.slug} type="button" onClick={() => openSheet(t.slug)} className="shrink-0">
+                  <TreatmentIcon name={t.name} iconUrl={t.icon_url} accentColor={t.accent_color} />
                 </button>
               ))}
-
+              {catalog.length === 0 &&
+                treatments.slice(0, CHIP_COUNT).map((t) => (
+                  <button
+                    key={t.slug}
+                    type="button"
+                    onClick={() => {
+                      setQ(t.name);
+                      setScope("providers");
+                    }}
+                    className="shrink-0 rounded-pill bg-butter px-3.5 py-2 text-[14px] lowercase text-ink whitespace-nowrap"
+                  >
+                    {t.name}
+                  </button>
+                ))}
             </div>
           </section>
 
