@@ -630,8 +630,54 @@ function TreatmentRow({ treatment, via }: { treatment: SearchTreatment; via?: st
   );
 }
 
+/** compact horizontal-rail card for treatments. */
+function TreatmentCardCompact({
+  treatment,
+  providerCount,
+  onClick,
+}: {
+  treatment: SearchTreatment;
+  providerCount?: number;
+  onClick?: () => void;
+}) {
+  const Wrapper = onClick ? "button" : Link;
+  return (
+    <Wrapper
+      {...(onClick
+        ? { type: "button", onClick }
+        : { to: "/treatment/$slug", params: { slug: treatment.slug } })}
+      className="shrink-0 w-[158px] rounded-[20px] border border-line bg-white p-3 text-left active:scale-[0.98] transition-transform"
+    >
+      {treatment.hero_image_url ? (
+        <img
+          src={treatment.hero_image_url}
+          alt={treatment.name}
+          loading="lazy"
+          className="size-12 rounded-xl object-cover"
+        />
+      ) : (
+        <span className="size-12 rounded-xl bg-mint grid place-items-center text-[13px] font-bold lowercase">
+          {treatment.name.slice(0, 2).toLowerCase()}
+        </span>
+      )}
+      <p className="mt-2.5 text-[14px] font-semibold lowercase leading-tight truncate">{treatment.name}</p>
+      <p className="text-[11px] text-ink-mute lowercase truncate">
+        {treatment.descriptor || treatment.category || treatment.family}
+      </p>
+      <div className="mt-2 flex items-center gap-2">
+        {providerCount !== undefined && (
+          <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[10px] lowercase">
+            {providerCount} provider{providerCount === 1 ? "" : "s"}
+          </span>
+        )}
+        {treatment.price_from !== null && (
+          <span className="text-[11px] font-semibold lowercase">from ${treatment.price_from}</span>
+        )}
+      </div>
+    </Wrapper>
+  );
+}
 
-function MedspaCard({
   storefront,
   km,
   providers,
