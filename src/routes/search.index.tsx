@@ -515,41 +515,34 @@ function SearchPage() {
             </section>
           )}
 
-          {/* d) nearby providers list */}
+          {/* d) nearby providers rail */}
           {showProviders && (
             <section className="mt-7">
-              <p className="brand-eyebrow">providers near you</p>
-              <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-                {providerResults.length} within {radius} km of {locLabel}
-              </p>
-              <div className="mt-2 space-y-2.5">
-                {providerResults.slice(0, expandProviders ? providerResults.length : NEARBY_PREVIEW).map(({ p, shops, km }) => (
-                  <ProviderCard key={p.id} provider={p} km={km} shops={shops} />
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">providers near you</p>
+                <span className="text-[12px] text-ink-mute lowercase">
+                  {providerResults.length} within {radius} km
+                </span>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                {providerResults.map(({ p, shops, km }) => (
+                  <ProviderCardCompact key={p.id} provider={p} km={km} shops={shops} />
                 ))}
               </div>
-              {providerResults.length > NEARBY_PREVIEW && (
-                <button
-                  type="button"
-                  onClick={() => setExpandProviders((v) => !v)}
-                  className="mt-3 w-full rounded-2xl border border-line py-2.5 text-[12px] font-semibold lowercase text-ink active:scale-[0.98] transition-transform"
-                >
-                  {expandProviders ? "show fewer providers" : `see all ${providerResults.length} providers`}
-                </button>
-              )}
             </section>
-
           )}
-
 
           {showMedspas && (
             <section className="mt-6">
-              <p className="brand-eyebrow">medspas near you</p>
-              <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-                {medspaResults.length} within {radius} km of {locLabel}
-              </p>
-              <div className="mt-2 space-y-2.5">
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="brand-eyebrow">medspas near you</p>
+                <span className="text-[12px] text-ink-mute lowercase">
+                  {medspaResults.length} within {radius} km
+                </span>
+              </div>
+              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                 {medspaResults.map((s) => (
-                  <MedspaCard
+                  <MedspaCardCompact
                     key={s.id}
                     storefront={s}
                     km={s.km}
@@ -561,6 +554,7 @@ function SearchPage() {
               </div>
             </section>
           )}
+
 
           {showTreatments && (
             <section className="mt-6">
