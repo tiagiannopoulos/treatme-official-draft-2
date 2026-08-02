@@ -214,22 +214,26 @@ function ProviderProfile() {
         </ul>
       </section>
 
-      {/* treatments offered */}
+      {/* treatments offered. only treatments that exist in the treatments table. */}
       <section className="px-6 mt-7">
         <p className="brand-eyebrow">treatments offered</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {provider.treatments.map((t) => (
-            <Link
+            <button
               key={t.treatment_slug}
-              to="/search"
-              search={{ q: t.name }}
-              className="rounded-pill border border-line px-3 py-1.5 text-[13px] lowercase"
+              type="button"
+              onClick={() => setSheetSlug(t.treatment_slug)}
+              className="rounded-pill border border-line px-3 py-1.5 text-left text-[13px] lowercase"
             >
               {t.name}
-            </Link>
+              {t.price_from !== null && (
+                <span className="ml-1.5 text-hot">from ${t.price_from}</span>
+              )}
+            </button>
           ))}
         </div>
       </section>
+
 
       {/* before and afters */}
       {media.length > 0 && (
