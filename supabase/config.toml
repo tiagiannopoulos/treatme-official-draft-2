@@ -1,1 +1,3 @@
 project_id = "lfnpqbsfsexyazwoincv"
+[functions.seed-clinics]
+verify_jwt = false
