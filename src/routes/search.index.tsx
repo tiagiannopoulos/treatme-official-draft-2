@@ -381,18 +381,18 @@ function SearchPage() {
                           onClick={() => setScope("treatments")}
                           className="text-[12px] font-semibold text-hot lowercase"
                         >
-                          see all {treatmentResults.length} treatments
+                          see all {treatmentResults.length}
                         </button>
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-2">
-                    {(scope === "all" ? treatmentResults.slice(0, 3) : treatmentResults).map(({ t }) => (
-                      <TreatmentResultRow
+                  <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(({ t }) => (
+                      <TreatmentCardCompact
                         key={t.slug}
                         treatment={t}
                         providerCount={treatmentProviderCounts[t.slug] ?? 0}
-                        onSelect={() => {
+                        onClick={() => {
                           setQ(t.name.toLowerCase());
                           setScope("providers");
                         }}
@@ -401,6 +401,7 @@ function SearchPage() {
                   </div>
                 </section>
               )}
+
 
               {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
             </>
