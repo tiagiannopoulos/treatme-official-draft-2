@@ -145,10 +145,6 @@ function SearchPage() {
     [data.storefronts],
   );
 
-  /** reset provider preview when filters change. */
-  useEffect(() => {
-    setExpandProviders(false);
-  }, [q, radius, center]);
 
 
 
