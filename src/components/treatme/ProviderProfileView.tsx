@@ -261,7 +261,7 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
               />
             </ClientOnly>
             <div className="p-4">
-              <p className="brand-display text-[17px]">{base.name}</p>
+              <p className="brand-display text-[17px] lowercase">{base.name}</p>
               <p className="mt-1 text-[12px] text-ink-soft lowercase inline-flex items-center gap-1">
                 <MapPin className="size-3.5 text-hot" />
                 {base.address_line}, {base.city} {base.postcode.toLowerCase()}
@@ -275,16 +275,16 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
               </Link>
             </div>
           </div>
-          {provider.storefronts.length > 1 && (
+          {others.length > 0 && (
             <div className="mt-2 space-y-1.5">
-              {provider.storefronts.slice(1).map((s) => (
+              {others.map((s) => (
                 <Link
                   key={s.id}
                   to="/storefront/$id"
                   params={{ id: s.id }}
                   className="flex items-center justify-between rounded-2xl border border-line px-3 py-2 text-[13px] lowercase"
                 >
-                  <span>{s.name}</span>
+                  <span className="lowercase">{s.name}</span>
                   <span className="text-ink-mute">
                     {formatDistance(distanceKm(TORONTO_CENTROID, { lat: s.lat, lng: s.lng }))}
                   </span>
