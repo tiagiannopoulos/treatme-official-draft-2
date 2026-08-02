@@ -588,6 +588,7 @@ export type Database = {
           price_note: string | null
           rec_mode: string
           science: string
+          search_synonyms: string[]
           short_description: string
           slug: string
           sort_order: number
@@ -623,6 +624,7 @@ export type Database = {
           price_note?: string | null
           rec_mode?: string
           science?: string
+          search_synonyms?: string[]
           short_description?: string
           slug: string
           sort_order?: number
@@ -658,6 +660,7 @@ export type Database = {
           price_note?: string | null
           rec_mode?: string
           science?: string
+          search_synonyms?: string[]
           short_description?: string
           slug?: string
           sort_order?: number
