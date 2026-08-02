@@ -72,11 +72,6 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
-/** how many providers to reveal in the nearby preview before asking to expand. */
-const NEARBY_PREVIEW = 3;
-
-/** how many treatments to surface as quick-entry chips in the explore state. */
-const CHIP_COUNT = 12;
 
 
 
