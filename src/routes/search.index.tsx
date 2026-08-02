@@ -584,38 +584,6 @@ function SearchPage() {
   );
 }
 
-function TreatmentRow({ treatment, via }: { treatment: SearchTreatment; via?: string }) {
-  return (
-    <Link
-      to="/treatment/$slug"
-      params={{ slug: treatment.slug }}
-      className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3"
-    >
-      {treatment.hero_image_url ? (
-        <img
-          src={treatment.hero_image_url}
-          alt={treatment.name}
-          loading="lazy"
-          className="size-11 rounded-xl object-cover shrink-0"
-        />
-      ) : (
-        <span className="size-11 shrink-0 rounded-xl bg-mint grid place-items-center text-[13px] font-bold">
-          {treatment.name.slice(0, 2).toLowerCase()}
-        </span>
-      )}
-      <span className="min-w-0 flex-1">
-        <span className="block text-[13.5px] font-semibold lowercase truncate">{treatment.name}</span>
-        <span className="block text-[11.5px] text-ink-mute lowercase truncate">
-          {treatment.category || treatment.family}
-        </span>
-        {via && <span className="block text-[11px] text-hot lowercase">matched: {via}</span>}
-      </span>
-      {treatment.price_from !== null && (
-        <span className="shrink-0 text-[12px] font-semibold lowercase">from ${treatment.price_from}</span>
-      )}
-    </Link>
-  );
-}
 
 /** compact horizontal-rail card for treatments. */
 function TreatmentCardCompact({
