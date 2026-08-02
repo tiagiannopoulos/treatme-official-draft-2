@@ -100,6 +100,87 @@ export type Database = {
           },
         ]
       }
+      patient_health_flags: {
+        Row: {
+          allergies: string | null
+          autoimmune_condition: boolean | null
+          blood_thinners: boolean | null
+          keloid_history: boolean | null
+          other_notes: string | null
+          pregnant_or_breastfeeding: boolean | null
+          recent_isotretinoin: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          allergies?: string | null
+          autoimmune_condition?: boolean | null
+          blood_thinners?: boolean | null
+          keloid_history?: boolean | null
+          other_notes?: string | null
+          pregnant_or_breastfeeding?: boolean | null
+          recent_isotretinoin?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          allergies?: string | null
+          autoimmune_condition?: boolean | null
+          blood_thinners?: boolean | null
+          keloid_history?: boolean | null
+          other_notes?: string | null
+          pregnant_or_breastfeeding?: boolean | null
+          recent_isotretinoin?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      patient_profile: {
+        Row: {
+          budget_band: string | null
+          concerns: string[] | null
+          downtime_tolerance: string | null
+          goals: string[] | null
+          languages: string[] | null
+          md_only: boolean | null
+          needle_comfort: string | null
+          preferred_provider_gender: string | null
+          skin_type: string | null
+          travel_radius_km: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          budget_band?: string | null
+          concerns?: string[] | null
+          downtime_tolerance?: string | null
+          goals?: string[] | null
+          languages?: string[] | null
+          md_only?: boolean | null
+          needle_comfort?: string | null
+          preferred_provider_gender?: string | null
+          skin_type?: string | null
+          travel_radius_km?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          budget_band?: string | null
+          concerns?: string[] | null
+          downtime_tolerance?: string | null
+          goals?: string[] | null
+          languages?: string[] | null
+          md_only?: boolean | null
+          needle_comfort?: string | null
+          preferred_provider_gender?: string | null
+          skin_type?: string | null
+          travel_radius_km?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       provider_media: {
         Row: {
           after_url: string
@@ -375,6 +456,24 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_treatments: {
+        Row: {
+          created_at: string | null
+          treatment_slug: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          treatment_slug: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          treatment_slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       storefronts: {
         Row: {
           address_line: string
@@ -523,6 +622,101 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "treatments"
             referencedColumns: ["slug"]
+          },
+        ]
+      }
+      treatment_log: {
+        Row: {
+          amount: number | null
+          amount_unit: string | null
+          areas_treated: string[] | null
+          booking_id: string | null
+          created_at: string | null
+          created_by_provider_id: string | null
+          id: string
+          next_due_at: string | null
+          performed_at: string
+          price_paid: number | null
+          product_name: string | null
+          provider_id: string | null
+          provider_notes: string | null
+          source: string
+          storefront_id: string | null
+          treatment_slug: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          amount_unit?: string | null
+          areas_treated?: string[] | null
+          booking_id?: string | null
+          created_at?: string | null
+          created_by_provider_id?: string | null
+          id?: string
+          next_due_at?: string | null
+          performed_at: string
+          price_paid?: number | null
+          product_name?: string | null
+          provider_id?: string | null
+          provider_notes?: string | null
+          source?: string
+          storefront_id?: string | null
+          treatment_slug: string
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          amount_unit?: string | null
+          areas_treated?: string[] | null
+          booking_id?: string | null
+          created_at?: string | null
+          created_by_provider_id?: string | null
+          id?: string
+          next_due_at?: string | null
+          performed_at?: string
+          price_paid?: number | null
+          product_name?: string | null
+          provider_id?: string | null
+          provider_notes?: string | null
+          source?: string
+          storefront_id?: string | null
+          treatment_slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      treatment_log_media: {
+        Row: {
+          created_at: string | null
+          id: string
+          kind: string
+          log_id: string | null
+          taken_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          kind: string
+          log_id?: string | null
+          taken_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          kind?: string
+          log_id?: string | null
+          taken_at?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_log_media_log_id_fkey"
+            columns: ["log_id"]
+            isOneToOne: false
+            referencedRelation: "treatment_log"
+            referencedColumns: ["id"]
           },
         ]
       }
