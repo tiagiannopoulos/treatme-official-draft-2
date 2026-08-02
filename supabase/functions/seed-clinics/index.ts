@@ -16,6 +16,9 @@ const QUERIES = [
 const FIELD_MASK =
   "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.websiteUri,nextPageToken";
 
+const REFERER =
+  "https://id-preview--c243e9e9-f41e-403c-830f-ae4f44358a6d.lovable.app/";
+
 interface Place {
   id: string;
   displayName?: { text?: string };
@@ -58,6 +61,8 @@ async function searchAll(apiKey: string, textQuery: string): Promise<Place[]> {
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
+        // the managed key is browser-referrer restricted to this project's origin
+        Referer: REFERER,
         "X-Goog-FieldMask": FIELD_MASK,
       },
       body: JSON.stringify({
@@ -86,8 +91,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok");
 
   try {
-    const apiKey = Deno.env.get("GOOGLE_MAPS_API_KEY");
-    if (!apiKey) throw new Error("missing GOOGLE_MAPS_API_KEY");
+    const apiKey =
+      Deno.env.get("GOOGLE_MAPS_BROWSER_KEY") ?? Deno.env.get("GOOGLE_MAPS_API_KEY");
+    if (!apiKey) throw new Error("missing google maps key");
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
