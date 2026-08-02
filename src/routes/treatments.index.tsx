@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
@@ -299,19 +299,27 @@ function CompactCard({
             ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })
             : navigate({ to: "/treatment/$slug", params: { slug: t.slug } })
         }
-        className="flex w-full flex-col text-left rounded-2xl border border-line bg-cream p-4 active:scale-[0.98] transition-transform"
+        className="flex w-full flex-col text-left rounded-2xl border border-line bg-cream overflow-hidden active:scale-[0.98] transition-transform"
       >
-        <p className="text-[15px] font-bold lowercase leading-tight" style={{ color: "#111111" }}>
-          {t.name}
-        </p>
-        <p className="mt-1 text-[11px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
-          {meta}
-        </p>
-        {price !== null && (
-          <p className="mt-2 text-sm font-bold" style={{ color: "#FF1F87" }}>
-            from ${Math.round(price)}
-          </p>
-        )}
+        <div
+          className="h-28 grid place-items-center overflow-hidden"
+          style={{ background: catalog?.accent_color || "rgba(248,161,198,0.35)" }}
+        >
+          {catalog?.icon_url ? (
+            <img src={catalog.icon_url} alt="" loading="lazy" className="size-8 object-contain" />
+          ) : (
+            <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+          )}
+        </div>
+        <div className="p-3">
+          <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
+          <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2 lowercase">{meta}</p>
+          {price !== null && (
+            <p className="text-[11px] font-semibold mt-2" style={{ color: "#FF1F87" }}>
+              from ${Math.round(price)}
+            </p>
+          )}
+        </div>
       </button>
       {alias && (
         <span className="absolute left-2 right-2 top-2 truncate rounded-full bg-hot px-2 py-1 text-[10px] font-bold lowercase text-white">
