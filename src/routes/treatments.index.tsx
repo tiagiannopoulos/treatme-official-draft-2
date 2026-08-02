@@ -287,9 +287,10 @@ function CoverCard({ t, alias }: { t: LibraryRow; alias: string | null }) {
         )}
         {alias && (
           <span className="absolute top-2 left-2 right-2 rounded-full bg-hot text-white px-2 py-1 text-[10px] font-bold lowercase truncate">
-            matched: {alias}
+            matched your search
           </span>
         )}
+
       </div>
       <div className="p-3">
         <p className="font-bold text-[14px] tracking-tight leading-tight lowercase line-clamp-2">{t.name}</p>
