@@ -8,9 +8,14 @@ import { useSyncExternalStore } from "react";
 
 const KEY = "treatme.patient.v1";
 
+export type JourneyStatus = "curious" | "planning" | "booked" | "done";
+
+export const JOURNEY_STATUSES: JourneyStatus[] = ["curious", "planning", "booked", "done"];
+
 export interface SavedTreatment {
   slug: string;
   savedAt: number;
+  status?: JourneyStatus;
 }
 
 export type Downtime = "none" | "a day" | "a weekend" | "a full week";
@@ -84,7 +89,9 @@ function read(): PatientState {
     if (!raw) return EMPTY;
     const parsed = JSON.parse(raw) as Partial<PatientState>;
     return {
-      saved: Array.isArray(parsed.saved) ? parsed.saved : [],
+      saved: Array.isArray(parsed.saved)
+        ? parsed.saved.map((t) => ({ ...t, status: t.status ?? "curious" }))
+        : [],
       profile: { ...EMPTY.profile, ...(parsed.profile ?? {}) },
       flags: { ...EMPTY.flags, ...(parsed.flags ?? {}) },
     };
@@ -129,7 +136,7 @@ export function isSaved(s: PatientState, slug: string) {
 
 export function saveTreatment(slug: string) {
   if (state.saved.some((t) => t.slug === slug)) return;
-  commit({ ...state, saved: [{ slug, savedAt: Date.now() }, ...state.saved] });
+  commit({ ...state, saved: [{ slug, savedAt: Date.now(), status: "curious" }, ...state.saved] });
   void import("@/lib/patient-sync").then((m) => m.syncSaved(state.saved));
 }
 
@@ -143,6 +150,14 @@ export function restoreTreatment(entry: SavedTreatment) {
   commit({
     ...state,
     saved: [...state.saved, entry].sort((a, b) => b.savedAt - a.savedAt),
+  });
+  void import("@/lib/patient-sync").then((m) => m.syncSaved(state.saved));
+}
+
+export function setTreatmentStatus(slug: string, status: JourneyStatus) {
+  commit({
+    ...state,
+    saved: state.saved.map((t) => (t.slug === slug ? { ...t, status } : t)),
   });
   void import("@/lib/patient-sync").then((m) => m.syncSaved(state.saved));
 }

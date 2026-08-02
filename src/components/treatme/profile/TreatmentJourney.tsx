@@ -65,7 +65,7 @@ export function TreatmentJourney() {
   return (
     <section className="mt-8">
       <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
-        treatment journey
+        getting started
       </h2>
 
       <div

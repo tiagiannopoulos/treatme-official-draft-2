@@ -5,7 +5,6 @@ import {
   usePatient,
   updateProfile,
   updateFlags,
-  answeredCount,
   consequenceLines,
   type Fitzpatrick,
 } from "@/lib/patient-store";
@@ -48,7 +47,6 @@ export function AboutYourSkin() {
   const patient = usePatient();
   const p = patient.profile;
   const [open, setOpen] = useState<RowKey | null>(null);
-  const { filled, total } = answeredCount(patient);
   const lines = consequenceLines(patient);
 
   const flagCount = [
@@ -83,15 +81,6 @@ export function AboutYourSkin() {
         about your skin
       </h2>
 
-      <div className="mt-2 h-[3px] w-full overflow-hidden rounded-full" style={{ backgroundColor: "rgba(17,17,17,0.10)" }}>
-        <div
-          className="h-full rounded-full transition-all"
-          style={{ width: `${(filled / total) * 100}%`, backgroundColor: "#FF1F87" }}
-        />
-      </div>
-      <p className="mt-1.5 text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.55)" }}>
-        {filled} of {total} answered
-      </p>
 
       <div
         className="mt-3 overflow-hidden rounded-[18px] border"

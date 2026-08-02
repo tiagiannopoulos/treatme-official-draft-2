@@ -18,7 +18,7 @@ function ProfilePage() {
   return (
     <div className="px-6 pt-6">
       <p className="brand-eyebrow">profile · alpha</p>
-      <h1 className="brand-display text-[32px] mt-2">your journey<span className="text-hot">.</span></h1>
+      <h1 className="brand-display text-[32px] mt-2">profile<span className="text-hot">.</span></h1>
       {analysis && photoDataUrl ? (
         <div className="mt-5 rounded-2xl bg-card border border-line p-4 flex items-center gap-4">
           <img src={photoDataUrl} alt="last scan" className="size-16 rounded-xl object-cover" />
@@ -35,8 +35,8 @@ function ProfilePage() {
         <Link to="/scan"><PillButton fullWidth>new scan</PillButton></Link>
         <PillButton fullWidth variant="outline" onClick={reset}>clear session</PillButton>
       </div>
-      <SavedTreatments />
       <TreatmentJourney />
+      <SavedTreatments />
       <UpcomingAppointments />
       <TxLog />
       <AboutYourSkin />

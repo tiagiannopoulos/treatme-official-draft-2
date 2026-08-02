@@ -1,11 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { INK, BUBBLEGUM, HOT } from "@/lib/treatment-catalog";
+import { INK, HOT } from "@/lib/treatment-catalog";
 import { displayTreatmentName } from "@/lib/treatment-labels";
-import { PillButton } from "@/components/treatme/PillButton";
 
 const MONTHS = [
   "january", "february", "march", "april", "may", "june",
@@ -90,24 +89,9 @@ export function UpcomingAppointments() {
       </h2>
 
       {rows.length === 0 ? (
-        <div
-          className="mt-3 flex flex-col items-center rounded-[18px] border px-5 py-7 text-center"
-          style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
-        >
-          <span className="grid size-14 place-items-center rounded-full" style={{ backgroundColor: BUBBLEGUM }}>
-            <CalendarClock className="size-6" style={{ color: INK }} strokeWidth={1.6} />
-          </span>
-          <p className="mt-3 text-[15px] font-medium lowercase" style={{ color: INK }}>
-            nothing booked yet
-          </p>
-          <p className="mt-1 max-w-[290px] text-[12.5px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
-            when you book through treatme, your next visit shows up here with the time, the person doing it, and where to
-            go.
-          </p>
-          <PillButton className="mt-4 h-10 px-5 text-[13px]" variant="outline" onClick={() => navigate({ to: "/search" })}>
-            find a provider
-          </PillButton>
-        </div>
+        <p className="mt-2 text-[12.5px] lowercase" style={{ color: "rgba(17,17,17,0.55)" }}>
+          nothing booked yet.
+        </p>
       ) : (
         <div className="mt-3 flex flex-col gap-3">
           {rows.map((r) => (

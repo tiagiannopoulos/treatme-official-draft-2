@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string | null
+          deposit_paid: number | null
+          duration_minutes: number | null
+          id: string
+          prep_note: string | null
+          provider_id: string | null
+          starts_at: string
+          status: string
+          storefront_id: string | null
+          treatment_slug: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          deposit_paid?: number | null
+          duration_minutes?: number | null
+          id?: string
+          prep_note?: string | null
+          provider_id?: string | null
+          starts_at: string
+          status?: string
+          storefront_id?: string | null
+          treatment_slug?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          deposit_paid?: number | null
+          duration_minutes?: number | null
+          id?: string
+          prep_note?: string | null
+          provider_id?: string | null
+          starts_at?: string
+          status?: string
+          storefront_id?: string | null
+          treatment_slug?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       education_stories: {
         Row: {
           category: string | null
@@ -99,6 +141,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      journey_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string | null
+          sessions_done: number | null
+          sessions_planned: number | null
+          sort_order: number | null
+          status: string
+          target_timing: string | null
+          treatment_slug: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          sessions_done?: number | null
+          sessions_planned?: number | null
+          sort_order?: number | null
+          status?: string
+          target_timing?: string | null
+          treatment_slug: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          sessions_done?: number | null
+          sessions_planned?: number | null
+          sort_order?: number | null
+          status?: string
+          target_timing?: string | null
+          treatment_slug?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       patient_health_flags: {
         Row: {
