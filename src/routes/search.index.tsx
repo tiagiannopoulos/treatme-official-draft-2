@@ -312,7 +312,7 @@ function SearchPage() {
               <p className="mt-4 text-[12px] lowercase text-ink/60">{countLine}</p>
 
               {showProviders && providerResults.length > 0 && (
-                <section className="mt-3">
+                <section className="mt-6">
                   {scope === "all" && (
                     <div className="flex items-baseline justify-between gap-3">
                       <p className="brand-eyebrow">providers</p>
@@ -322,20 +322,21 @@ function SearchPage() {
                           onClick={() => setScope("providers")}
                           className="text-[12px] font-semibold text-hot lowercase"
                         >
-                          see all {providerResults.length} providers
+                          see all {providerResults.length}
                         </button>
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-2.5">
-                    {(scope === "all" ? providerResults.slice(0, 3) : providerResults).map(
+                  <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                    {(scope === "all" ? providerResults.slice(0, 6) : providerResults).map(
                       ({ p, via, shops, km }) => (
-                        <ProviderCard key={p.id} provider={p} via={via} km={km} shops={shops} />
+                        <ProviderCardCompact key={p.id} provider={p} via={via} km={km} shops={shops} />
                       ),
                     )}
                   </div>
                 </section>
               )}
+
 
               {showMedspas && medspaResults.length > 0 && (
                 <section className="mt-6">
