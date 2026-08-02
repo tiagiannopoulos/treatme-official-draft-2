@@ -45,7 +45,14 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
   const [sheetSlug, setSheetSlug] = useState<string | null>(null);
   const { profile } = usePatient();
 
-  const base = provider.storefronts[0] ?? null;
+  // nearest storefront leads. the provider is the hero, the place is context.
+  const stores = [...provider.storefronts].sort(
+    (a, b) =>
+      distanceKm(TORONTO_CENTROID, { lat: a.lat, lng: a.lng }) -
+      distanceKm(TORONTO_CENTROID, { lat: b.lat, lng: b.lng }),
+  );
+  const base = stores[0] ?? null;
+  const others = stores.slice(1);
   const hasRating = provider.review_count >= 3;
   const initials = provider.name
     .split(" ")
@@ -56,11 +63,12 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
     .toUpperCase();
 
   const langs = (provider.languages ?? []).length ? provider.languages.join(", ") : "english";
+  const certs = (provider.specialties ?? []).filter(Boolean);
   const credentials = [
-    provider.credentials || provider.title,
+    [provider.credentials || provider.title, provider.licensing_body].filter(Boolean).join(", "),
     `${provider.years_experience} years practising`,
-    provider.licensing_body || "provincial regulatory college",
     `speaks ${langs}`,
+    certs.length ? `trained in ${certs.join(", ")}` : "",
   ].filter(Boolean);
 
   const license = licenseLine(provider);
@@ -90,9 +98,11 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
               {initials}
             </span>
           )}
-          <div className="min-w-0 pt-1">
-            <h1 className="text-[24px] font-semibold leading-[1.05] lowercase">{provider.name}</h1>
-            <p className="text-[13px] text-ink-mute lowercase mt-1">{provider.title}</p>
+          <div className="min-w-0 flex-1 pt-1">
+            <h1 className="text-[24px] font-medium leading-[1.05] lowercase">{provider.name}</h1>
+            <p className="text-[13px] text-ink-mute lowercase mt-1">
+              {provider.credentials || provider.title}
+            </p>
             {base && (
               <Link
                 to="/storefront/$id"
@@ -100,8 +110,8 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
                 className="mt-2 inline-flex items-center gap-1 rounded-pill bg-bubblegum/30 px-2.5 py-1 text-[11px] lowercase"
               >
                 <MapPin className="size-3 text-hot" />
-                {base.name}
-                {provider.storefronts.length > 1 && ` +${provider.storefronts.length - 1} more`}
+                at {base.name}
+                {others.length > 0 && ` and ${others.length} more`}
               </Link>
             )}
             <div className="mt-2 flex items-center gap-2 text-[12px] lowercase">
@@ -115,9 +125,10 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
                   new to treatme
                 </span>
               )}
-              {away && <span className="text-ink-mute">{away} away</span>}
+              {away && <span className="ml-auto text-ink-mute">{away} away</span>}
             </div>
           </div>
+
         </div>
 
         {/* license verified against the public college registry. no unverified state. */}
