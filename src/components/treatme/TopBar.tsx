@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 
 function titleFor(pathname: string) {
   if (pathname.startsWith("/search")) return "search";
-  if (pathname.startsWith("/treatments")) return "treatments";
+  if (pathname.startsWith("/treatments") || pathname.startsWith("/treatment/")) return "treatments";
   if (pathname.startsWith("/profile")) return "profile";
   if (pathname.startsWith("/scan")) return "scan";
   return "menu";
