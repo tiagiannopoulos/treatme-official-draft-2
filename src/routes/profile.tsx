@@ -30,7 +30,9 @@ function ProfilePage() {
         <Link to="/scan"><PillButton fullWidth>new scan</PillButton></Link>
         <PillButton fullWidth variant="outline" onClick={reset}>clear session</PillButton>
       </div>
-      <p className="mt-8 text-[11px] text-ink-mute uppercase tracking-widest">accounts & saved history coming next</p>
+      <SavedTreatments />
+      <TxLog />
+      <AboutYourSkin />
     </div>
   );
 }
