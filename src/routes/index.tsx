@@ -65,7 +65,7 @@ function MenuPage() {
       {/* 2. For you */}
       <TreatmentRail
         eyebrow="For you"
-        title="Picked for your skin"
+        title="picked for your skin"
         items={forYou}
         tone="butter"
       />
@@ -73,7 +73,7 @@ function MenuPage() {
       {/* 3. Trending now */}
       <TreatmentRail
         eyebrow="Trending now"
-        title="What people are booking"
+        title="phat people are booking"
         items={trending}
         tone="mint"
         icon={<TrendingUp className="size-[18px] text-ink" strokeWidth={2.2} />}
