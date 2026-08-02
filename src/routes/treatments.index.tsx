@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
+import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
 
