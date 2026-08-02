@@ -687,7 +687,63 @@ function MedspaCard({
   );
 }
 
-/** 260px cover card for the featured storefronts rail. */
+/** compact horizontal-rail card for medspas. */
+function MedspaCardCompact({
+  storefront,
+  km,
+  providers,
+  active,
+  onSelect,
+}: {
+  storefront: Storefront;
+  km: number;
+  providers: Provider[];
+  active: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <div
+      onClick={onSelect}
+      className={cn(
+        "shrink-0 w-[220px] rounded-[20px] border overflow-hidden bg-white",
+        active ? "border-hot" : "border-line",
+      )}
+    >
+      {storefront.hero_image_url ? (
+        <img
+          src={storefront.hero_image_url}
+          alt={`${storefront.name} interior`}
+          loading="lazy"
+          className="h-[110px] w-full object-cover"
+        />
+      ) : (
+        <div className="h-[110px] w-full bg-mint grid place-items-center">
+          <span className="brand-display text-[34px] text-ink lowercase">{storefront.name[0]}</span>
+        </div>
+      )}
+      <div className="p-3">
+        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1 truncate">
+          {storefront.name}
+          {storefront.claimed && <BadgeCheck className="size-3.5 text-hot shrink-0" />}
+        </p>
+        <p className="text-[11px] text-ink-mute lowercase mt-0.5 truncate">{storefront.tagline}</p>
+        <p className="mt-1.5 text-[11px] text-ink-soft lowercase inline-flex items-center gap-1">
+          <MapPin className="size-3 text-hot" />
+          {storefront.address_line}, {storefront.city} · {formatDistance(km)}
+        </p>
+        <div className="mt-2.5 flex items-center gap-2 border-t border-line pt-2">
+          {providers.slice(0, 3).map((p) => (
+            <Avatar key={p.id} name={p.name} url={p.avatar_url} size="size-7" />
+          ))}
+          <span className="text-[11px] text-ink-mute lowercase">
+            {providers.length} provider{providers.length === 1 ? "" : "s"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FeaturedStorefrontCard({
   storefront,
   providerCount,
