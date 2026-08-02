@@ -579,65 +579,149 @@ export type Database = {
         }
         Relationships: []
       }
+      storefront_media: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          sort_order: number
+          storefront_id: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          sort_order?: number
+          storefront_id: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          sort_order?: number
+          storefront_id?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storefront_media_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storefront_media_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storefronts: {
         Row: {
+          accessibility: string[]
           address_line: string
+          cancellation_policy: string | null
           city: string
           claimed: boolean
+          cover_url: string | null
           created_at: string
+          deposit_policy: string | null
+          devices: string[]
           featured: boolean
           google_place_id: string | null
           hero_image_url: string | null
+          hours: Json | null
           id: string
           lat: number
+          late_policy: string | null
           lng: number
           name: string
+          neighbourhood: string | null
           owner_user_id: string | null
+          parking: string | null
+          peel_depths: string[]
+          phone: string | null
           postcode: string
+          product_lines: string[]
           rating: number
           review_count: number
           slug: string
           tagline: string
+          transit_note: string | null
           updated_at: string
         }
         Insert: {
+          accessibility?: string[]
           address_line?: string
+          cancellation_policy?: string | null
           city?: string
           claimed?: boolean
+          cover_url?: string | null
           created_at?: string
+          deposit_policy?: string | null
+          devices?: string[]
           featured?: boolean
           google_place_id?: string | null
           hero_image_url?: string | null
+          hours?: Json | null
           id?: string
           lat: number
+          late_policy?: string | null
           lng: number
           name: string
+          neighbourhood?: string | null
           owner_user_id?: string | null
+          parking?: string | null
+          peel_depths?: string[]
+          phone?: string | null
           postcode?: string
+          product_lines?: string[]
           rating?: number
           review_count?: number
           slug: string
           tagline?: string
+          transit_note?: string | null
           updated_at?: string
         }
         Update: {
+          accessibility?: string[]
           address_line?: string
+          cancellation_policy?: string | null
           city?: string
           claimed?: boolean
+          cover_url?: string | null
           created_at?: string
+          deposit_policy?: string | null
+          devices?: string[]
           featured?: boolean
           google_place_id?: string | null
           hero_image_url?: string | null
+          hours?: Json | null
           id?: string
           lat?: number
+          late_policy?: string | null
           lng?: number
           name?: string
+          neighbourhood?: string | null
           owner_user_id?: string | null
+          parking?: string | null
+          peel_depths?: string[]
+          phone?: string | null
           postcode?: string
+          product_lines?: string[]
           rating?: number
           review_count?: number
           slug?: string
           tagline?: string
+          transit_note?: string | null
           updated_at?: string
         }
         Relationships: []

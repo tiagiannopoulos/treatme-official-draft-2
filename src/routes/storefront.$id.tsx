@@ -1,27 +1,53 @@
-import { createFileRoute, Link, notFound, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+
+import { StorefrontView } from "@/components/treatme/StorefrontView";
 import { directoryQuery } from "@/lib/search-data";
 
-/** stable id entry point for storefronts. resolves to the readable /medspas/:slug page. */
+/** canonical storefront page by id. /medspas/$slug redirects here. */
 export const Route = createFileRoute("/storefront/$id")({
-  loader: async ({ context, params }) => {
-    const data = await context.queryClient.ensureQueryData(directoryQuery);
-    const storefront = data.storefronts.find((s) => s.id === params.id || s.slug === params.id);
-    if (!storefront) throw notFound();
-    throw redirect({ to: "/medspas/$slug", params: { slug: storefront.slug } });
+  head: () => ({
+    meta: [
+      { title: "clinic · treatme" },
+      {
+        name: "description",
+        content:
+          "who works here, what they have on site, hours, address and policies for this clinic on treatme.",
+      },
+      { property: "og:title", content: "clinic · treatme" },
+      {
+        property: "og:description",
+        content:
+          "who works here, what they have on site, hours, address and policies for this clinic on treatme.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(directoryQuery);
   },
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
-      <h1 className="brand-display text-[24px]">couldn't load this storefront.</h1>
-      <p className="text-[13px] text-ink-mute mt-2">{error.message}</p>
+      <h1 className="text-[24px] font-medium lowercase">couldn't load this storefront.</h1>
+      <p className="mt-2 text-[13px] text-ink-mute lowercase">{error.message}</p>
     </div>
   ),
   notFoundComponent: () => (
     <div className="px-6 pt-10">
-      <h1 className="brand-display text-[24px]">storefront not found.</h1>
-      <Link to="/search" search={{ q: undefined }} className="text-[13px] text-hot lowercase mt-2 inline-block">
+      <h1 className="text-[24px] font-medium lowercase">storefront not found.</h1>
+      <Link
+        to="/search"
+        search={{ q: undefined }}
+        className="mt-2 inline-block text-[13px] text-hot lowercase"
+      >
         back to search
       </Link>
     </div>
   ),
-  component: () => null,
+  component: StorefrontByIdRoute,
 });
+
+function StorefrontByIdRoute() {
+  const { id } = Route.useParams();
+  return <StorefrontView match={(s) => s.id === id || s.slug === id} />;
+}
