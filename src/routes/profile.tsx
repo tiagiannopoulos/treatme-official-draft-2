@@ -36,6 +36,8 @@ function ProfilePage() {
         <PillButton fullWidth variant="outline" onClick={reset}>clear session</PillButton>
       </div>
       <SavedTreatments />
+      <TreatmentJourney />
+      <UpcomingAppointments />
       <TxLog />
       <AboutYourSkin />
     </div>
