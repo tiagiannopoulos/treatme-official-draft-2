@@ -54,8 +54,15 @@ export interface Provider {
   licensing_body: string;
   languages: string[];
   specialties: string[];
+  treats: string[];
+  devices: string[];
+  fitzpatrick_min: number | null;
+  fitzpatrick_max: number | null;
+  license_verified: boolean;
+  license_number: string | null;
   /** every storefront this human works at. a provider can work at more than one. */
   storefronts: Array<Storefront & { is_primary: boolean }>;
+
   treatments: ProviderTreatment[];
 }
 
