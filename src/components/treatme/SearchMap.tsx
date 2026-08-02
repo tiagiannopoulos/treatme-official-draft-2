@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { MarkerClusterer, type Marker as ClusterMarker } from "@googlemaps/markerclusterer";
 import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsKey } from "@/lib/map.functions";
 import type { LatLng, Storefront } from "@/lib/search-data";
+
 
 const HOT = "#FF1F87";
 const INK = "#111111";
