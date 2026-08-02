@@ -3,7 +3,10 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useTreatmentStory } from "@/lib/treatment-story-store";
+import { useNavigate } from "@tanstack/react-router";
+import { PosterCard } from "@/components/treatme/PosterCard";
+import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
+import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
 
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
@@ -22,6 +25,7 @@ export const Route = createFileRoute("/treatments/")({
   }),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(libraryQuery);
+    context.queryClient.ensureQueryData(treatmentCatalogQuery);
   },
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
@@ -90,6 +94,9 @@ const PREVIEW_COUNT = 2;
 
 function TreatmentsPage() {
   const { data: treatments } = useSuspenseQuery(libraryQuery);
+  const { data: catalog } = useSuspenseQuery(treatmentCatalogQuery);
+  const catalogBySlug = useMemo(() => new Map(catalog.map((c) => [c.slug, c])), [catalog]);
+  const [pill, setPill] = useState<CategoryPill>("all");
   const [q, setQ] = useState("");
   const [concern, setConcern] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -113,6 +120,7 @@ function TreatmentsPage() {
     const needle = norm(q);
     return treatments
       .map((t) => {
+        if (pill !== "all" && pillFor(t.family) !== pill) return null;
         if (concern && !(t.improves ?? []).includes(concern)) return null;
         if (!needle) return { t, alias: null as string | null };
         if (norm(t.name).includes(needle) || norm(t.category).includes(needle)) {
@@ -122,7 +130,7 @@ function TreatmentsPage() {
         return alias ? { t, alias } : null;
       })
       .filter((r): r is { t: LibraryRow; alias: string | null } => r !== null);
-  }, [treatments, q, concern]);
+  }, [treatments, q, concern, pill]);
 
   const grouped = useMemo(() => {
     const order = (f: string) => {
@@ -166,6 +174,17 @@ function TreatmentsPage() {
             <X className="size-3.5" />
           </button>
         )}
+      </div>
+
+      {/* category pills */}
+      <div className="mt-3 -mx-6 overflow-x-auto scrollbar-none">
+        <div className="flex gap-2 px-6 pb-1">
+          {CATEGORY_PILLS.map((c) => (
+            <button key={c} type="button" onClick={() => setPill(c)} className={chipCls(pill === c)}>
+              {c}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* concern filter chips */}
@@ -226,7 +245,7 @@ function TreatmentsPage() {
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   {visible.map(({ t, alias }) => (
-                    <CoverCard key={t.slug} t={t} alias={alias} />
+                    <CoverCard key={t.slug} t={t} alias={alias} catalog={catalogBySlug.get(t.slug)} />
                   ))}
                 </div>
                 {!isExpanded && remaining > 0 && (
@@ -268,35 +287,37 @@ function tintFor(slug: string) {
   return TINTS[h % TINTS.length];
 }
 
-function CoverCard({ t, alias }: { t: LibraryRow; alias: string | null }) {
-  const { open } = useTreatmentStory();
-  const src = t.hero_image_url || t.hero_image || undefined;
+function CoverCard({
+  t,
+  alias,
+  catalog,
+}: {
+  t: LibraryRow;
+  alias: string | null;
+  catalog?: { poster_url: string | null; accent_color: string; has_story: boolean; downtime_label: string };
+}) {
+  const navigate = useNavigate();
+  const { openSheet } = useTreatmentSheet();
+  const poster = catalog?.poster_url || t.hero_image_url || t.hero_image || null;
+  const hasStory = catalog?.has_story ?? false;
   return (
-    <button
-      type="button"
-      onClick={() => open(t.slug)}
-      className="text-left rounded-2xl overflow-hidden border border-line bg-cream active:scale-[0.98] transition"
-    >
-      <div className={cn("relative aspect-[4/5] w-full overflow-hidden", tintFor(t.slug))}>
-        {src ? (
-          <img src={src} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <span className="absolute inset-0 grid place-items-center brand-display text-[40px] text-ink/25 lowercase">
-            {t.name.slice(0, 2)}
-          </span>
-        )}
-        {alias && (
-          <span className="absolute top-2 left-2 right-2 rounded-full bg-hot text-white px-2 py-1 text-[10px] font-bold lowercase truncate">
-            matched your search
-          </span>
-        )}
-
-      </div>
-      <div className="p-3">
-        <p className="font-bold text-[14px] tracking-tight leading-tight lowercase line-clamp-2">{t.name}</p>
-        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2 lowercase">{t.category}</p>
-        <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${Math.round(Number(t.price_from))}</p>
-      </div>
-    </button>
+    <div className="relative">
+      <PosterCard
+        name={t.name}
+        posterUrl={poster}
+        accentColor={catalog?.accent_color}
+        hasStory={hasStory}
+        meta={catalog?.downtime_label || t.category}
+        className="w-full"
+        onPress={() =>
+          hasStory ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } }) : openSheet(t.slug)
+        }
+      />
+      {alias && (
+        <span className="absolute left-2 right-2 top-2 truncate rounded-pill bg-hot px-2 py-1 text-[10px] font-bold lowercase text-white">
+          matched your search
+        </span>
+      )}
+    </div>
   );
 }

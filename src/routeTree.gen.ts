@@ -26,6 +26,7 @@ import { Route as BookConsultRouteImport } from './routes/book.consult'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
 import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
+import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -113,6 +114,11 @@ const TreatmentsSlugBookRoute = TreatmentsSlugBookRouteImport.update({
   path: '/treatments/$slug/book',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TreatmentSlugStoryRoute = TreatmentSlugStoryRouteImport.update({
+  id: '/treatment/$slug/story',
+  path: '/treatment/$slug/story',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
   id: '/api/public/analyze',
   path: '/api/public/analyze',
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
@@ -156,6 +163,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatments/$slug': typeof TreatmentsSlugIndexRoute
 }
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/treatment/$slug/story'
     | '/treatments/$slug/book'
     | '/treatments/$slug/'
   fileRoutesByTo: FileRoutesByTo
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/treatments'
     | '/api/public/analyze'
+    | '/treatment/$slug/story'
     | '/treatments/$slug/book'
     | '/treatments/$slug'
   id:
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/treatment/$slug/story'
     | '/treatments/$slug/book'
     | '/treatments/$slug/'
   fileRoutesById: FileRoutesById
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
+  TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
   TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
   TreatmentsSlugIndexRoute: typeof TreatmentsSlugIndexRoute
 }
@@ -385,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentsSlugBookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/treatment/$slug/story': {
+      id: '/treatment/$slug/story'
+      path: '/treatment/$slug/story'
+      fullPath: '/treatment/$slug/story'
+      preLoaderRoute: typeof TreatmentSlugStoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/analyze': {
       id: '/api/public/analyze'
       path: '/api/public/analyze'
@@ -412,6 +432,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
+  TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
   TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
   TreatmentsSlugIndexRoute: TreatmentsSlugIndexRoute,
 }
