@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Sparkles, Lock, BookOpen, TrendingUp, ArrowRight } from "lucide-react";
-import { TREATMENTS } from "@/lib/treatments-data";
+import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { useTreatmentStory } from "@/lib/treatment-story-store";
 
 export const Route = createFileRoute("/")({
@@ -10,12 +11,24 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "your tx, matched. scan your skin, find verified providers nearby." },
     ],
   }),
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(searchTreatmentsQuery);
+  },
+  errorComponent: ({ error }) => (
+    <div className="px-6 pt-10" role="alert">
+      <h1 className="brand-display text-[26px]">couldn't load treatments.</h1>
+      <p className="text-[13px] text-ink-mute mt-2">{error.message}</p>
+    </div>
+  ),
+  notFoundComponent: () => <div className="px-6 pt-10">nothing here.</div>,
   component: MenuPage,
 });
 
 function MenuPage() {
-  const forYou = TREATMENTS.slice(0, 4);
-  const trending = TREATMENTS.slice(1, 5);
+  const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+  const forYou = treatments.slice(0, 4);
+  const trending = treatments.slice(4, 8);
+
 
   return (
     <div className="pt-5 pb-4 space-y-10">
