@@ -28,7 +28,9 @@ export function noDash(input: string): string {
   return input
     .replace(/[\u2010-\u2015]/g, " ")
     .replace(/-/g, " ")
+    .replace(/_/g, " ")
     .replace(/\s+/g, " ")
+
     .replace(/\s+([,.;:?])/g, "$1")
     .trim()
     .toLowerCase();
