@@ -30,7 +30,7 @@ import {
   type SearchTreatment,
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
-import { Avatar, ProviderCard, ProviderCardCompact } from "@/components/treatme/ProviderCard";
+import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
 import { cn } from "@/lib/utils";
 
 
