@@ -31,8 +31,6 @@ import {
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCard } from "@/components/treatme/ProviderCard";
-import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
-import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/search/")({
