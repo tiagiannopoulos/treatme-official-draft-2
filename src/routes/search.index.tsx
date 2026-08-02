@@ -73,17 +73,8 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
-/** available search scopes. */
-const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
-
-
-
-
-
-
-
-
 function SearchPage() {
+
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
 
