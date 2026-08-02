@@ -1,11 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarClock, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { INK, BUBBLEGUM, HOT } from "@/lib/treatment-catalog";
+import { INK, HOT } from "@/lib/treatment-catalog";
 import { displayTreatmentName } from "@/lib/treatment-labels";
-import { PillButton } from "@/components/treatme/PillButton";
 
 const MONTHS = [
   "january", "february", "march", "april", "may", "june",

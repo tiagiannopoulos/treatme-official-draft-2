@@ -6,7 +6,6 @@ import { Bell, NotebookPen, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BUTTER, INK } from "@/lib/treatment-catalog";
 import { displayTreatmentName } from "@/lib/treatment-labels";
-import { PillButton } from "@/components/treatme/PillButton";
 
 interface LogMedia {
   id: string;
