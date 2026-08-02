@@ -122,29 +122,29 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
       {fit.length > 0 && (
         <section className="px-6 mt-7">
           <p className="brand-eyebrow">who this provider is right for</p>
-          <ul className="mt-2 space-y-2">
-            {fit.map((f) => (
-              <li
-                key={f.id}
-                className={cn(
-                  "rounded-2xl px-3 py-2 text-[13px] lowercase leading-snug",
-                  f.tone === "match" && "bg-mint text-ink",
-                  f.tone === "conflict" && "border border-line text-ink-soft",
-                  f.tone === "neutral" && "bg-cream text-ink-soft",
-                )}
-              >
-                {f.tone === "match" && (
-                  <BadgeCheck className="mr-1.5 inline size-3.5 -mt-[2px] text-hot" />
-                )}
-                {f.label}
-                {f.tone === "match" && (
-                  <span className="ml-1 font-semibold">· matches your answers</span>
-                )}
-              </li>
-            ))}
+          <ul className="mt-2 rounded-2xl border border-line divide-y divide-line overflow-hidden">
+            {fit.map((f) => {
+              const Icon =
+                f.icon === "language" ? Languages : f.icon === "device" ? Zap : f.icon === "treats" ? Sparkles : Droplet;
+              return (
+                <li
+                  key={f.id}
+                  className={cn(
+                    "flex items-start gap-2 px-3 py-2.5 text-[13px] lowercase leading-snug",
+                    f.tone === "match" && "bg-mint text-ink",
+                    f.tone === "plain" && "bg-cream text-ink-soft",
+                    f.tone === "neutral" && "text-ink-soft",
+                  )}
+                >
+                  <Icon className="mt-[2px] size-3.5 shrink-0 text-hot" />
+                  <span>{f.label}</span>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
+
 
 
       {/* about */}
