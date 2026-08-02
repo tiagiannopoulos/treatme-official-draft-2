@@ -73,19 +73,9 @@ const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 /** how many nearby providers to reveal per infinite-scroll page. */
 const PAGE_SIZE = 10;
 
-/** quick-entry chips for the explore state. tapping one seeds the search bar. */
-const TREATMENT_CHIPS = [
-  "botox",
-  "lip filler",
-  "cheek filler",
-  "morpheus8",
-  "hydrafacial",
-  "laser hair removal",
-  "chemical peel",
-  "microneedling",
-  "prp",
-  "skin boosters",
-];
+/** how many treatments to surface as quick-entry chips in the explore state. */
+const CHIP_COUNT = 12;
+
 
 
 function SearchPage() {
