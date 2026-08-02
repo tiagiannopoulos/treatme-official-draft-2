@@ -76,7 +76,6 @@ function MenuPage() {
         title="what people are booking"
         items={trending}
         tone="mint"
-        icon={<TrendingUp className="size-[18px] text-ink" strokeWidth={2.2} />}
       />
 
       {/* 3b. learn about treatments */}
