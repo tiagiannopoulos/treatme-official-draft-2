@@ -89,11 +89,12 @@ function ScanPage() {
         onClick={() => setTaps((t) => t + 1)}
         className="brand-eyebrow select-none"
       >
-        step 01 of 03 · scan
+        treatme
       </button>
       <h1 className="brand-display text-[40px] mt-3 text-balance">
-        let's see what your skin is asking for<span className="text-hot">.</span>
+        step 1 of 3 - scan<span className="text-hot">.</span>
       </h1>
+
 
       <div className="mt-6 rounded-3xl bg-bubblegum/45 border border-bubblegum p-5">
         {/* face guide */}
