@@ -1,0 +1,1 @@
+ALTER TABLE public.providers ADD COLUMN IF NOT EXISTS is_seed_data boolean NOT NULL DEFAULT false;

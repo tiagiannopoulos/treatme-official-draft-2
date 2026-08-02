@@ -317,6 +317,7 @@ export type Database = {
           created_at: string
           credentials: string
           id: string
+          is_seed_data: boolean
           languages: string[]
           licensing_body: string
           name: string
@@ -337,6 +338,7 @@ export type Database = {
           created_at?: string
           credentials?: string
           id?: string
+          is_seed_data?: boolean
           languages?: string[]
           licensing_body?: string
           name: string
@@ -357,6 +359,7 @@ export type Database = {
           created_at?: string
           credentials?: string
           id?: string
+          is_seed_data?: boolean
           languages?: string[]
           licensing_body?: string
           name?: string
