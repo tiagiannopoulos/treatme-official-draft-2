@@ -94,7 +94,7 @@ function TreatmentDetailPage() {
         </span>
         <div className="min-w-0">
           {t.family && <p className="text-[13px] font-bold lowercase text-ink">{t.family}</p>}
-          <h1 className="mt-1 text-[32px] font-medium lowercase leading-tight tracking-[-0.02em] text-ink">
+          <h1 className="mt-1 text-[32px] font-medium lowercase leading-tight tracking-[-0.02em] text-ink break-words">
             {t.name}
             <span style={{ color: HOT }}>.</span>
           </h1>
