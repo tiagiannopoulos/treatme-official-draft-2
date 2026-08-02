@@ -130,10 +130,12 @@ export function isSaved(s: PatientState, slug: string) {
 export function saveTreatment(slug: string) {
   if (state.saved.some((t) => t.slug === slug)) return;
   commit({ ...state, saved: [{ slug, savedAt: Date.now() }, ...state.saved] });
+  void import("@/lib/patient-sync").then((m) => m.syncSaved(state.saved));
 }
 
 export function removeTreatment(slug: string) {
   commit({ ...state, saved: state.saved.filter((t) => t.slug !== slug) });
+  void import("@/lib/patient-sync").then((m) => m.syncSaved(state.saved, slug));
 }
 
 export function restoreTreatment(entry: SavedTreatment) {
@@ -142,14 +144,18 @@ export function restoreTreatment(entry: SavedTreatment) {
     ...state,
     saved: [...state.saved, entry].sort((a, b) => b.savedAt - a.savedAt),
   });
+  void import("@/lib/patient-sync").then((m) => m.syncSaved(state.saved));
 }
 
 export function updateProfile(patch: Partial<PatientProfile>) {
   commit({ ...state, profile: { ...state.profile, ...patch } });
+  void import("@/lib/patient-sync").then((m) => m.syncProfile(state.profile));
 }
 
+/** safety answers. these go to patient_health_flags only. */
 export function updateFlags(patch: Partial<HealthFlags>) {
   commit({ ...state, flags: { ...state.flags, ...patch, answered: true } });
+  void import("@/lib/patient-sync").then((m) => m.syncHealthFlags(state.flags));
 }
 
 /** the twelve answerable things in about your skin, safety included. */
