@@ -138,7 +138,7 @@ function TreatmentRail({
   );
 }
 
-function StoryCard({ t, bg }: { t: (typeof TREATMENTS)[number]; bg: string }) {
+function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
   const { open } = useTreatmentStory();
   return (
     <button
@@ -146,17 +146,24 @@ function StoryCard({ t, bg }: { t: (typeof TREATMENTS)[number]; bg: string }) {
       onClick={() => open(t.slug)}
       className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden text-left"
     >
-      <div className={`h-28 ${bg} grid place-items-center`}>
-        <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+      <div className={`h-28 ${bg} grid place-items-center overflow-hidden`}>
+        {t.hero_image_url ? (
+          <img src={t.hero_image_url} alt="" loading="lazy" className="size-full object-cover" />
+        ) : (
+          <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+        )}
       </div>
       <div className="p-3">
         <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
-        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category}</p>
-        <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${t.priceFrom}</p>
+        <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2">{t.category || t.family}</p>
+        {t.price_from !== null && (
+          <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${Math.round(t.price_from)}</p>
+        )}
       </div>
     </button>
   );
 }
+
 
 function EduCard({ title, sub }: { title: string; sub: string }) {
   return (
