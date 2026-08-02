@@ -3,98 +3,88 @@ import type { PatientProfile } from "@/lib/patient-store";
 
 /**
  * "who this provider is right for". declarations the provider makes, matched
- * against the patient's about your skin answers. honest beats flattering, so a
- * conflict is stated as plainly as a match.
+ * against the patient's saved about your skin answers. honest beats flattering,
+ * so a mismatch is stated plainly, in cream, never in red.
  */
-export type FitTone = "match" | "conflict" | "neutral";
+export type FitTone = "match" | "plain" | "neutral";
 
 export interface FitSignal {
   id: string;
+  icon: "skin" | "language" | "treats" | "device";
   label: string;
   tone: FitTone;
+}
+
+const ROMAN = ["", "i", "ii", "iii", "iv", "v", "vi"];
+
+export function fitzRoman(n: number): string {
+  return ROMAN[n] ?? String(n);
 }
 
 function lower(list: string[]): string[] {
   return list.map((s) => s.toLowerCase().trim()).filter(Boolean);
 }
 
-function overlap(a: string[], b: string[]): string[] {
-  return lower(a).filter((x) => lower(b).some((y) => y.includes(x) || x.includes(y)));
+/** patient skin type is stored as a roman numeral string, e.g. "iv". */
+function fitzNumber(value: string | null): number | null {
+  if (!value) return null;
+  const i = ROMAN.indexOf(value.toLowerCase().trim());
+  return i > 0 ? i : null;
 }
 
 export function providerFit(p: Provider, profile: PatientProfile): FitSignal[] {
   const out: FitSignal[] = [];
 
-  // concerns the provider declares they treat
-  const treats = lower(p.specialties ?? []);
-  if (treats.length) {
-    const shared = overlap(profile.workingOn, treats);
+  if (p.fitzpatrick_min !== null && p.fitzpatrick_max !== null) {
     out.push({
-      id: "treats",
-      label: `treats: ${treats.join(", ")}`,
-      tone: shared.length ? "match" : "neutral",
+      id: "fitz",
+      icon: "skin",
+      label:
+        p.fitzpatrick_min === p.fitzpatrick_max
+          ? `works with fitzpatrick ${fitzRoman(p.fitzpatrick_min)}`
+          : `works with fitzpatrick ${fitzRoman(p.fitzpatrick_min)} to ${fitzRoman(p.fitzpatrick_max)}`,
+      tone: "neutral",
     });
-    if (profile.workingOn.length && !shared.length) {
-      out.push({
-        id: "treats-conflict",
-        label: `this provider does not list experience with ${lower(profile.workingOn).join(" or ")}`,
-        tone: "conflict",
-      });
-    }
   }
 
-  // languages
   const langs = lower(p.languages ?? []);
   if (langs.length) {
-    const shared = overlap(profile.languages, langs);
-    out.push({
-      id: "languages",
-      label: `speaks ${langs.join(", ")}`,
-      tone: shared.length ? "match" : "neutral",
-    });
-    if (profile.languages.length && !shared.length) {
-      out.push({
-        id: "languages-conflict",
-        label: `does not list ${lower(profile.languages).join(" or ")}`,
-        tone: "conflict",
-      });
-    }
+    out.push({ id: "langs", icon: "language", label: `speaks ${langs.join(", ")}`, tone: "neutral" });
   }
 
-  // skin type. no provider in alpha has declared a fitzpatrick range yet, so
-  // the honest answer is that it is unknown rather than implied.
-  if (profile.skinType) {
-    out.push({
-      id: "skin-type",
-      label: `this provider has not listed experience with fitzpatrick type ${profile.skinType}`,
-      tone: "conflict",
-    });
+  const treats = lower(p.treats?.length ? p.treats : (p.specialties ?? []));
+  if (treats.length) {
+    out.push({ id: "treats", icon: "treats", label: `treats: ${treats.join(", ")}`, tone: "neutral" });
   }
 
-  // treatments they actually list, used as the on site capability signal
-  const families = Array.from(new Set(p.treatments.map((t) => t.category).filter(Boolean)));
-  if (families.length) {
-    out.push({
-      id: "offers",
-      label: `works in ${lower(families).slice(0, 3).join(", ")}`,
-      tone: "neutral",
-    });
+  const devices = lower(p.devices ?? []);
+  if (devices.length) {
+    out.push({ id: "devices", icon: "device", label: `devices on site: ${devices.join(", ")}`, tone: "neutral" });
   }
 
-  if (!profile.skinType && !profile.workingOn.length && !profile.languages.length) {
+  // compare against the patient's saved skin type. silent when they have none.
+  const patientFitz = fitzNumber(profile.skinType);
+  if (patientFitz !== null && p.fitzpatrick_min !== null && p.fitzpatrick_max !== null) {
+    const inside = patientFitz >= p.fitzpatrick_min && patientFitz <= p.fitzpatrick_max;
     out.push({
-      id: "prompt",
-      label: "answer about your skin and treatme will tell you whether this provider fits you",
-      tone: "neutral",
+      id: "skin-match",
+      icon: "skin",
+      label: inside
+        ? "matches your skin type"
+        : "this provider does not list experience with your skin type",
+      tone: inside ? "match" : "plain",
     });
   }
 
   return out;
 }
 
-/** license verified · cno. never render an unverified state, it reads as an accusation. */
+/** "license verified · cno #123456". never render a negative or pending state. */
 export function licenseLine(p: Provider): string | null {
-  if (!p.verified) return null;
+  if (!p.license_verified) return null;
   const body = (p.licensing_body ?? "").trim().toLowerCase();
-  return body ? `license verified · ${body}` : "license verified";
+  const num = (p.license_number ?? "").trim();
+  if (body && num) return `license verified · ${body} #${num}`;
+  if (body) return `license verified · ${body}`;
+  return "license verified";
 }
