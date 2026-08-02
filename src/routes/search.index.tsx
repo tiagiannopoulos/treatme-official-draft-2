@@ -640,14 +640,8 @@ function TreatmentCardCompact({
   providerCount?: number;
   onClick?: () => void;
 }) {
-  const Wrapper = onClick ? "button" : Link;
-  return (
-    <Wrapper
-      {...(onClick
-        ? { type: "button", onClick }
-        : { to: "/treatment/$slug", params: { slug: treatment.slug } })}
-      className="shrink-0 w-[158px] rounded-[20px] border border-line bg-white p-3 text-left active:scale-[0.98] transition-transform"
-    >
+  const body = (
+    <>
       {treatment.hero_image_url ? (
         <img
           src={treatment.hero_image_url}
@@ -674,9 +668,30 @@ function TreatmentCardCompact({
           <span className="text-[11px] font-semibold lowercase">from ${treatment.price_from}</span>
         )}
       </div>
-    </Wrapper>
+    </>
+  );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="shrink-0 w-[158px] rounded-[20px] border border-line bg-white p-3 text-left active:scale-[0.98] transition-transform"
+      >
+        {body}
+      </button>
+    );
+  }
+  return (
+    <Link
+      to="/treatment/$slug"
+      params={{ slug: treatment.slug }}
+      className="shrink-0 w-[158px] rounded-[20px] border border-line bg-white p-3 text-left active:scale-[0.98] transition-transform"
+    >
+      {body}
+    </Link>
   );
 }
+
 
 function MedspaCard({
   storefront,
