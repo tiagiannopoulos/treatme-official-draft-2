@@ -439,19 +439,20 @@ function SearchPage() {
           <section className="mt-6">
             <p className="brand-eyebrow">explore treatments</p>
             <div className="mt-2 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
-              {TREATMENT_CHIPS.map((chip) => (
+              {treatments.slice(0, CHIP_COUNT).map((t) => (
                 <button
-                  key={chip}
+                  key={t.slug}
                   type="button"
                   onClick={() => {
-                    setQ(chip);
+                    setQ(t.name);
                     setScope("providers");
                   }}
-                  className="shrink-0 rounded-pill bg-butter text-ink px-3.5 py-2 text-[14px] lowercase"
+                  className="shrink-0 rounded-pill bg-butter text-ink px-3.5 py-2 text-[14px] lowercase whitespace-nowrap"
                 >
-                  {chip}
+                  {t.name}
                 </button>
               ))}
+
             </div>
           </section>
 
