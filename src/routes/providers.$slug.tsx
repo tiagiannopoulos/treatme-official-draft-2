@@ -357,6 +357,9 @@ function ProviderProfile() {
           book a consult
         </Link>
       </div>
+
+      {sheetSlug && <TreatmentSheet slug={sheetSlug} onClose={() => setSheetSlug(null)} />}
     </div>
   );
+
 }
