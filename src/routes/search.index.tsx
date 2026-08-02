@@ -74,11 +74,12 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
-/** how many nearby providers to reveal per infinite-scroll page. */
-const PAGE_SIZE = 10;
+/** how many providers to reveal in the nearby preview before asking to expand. */
+const NEARBY_PREVIEW = 3;
 
 /** how many treatments to surface as quick-entry chips in the explore state. */
 const CHIP_COUNT = 12;
+
 
 
 
@@ -101,8 +102,8 @@ function SearchPage() {
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
   const [locating, setLocating] = useState(false);
-  const [visibleProviders, setVisibleProviders] = useState(PAGE_SIZE);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [expandProviders, setExpandProviders] = useState(false);
+
 
   const [selected, setSelected] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -156,23 +157,11 @@ function SearchPage() {
     [data.storefronts],
   );
 
-  /** reveal another page of providers when the sentinel scrolls into view. */
+  /** reset provider preview when filters change. */
   useEffect(() => {
-    const el = loadMoreRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisibleProviders((n) => n + PAGE_SIZE);
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [q, scope, radius, center, visibleProviders]);
-
-  useEffect(() => {
-    setVisibleProviders(PAGE_SIZE);
+    setExpandProviders(false);
   }, [q, radius, center]);
+
 
 
   const providerResults = useMemo(() => {
@@ -563,16 +552,21 @@ function SearchPage() {
                 {providerResults.length} within {radius} km of {locLabel}
               </p>
               <div className="mt-2 space-y-2.5">
-                {providerResults.slice(0, visibleProviders).map(({ p, shops, km }) => (
+                {providerResults.slice(0, expandProviders ? providerResults.length : NEARBY_PREVIEW).map(({ p, shops, km }) => (
                   <ProviderCard key={p.id} provider={p} km={km} shops={shops} />
                 ))}
               </div>
-              {visibleProviders < providerResults.length && (
-                <div ref={loadMoreRef} className="py-6 text-center text-[12px] text-ink-mute lowercase">
-                  loading more providers...
-                </div>
+              {providerResults.length > NEARBY_PREVIEW && (
+                <button
+                  type="button"
+                  onClick={() => setExpandProviders((v) => !v)}
+                  className="mt-3 w-full rounded-2xl border border-line py-2.5 text-[12px] font-semibold lowercase text-ink active:scale-[0.98] transition-transform"
+                >
+                  {expandProviders ? "show fewer providers" : `see all ${providerResults.length} providers`}
+                </button>
               )}
             </section>
+
           )}
 
 
