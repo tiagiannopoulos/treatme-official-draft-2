@@ -6,7 +6,15 @@ import { toast } from "sonner";
 
 import { PosterCard } from "@/components/treatme/PosterCard";
 import { treatmentCatalogQuery, INK, MINT } from "@/lib/treatment-catalog";
-import { usePatient, removeTreatment, restoreTreatment, type SavedTreatment } from "@/lib/patient-store";
+import {
+  usePatient,
+  removeTreatment,
+  restoreTreatment,
+  setTreatmentStatus,
+  JOURNEY_STATUSES,
+  type JourneyStatus,
+  type SavedTreatment,
+} from "@/lib/patient-store";
 import { PillButton } from "@/components/treatme/PillButton";
 
 export function SavedTreatments() {
@@ -45,7 +53,7 @@ export function SavedTreatments() {
   return (
     <section className="mt-8">
       <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
-        saved treatments
+        your journey
       </h2>
 
       <div
@@ -58,10 +66,10 @@ export function SavedTreatments() {
               <Bookmark className="size-6" style={{ color: INK }} strokeWidth={1.6} />
             </span>
             <p className="mt-3 text-[15px] font-medium lowercase" style={{ color: INK }}>
-              nothing saved yet
+              your journey is empty
             </p>
             <p className="mt-1 max-w-[260px] text-[12.5px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
-              tap the bookmark on any treatment to keep it here
+              tap the bookmark on any treatment and it lands here as curious
             </p>
             <PillButton
               className="mt-4 h-10 px-5 text-[13px]"
@@ -92,6 +100,7 @@ export function SavedTreatments() {
                   onPress={() => navigate({ to: "/treatment/$slug", params: { slug: entry.slug } })}
                   className="w-full"
                 />
+                <StatusPill entry={entry} />
                 <button
                   type="button"
                   aria-label={`remove ${treatment.name}`}
@@ -110,5 +119,32 @@ export function SavedTreatments() {
         )}
       </div>
     </section>
+  );
+}
+
+const STATUS_TINT: Record<JourneyStatus, string> = {
+  curious: "#FCFBF7",
+  planning: "#DFFFF8",
+  booked: "#F8A1C6",
+  done: "#FFEDB4",
+};
+
+function StatusPill({ entry }: { entry: SavedTreatment }) {
+  const status: JourneyStatus = entry.status ?? "curious";
+  return (
+    <button
+      type="button"
+      aria-label={`status ${status}, tap to change`}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        const next = JOURNEY_STATUSES[(JOURNEY_STATUSES.indexOf(status) + 1) % JOURNEY_STATUSES.length];
+        setTreatmentStatus(entry.slug, next);
+      }}
+      className="mt-2 rounded-full px-2.5 py-1 text-[11px] lowercase"
+      style={{ backgroundColor: STATUS_TINT[status], border: "1px solid rgba(17,17,17,0.10)", color: "#111111" }}
+    >
+      {status}
+    </button>
   );
 }
