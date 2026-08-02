@@ -301,11 +301,8 @@ function CompactCard({
           className="h-28 grid place-items-center overflow-hidden"
           style={{ background: catalog?.accent_color || "rgba(248,161,198,0.35)" }}
         >
-          {catalog?.icon_url ? (
-            <img src={catalog.icon_url} alt="" loading="lazy" className="size-8 object-contain" />
-          ) : (
-            <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
-          )}
+          <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
+
         </div>
         <div className="p-3">
           <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
