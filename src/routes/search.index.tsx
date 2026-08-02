@@ -349,14 +349,14 @@ function SearchPage() {
                           onClick={() => setScope("medspas")}
                           className="text-[12px] font-semibold text-hot lowercase"
                         >
-                          see all {medspaResults.length} medspas
+                          see all {medspaResults.length}
                         </button>
                       )}
                     </div>
                   )}
-                  <div className="mt-2 space-y-2.5">
-                    {(scope === "all" ? medspaResults.slice(0, 3) : medspaResults).map((s) => (
-                      <MedspaCard
+                  <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
+                    {(scope === "all" ? medspaResults.slice(0, 6) : medspaResults).map((s) => (
+                      <MedspaCardCompact
                         key={s.id}
                         storefront={s}
                         km={s.km}
@@ -368,6 +368,7 @@ function SearchPage() {
                   </div>
                 </section>
               )}
+
 
               {showTreatments && treatmentResults.length > 0 && (
                 <section className="mt-6">
