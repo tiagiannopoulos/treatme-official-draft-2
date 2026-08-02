@@ -529,57 +529,40 @@ export type Database = {
       treatment_story_slides: {
         Row: {
           body: string | null
-          created_at: string
-          detail_chips: string[]
-          headline: string
+          headline: string | null
           id: string
-          media_overlay: Database["public"]["Enums"]["slide_overlay"]
-          media_url: string | null
-          slide_order: number
-          slide_type: Database["public"]["Enums"]["slide_type"]
+          image_url: string | null
+          kind: string
+          overlay: Database["public"]["Enums"]["slide_overlay"] | null
+          slide_index: number
           treatment_slug: string
-          updated_at: string
         }
         Insert: {
           body?: string | null
-          created_at?: string
-          detail_chips?: string[]
-          headline: string
+          headline?: string | null
           id?: string
-          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
-          media_url?: string | null
-          slide_order: number
-          slide_type: Database["public"]["Enums"]["slide_type"]
+          image_url?: string | null
+          kind: string
+          overlay?: Database["public"]["Enums"]["slide_overlay"] | null
+          slide_index: number
           treatment_slug: string
-          updated_at?: string
         }
         Update: {
           body?: string | null
-          created_at?: string
-          detail_chips?: string[]
-          headline?: string
+          headline?: string | null
           id?: string
-          media_overlay?: Database["public"]["Enums"]["slide_overlay"]
-          media_url?: string | null
-          slide_order?: number
-          slide_type?: Database["public"]["Enums"]["slide_type"]
+          image_url?: string | null
+          kind?: string
+          overlay?: Database["public"]["Enums"]["slide_overlay"] | null
+          slide_index?: number
           treatment_slug?: string
-          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "treatment_story_slides_treatment_slug_fkey"
-            columns: ["treatment_slug"]
-            isOneToOne: false
-            referencedRelation: "treatments"
-            referencedColumns: ["slug"]
-          },
-        ]
+        Relationships: []
       }
       treatments: {
         Row: {
           aliases: string[]
-          category: string
+          category: string | null
           created_at: string
           descriptor: string
           downtime: string
@@ -589,8 +572,13 @@ export type Database = {
           hero_image_url: string | null
           hero_tone: Database["public"]["Enums"]["slide_overlay"]
           improves: string[]
+          is_prescription_category: boolean | null
+          medically_reviewed_at: string | null
+          medically_reviewed_by: string | null
           name: string
-          price_from: number
+          needs_device_disclaimer: boolean | null
+          price_from: number | null
+          price_note: string | null
           rec_mode: string
           science: string
           short_description: string
@@ -602,7 +590,7 @@ export type Database = {
         }
         Insert: {
           aliases?: string[]
-          category: string
+          category?: string | null
           created_at?: string
           descriptor?: string
           downtime?: string
@@ -612,8 +600,13 @@ export type Database = {
           hero_image_url?: string | null
           hero_tone?: Database["public"]["Enums"]["slide_overlay"]
           improves?: string[]
+          is_prescription_category?: boolean | null
+          medically_reviewed_at?: string | null
+          medically_reviewed_by?: string | null
           name: string
-          price_from: number
+          needs_device_disclaimer?: boolean | null
+          price_from?: number | null
+          price_note?: string | null
           rec_mode?: string
           science?: string
           short_description?: string
@@ -625,7 +618,7 @@ export type Database = {
         }
         Update: {
           aliases?: string[]
-          category?: string
+          category?: string | null
           created_at?: string
           descriptor?: string
           downtime?: string
@@ -635,8 +628,13 @@ export type Database = {
           hero_image_url?: string | null
           hero_tone?: Database["public"]["Enums"]["slide_overlay"]
           improves?: string[]
+          is_prescription_category?: boolean | null
+          medically_reviewed_at?: string | null
+          medically_reviewed_by?: string | null
           name?: string
-          price_from?: number
+          needs_device_disclaimer?: boolean | null
+          price_from?: number | null
+          price_note?: string | null
           rec_mode?: string
           science?: string
           short_description?: string
