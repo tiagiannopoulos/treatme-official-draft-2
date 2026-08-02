@@ -73,7 +73,7 @@ function MenuPage() {
       {/* 3. Trending now */}
       <TreatmentRail
         eyebrow="Trending now"
-        title="what people are booking"
+        title="popular this week"
         items={trending}
         tone="mint"
       />
