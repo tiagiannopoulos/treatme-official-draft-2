@@ -561,22 +561,29 @@ export type Database = {
       }
       treatments: {
         Row: {
+          accent_color: string | null
           aliases: string[]
+          avg_price_high: number | null
+          avg_price_low: number | null
+          blurb: string | null
           category: string | null
           created_at: string
           descriptor: string
           downtime: string
+          downtime_label: string | null
           family: string
           group: Database["public"]["Enums"]["treatment_group"] | null
           hero_image: string
           hero_image_url: string | null
           hero_tone: Database["public"]["Enums"]["slide_overlay"]
+          icon_url: string | null
           improves: string[]
           is_prescription_category: boolean | null
           medically_reviewed_at: string | null
           medically_reviewed_by: string | null
           name: string
           needs_device_disclaimer: boolean | null
+          poster_url: string | null
           price_from: number | null
           price_note: string | null
           rec_mode: string
@@ -589,22 +596,29 @@ export type Database = {
           what_to_expect: string
         }
         Insert: {
+          accent_color?: string | null
           aliases?: string[]
+          avg_price_high?: number | null
+          avg_price_low?: number | null
+          blurb?: string | null
           category?: string | null
           created_at?: string
           descriptor?: string
           downtime?: string
+          downtime_label?: string | null
           family?: string
           group?: Database["public"]["Enums"]["treatment_group"] | null
           hero_image?: string
           hero_image_url?: string | null
           hero_tone?: Database["public"]["Enums"]["slide_overlay"]
+          icon_url?: string | null
           improves?: string[]
           is_prescription_category?: boolean | null
           medically_reviewed_at?: string | null
           medically_reviewed_by?: string | null
           name: string
           needs_device_disclaimer?: boolean | null
+          poster_url?: string | null
           price_from?: number | null
           price_note?: string | null
           rec_mode?: string
@@ -617,22 +631,29 @@ export type Database = {
           what_to_expect?: string
         }
         Update: {
+          accent_color?: string | null
           aliases?: string[]
+          avg_price_high?: number | null
+          avg_price_low?: number | null
+          blurb?: string | null
           category?: string | null
           created_at?: string
           descriptor?: string
           downtime?: string
+          downtime_label?: string | null
           family?: string
           group?: Database["public"]["Enums"]["treatment_group"] | null
           hero_image?: string
           hero_image_url?: string | null
           hero_tone?: Database["public"]["Enums"]["slide_overlay"]
+          icon_url?: string | null
           improves?: string[]
           is_prescription_category?: boolean | null
           medically_reviewed_at?: string | null
           medically_reviewed_by?: string | null
           name?: string
           needs_device_disclaimer?: boolean | null
+          poster_url?: string | null
           price_from?: number | null
           price_note?: string | null
           rec_mode?: string
