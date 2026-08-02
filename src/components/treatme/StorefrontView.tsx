@@ -29,7 +29,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   const storefront = data.storefronts.find(match) ?? null;
 
   const { openTreatment } = useTreatmentSheet();
-  const [filterSlug, setFilterSlug] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   const { data: photos = [] } = useQuery({
@@ -88,9 +87,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   const fullAddress = extras ? `${line}, ${extras}` : line;
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(`${storefront.name} ${fullAddress}`)}`;
 
-  const shownRoster = filterSlug
-    ? roster.filter((p) => p.treatments.some((t) => t.treatment_slug === filterSlug))
-    : roster;
+  const shownRoster = roster;
 
   const groups: Array<{ label: string; items: string[] }> = [
     { label: "devices", items: storefront.devices ?? [] },
@@ -170,25 +167,10 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       {claimed && roster.length > 0 && (
         <section className="px-6 pt-6">
           <h2 className="text-[17px] font-medium lowercase">who works here</h2>
-          {filterSlug && (
-            <button
-              type="button"
-              onClick={() => setFilterSlug(null)}
-              className="mt-2 inline-flex items-center gap-1 rounded-pill bg-bubblegum/30 px-2.5 py-1 text-[12px] lowercase"
-            >
-              showing {noDash(treatments.find((t) => t.slug === filterSlug)?.name ?? "")}
-              <X className="size-3" />
-            </button>
-          )}
-          <div className="mt-3 space-y-2.5">
+                  <div className="mt-3 space-y-2.5">
             {shownRoster.map((p) => (
               <RosterRow key={p.id} provider={p} storefront={storefront} />
             ))}
-            {shownRoster.length === 0 && (
-              <p className="text-[13px] lowercase text-ink/60">
-                nobody here lists that treatment yet.
-              </p>
-            )}
           </div>
         </section>
       )}
@@ -309,25 +291,19 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
           <h2 className="text-[17px] font-medium lowercase">treatments offered</h2>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {treatments.map((t) => {
-              const on = filterSlug === t.slug;
               return (
                 <button
                   key={t.slug}
                   type="button"
                   onClick={() => openTreatment(t.slug)}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setFilterSlug(on ? null : t.slug);
-                  }}
                   className="rounded-pill border px-2.5 py-1.5 text-[12px] lowercase"
                   style={{
-                    borderColor: on ? "#111111" : "rgba(17,17,17,0.12)",
-                    backgroundColor: on ? "#F8A1C6" : "transparent",
+                    borderColor: "rgba(17,17,17,0.12)",
                   }}
                 >
                   {noDash(t.name)}
                   {t.from !== null && (
-                    <span className="ml-1" style={{ color: on ? "#111111" : "#FF1F87" }}>
+                    <span className="ml-1 text-hot">
                       from ${Math.round(t.from)}
                     </span>
                   )}
