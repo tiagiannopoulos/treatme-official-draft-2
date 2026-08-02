@@ -53,7 +53,7 @@ export function SavedTreatments() {
   return (
     <section className="mt-8">
       <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
-        your journey
+        saved treatments
       </h2>
 
       <div
@@ -66,10 +66,10 @@ export function SavedTreatments() {
               <Bookmark className="size-6" style={{ color: INK }} strokeWidth={1.6} />
             </span>
             <p className="mt-3 text-[15px] font-medium lowercase" style={{ color: INK }}>
-              your journey is empty
+              nothing saved yet
             </p>
             <p className="mt-1 max-w-[260px] text-[12.5px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
-              tap the bookmark on any treatment and it lands here as curious
+              tap the bookmark on any treatment to keep it here
             </p>
             <PillButton
               className="mt-4 h-10 px-5 text-[13px]"
