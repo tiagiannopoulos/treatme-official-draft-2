@@ -108,7 +108,7 @@ function TreatmentRail({
   eyebrow: string;
   title: string;
   sub: string;
-  items: typeof TREATMENTS;
+  items: SearchTreatment[];
   tone: "butter" | "mint" | "bubblegum";
   icon?: React.ReactNode;
 }) {
