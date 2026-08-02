@@ -296,7 +296,7 @@ function CoverCard({
   catalog?: { poster_url: string | null; accent_color: string; has_story: boolean; downtime_label: string };
 }) {
   const navigate = useNavigate();
-  const poster = catalog?.poster_url || t.hero_image_url || t.hero_image || null;
+  const poster = null;
   const hasStory = catalog?.has_story ?? false;
   return (
     <div className="relative">
