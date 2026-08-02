@@ -678,6 +678,7 @@ function TreatmentCardCompact({
   );
 }
 
+function MedspaCard({
   storefront,
   km,
   providers,
@@ -690,6 +691,7 @@ function TreatmentCardCompact({
   active: boolean;
   onSelect: () => void;
 }) {
+
   return (
     <div
       onClick={onSelect}
