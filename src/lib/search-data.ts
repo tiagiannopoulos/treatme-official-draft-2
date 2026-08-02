@@ -60,8 +60,9 @@ export interface Provider {
   fitzpatrick_max: number | null;
   license_verified: boolean;
   license_number: string | null;
-
+  /** every storefront this human works at. a provider can work at more than one. */
   storefronts: Array<Storefront & { is_primary: boolean }>;
+
   treatments: ProviderTreatment[];
 }
 
