@@ -19,6 +19,7 @@ import {
   storefrontMediaQuery,
   todayKey,
 } from "@/lib/storefront-detail";
+import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 
 /** full storefront page. the roster sits directly under the hero on purpose. */
 export function StorefrontView({ match }: { match: (s: Storefront) => boolean }) {
@@ -27,6 +28,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   const { data } = useSuspenseQuery(directoryQuery);
   const storefront = data.storefronts.find(match) ?? null;
 
+  const { openTreatment } = useTreatmentSheet();
   const [filterSlug, setFilterSlug] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
 
@@ -312,7 +314,11 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
                 <button
                   key={t.slug}
                   type="button"
-                  onClick={() => setFilterSlug(on ? null : t.slug)}
+                  onClick={() => openTreatment(t.slug)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setFilterSlug(on ? null : t.slug);
+                  }}
                   className="rounded-pill border px-2.5 py-1.5 text-[12px] lowercase"
                   style={{
                     borderColor: on ? "#111111" : "rgba(17,17,17,0.12)",
