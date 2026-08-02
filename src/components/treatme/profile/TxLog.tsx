@@ -105,9 +105,6 @@ export function TxLog() {
       <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
         tx log
       </h2>
-      <p className="mt-1 text-[12.5px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
-        every treatment you book through treatme, recorded by the person who did it
-      </p>
 
       {entries.length === 0 ? (
         <div
