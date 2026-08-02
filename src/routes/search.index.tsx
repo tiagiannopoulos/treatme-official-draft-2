@@ -92,10 +92,8 @@ function SearchPage() {
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
   const [locating, setLocating] = useState(false);
-  const [expandProviders, setExpandProviders] = useState(false);
-
-
   const [selected, setSelected] = useState<string | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   /** debounced query: matching waits 250ms behind typing. */
