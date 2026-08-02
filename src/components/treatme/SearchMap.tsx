@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { MarkerClusterer, type Marker as ClusterMarker } from "@googlemaps/markerclusterer";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsKey } from "@/lib/map.functions";
@@ -93,7 +93,7 @@ export function SearchMap({
           disableDefaultUI: true,
           zoomControl: true,
           clickableIcons: false,
-          gestureHandling: "greedy",
+          gestureHandling,
           styles: MAP_STYLE,
           mapTypeId: "roadmap",
         });
@@ -119,11 +119,14 @@ export function SearchMap({
       cancelled = true;
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
+      clustererRef.current?.clearMarkers();
+      clustererRef.current?.setMap(null);
+      clustererRef.current = null;
       circleRef.current?.setMap(null);
       circleRef.current = null;
       mapRef.current = null;
     };
-  }, [browserKey, trackingId, onSelect]);
+  }, [browserKey, trackingId, onSelect, gestureHandling]);
 
   // remove google maps error overlay if the key is restricted and we fall back.
   useEffect(() => {
@@ -352,6 +355,18 @@ export function SearchMap({
       <p className="absolute bottom-3 left-3 text-[10px] text-ink-mute lowercase">map loading</p>
     </div>
   );
+}
+
+/** hot pink cluster bubble so clusters stay on brand. */
+function createClusterIcon(count: number): google.maps.Icon {
+  const size = count > 50 ? 52 : count > 20 ? 46 : 40;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="${HOT}" fill-opacity="0.92" stroke="${CREAM}" stroke-width="2.5"/></svg>`;
+  return {
+    url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+    scaledSize: new google.maps.Size(size, size),
+    anchor: new google.maps.Point(size / 2, size / 2),
+    labelOrigin: new google.maps.Point(20, 20),
+  };
 }
 
 function createPinIcon(active: boolean): google.maps.Icon {
