@@ -200,6 +200,8 @@ export interface SearchTreatment {
   price_from: number | null;
   hero_image_url: string | null;
   aliases: string[];
+  /** brand and colloquial names people actually type, from the treatments table. */
+  search_synonyms: string[];
   /** short one-line description used in treatment result rows. */
   descriptor: string;
 }
@@ -209,7 +211,7 @@ export const searchTreatmentsQuery = queryOptions({
   queryFn: async (): Promise<SearchTreatment[]> => {
     const { data, error } = await supabase
       .from("treatments")
-      .select("slug, name, category, family, price_from, hero_image_url, aliases, descriptor, sort_order")
+      .select("slug, name, category, family, price_from, hero_image_url, aliases, search_synonyms, descriptor, sort_order")
       .order("sort_order");
     if (error) throw new Error(error.message);
     return (data ?? []).map((t) => ({
@@ -220,6 +222,7 @@ export const searchTreatmentsQuery = queryOptions({
       price_from: t.price_from === null ? null : Number(t.price_from),
       hero_image_url: t.hero_image_url ?? null,
       aliases: (t.aliases ?? []) as string[],
+      search_synonyms: (t.search_synonyms ?? []) as string[],
       descriptor: t.descriptor ?? "",
     }));
   },
@@ -233,6 +236,8 @@ export function matchTreatment(t: SearchTreatment, q: string): { hit: boolean; v
   const needle = q.toLowerCase();
   if (t.name.toLowerCase().includes(needle)) return { hit: true };
   if (t.category.toLowerCase().includes(needle)) return { hit: true };
+  const synonym = t.search_synonyms.find((a) => a.toLowerCase().includes(needle));
+  if (synonym) return { hit: true, via: synonym.toLowerCase() };
   const alias = t.aliases.find((a) => a.toLowerCase().includes(needle));
   if (alias) return { hit: true, via: alias.toLowerCase() };
   return { hit: false };

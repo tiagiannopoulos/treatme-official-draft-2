@@ -33,12 +33,12 @@ import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCard } from "@/components/treatme/ProviderCard";
 import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
 import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
-import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/search/")({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === "string" ? search.q : undefined,
+    scope: typeof search.scope === "string" ? search.scope : undefined,
   }),
   head: () => ({
     meta: [
@@ -86,12 +86,17 @@ function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
-  const { openSheet } = useTreatmentSheet();
 
-  const initialQ = Route.useSearch().q ?? "";
+  const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
   const [focused, setFocused] = useState(false);
-  const [scope, setScope] = useState<Scope>(initialQ ? "providers" : "all");
+  const [scope, setScope] = useState<Scope>(
+    initialScope && (SCOPES as readonly string[]).includes(initialScope)
+      ? (initialScope as Scope)
+      : initialQ
+        ? "providers"
+        : "all",
+  );
   const [radius, setRadius] = useState<number>(10);
   const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
   const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
@@ -446,9 +451,14 @@ function SearchPage() {
             <p className="brand-eyebrow">explore treatments</p>
             <div className="mt-3 -mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
               {(catalog.length ? catalog.slice(0, CHIP_COUNT) : []).map((t) => (
-                <button key={t.slug} type="button" onClick={() => openSheet(t.slug)} className="shrink-0">
+                <Link
+                  key={t.slug}
+                  to="/treatment/$slug"
+                  params={{ slug: t.slug }}
+                  className="shrink-0"
+                >
                   <TreatmentIcon name={t.name} iconUrl={t.icon_url} accentColor={t.accent_color} />
-                </button>
+                </Link>
               ))}
               {catalog.length === 0 &&
                 treatments.slice(0, CHIP_COUNT).map((t) => (
@@ -629,7 +639,7 @@ function SearchPage() {
 function TreatmentRow({ treatment, via }: { treatment: SearchTreatment; via?: string }) {
   return (
     <Link
-      to="/treatments/$slug"
+      to="/treatment/$slug"
       params={{ slug: treatment.slug }}
       className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3"
     >
