@@ -39,6 +39,8 @@ interface Props {
   height?: string;
   /** shows the expand button that pushes to the full screen map. */
   expandable?: boolean;
+  /** cooperative keeps the page scrolling inside the small card; greedy suits full screen. */
+  gestureHandling?: "greedy" | "cooperative";
   className?: string;
 }
 
@@ -51,8 +53,10 @@ export function SearchMap({
   radiusKm,
   height = "h-[220px]",
   expandable = false,
+  gestureHandling = "cooperative",
   className,
 }: Props) {
+
   const { data } = useQuery(keyQuery);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
