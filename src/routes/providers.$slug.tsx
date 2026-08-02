@@ -63,6 +63,8 @@ function ProviderProfile() {
 
   const [bioOpen, setBioOpen] = useState(false);
   const [allReviews, setAllReviews] = useState(false);
+  const [sheetSlug, setSheetSlug] = useState<string | null>(null);
+  const { profile } = usePatient();
 
   const base = provider.storefronts[0] ?? null;
   const hasRating = provider.review_count >= 3;
@@ -82,7 +84,12 @@ function ProviderProfile() {
     `speaks ${langs}`,
   ].filter(Boolean);
 
+  const license = licenseLine(provider);
+  const fit = providerFit(provider, profile);
+  const away = base ? formatDistance(distanceKm(TORONTO_CENTROID, { lat: base.lat, lng: base.lng })) : null;
+
   const shownReviews = allReviews ? reviews : reviews.slice(0, 3);
+
 
   return (
     <div className="pb-36">
