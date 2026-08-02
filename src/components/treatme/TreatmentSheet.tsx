@@ -35,7 +35,6 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
   }, [directory, slug]);
 
   function toSearch() {
-    onClose();
     navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: "providers" } });
   }
 
@@ -102,10 +101,7 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
             {treatment.has_story && (
               <button
                 type="button"
-                onClick={() => {
-                  onClose();
-                  navigate({ to: "/treatment/$slug/story", params: { slug: treatment.slug } });
-                }}
+                onClick={() => navigate({ to: "/treatment/$slug/story", params: { slug: treatment.slug } })}
                 className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-pill text-[15px] font-semibold lowercase text-ink"
                 style={{ backgroundColor: "#DFFFF8" }}
               >
