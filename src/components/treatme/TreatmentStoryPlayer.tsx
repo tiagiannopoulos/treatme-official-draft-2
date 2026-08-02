@@ -1,83 +1,48 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Check, Clock, Lock, MessageCircle, Sparkles, User, X } from "lucide-react";
 
-import {
-  priceRangeLabel,
-  realResultsQuery,
-  storySlidesQuery,
-  treatmentCatalogQuery,
-  type CatalogTreatment,
-  type StorySlideRow,
-} from "@/lib/treatment-catalog";
-import { directoryQuery, distanceKm, TORONTO_CENTROID } from "@/lib/search-data";
-import { Avatar } from "@/components/treatme/ProviderCard";
+import { realResultsQuery, treatmentCatalogQuery } from "@/lib/treatment-catalog";
+import { buildSlides, storySourceQuery, INK, type StorySlide } from "@/lib/treatment-story";
 
-const CREAM = "#FCFBF7";
 const SLIDE_MS = 6000;
+
+/** a darker tint of the slide background, never a different hue. */
+const darker = (bg: string, pct: number) => `color-mix(in srgb, ${bg} ${100 - pct}%, ${INK})`;
+/** a lighter tint of the slide background. */
+const lighter = (bg: string, pct: number) => `color-mix(in srgb, ${bg} ${100 - pct}%, #FFFFFF)`;
 
 export function TreatmentStoryPlayer({ slug }: { slug: string }) {
   const navigate = useNavigate();
   const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
-  const { data: slidesRaw = [], isLoading: slidesLoading } = useQuery(storySlidesQuery(slug));
+  const { data: source, isLoading } = useQuery(storySourceQuery(slug));
   const { data: media = [] } = useQuery(realResultsQuery(slug));
-  const { data: directory } = useQuery(directoryQuery);
 
-  const treatment = catalog.find((t) => t.slug === slug);
-  const storyList = useMemo(() => catalog.filter((t) => t.has_story), [catalog]);
-
-  /** the real_results slide only exists when consented photos exist. */
-  const slides = useMemo(
-    () => slidesRaw.filter((s) => s.kind !== "real_results" || media.length > 0),
-    [slidesRaw, media.length],
-  );
+  const slides = useMemo(() => (source ? buildSlides(source, media) : []), [source, media]);
 
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [held, setHeld] = useState(false);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setIndex(0);
-    setReady(false);
   }, [slug]);
-
-  const slide = slides[index];
-  const bg = slide?.image_url || treatment?.poster_url || null;
-
-  /** hold on a dark frame until the first image decodes, never a white flash. */
-  useEffect(() => {
-    if (index !== 0) return;
-    if (!bg) {
-      setReady(true);
-      return;
-    }
-    let cancelled = false;
-    const img = new Image();
-    img.src = bg;
-    const done = () => {
-      if (!cancelled) setReady(true);
-    };
-    img.decode ? img.decode().then(done).catch(done) : (img.onload = done);
-    return () => {
-      cancelled = true;
-    };
-  }, [bg, index]);
-
-  const paused = held || !ready || slides.length === 0;
 
   useEffect(() => {
     setProgress(0);
   }, [index]);
 
+  const slide = slides[index];
+  const bg = slide?.bg ?? "#FCFBF7";
+  const paused = held || slides.length === 0;
+
   useEffect(() => {
     if (paused) return;
     let raf = 0;
-    let start = performance.now();
-    const carried = progress * SLIDE_MS;
+    const start = performance.now();
     const tick = (now: number) => {
-      const pct = Math.min(1, (carried + (now - start)) / SLIDE_MS);
+      const pct = Math.min(1, (now - start) / SLIDE_MS);
       setProgress(pct);
       if (pct >= 1) {
         next();
@@ -91,14 +56,13 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
   }, [paused, index, slides.length]);
 
   function close() {
-    if (typeof window !== "undefined" && window.history.length > 1) window.history.back();
-    else navigate({ to: "/treatments" });
+    navigate({ to: "/treatments" });
   }
 
   function siblingStory(step: number) {
-    if (storyList.length === 0) return;
-    const at = storyList.findIndex((t) => t.slug === slug);
-    const nextSlug = storyList[(at + step + storyList.length) % storyList.length]?.slug;
+    if (catalog.length === 0) return;
+    const at = catalog.findIndex((t) => t.slug === slug);
+    const nextSlug = catalog[(at + step + catalog.length) % catalog.length]?.slug;
     if (nextSlug) navigate({ to: "/treatment/$slug/story", params: { slug: nextSlug } });
   }
 
@@ -123,12 +87,12 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
   }, [index, slides.length]);
 
   const holdTimer = useRef<number | null>(null);
-  const startPt = useRef<{ x: number; y: number; t: number } | null>(null);
+  const startPt = useRef<{ x: number; y: number } | null>(null);
   const heldRef = useRef(false);
 
   function onPointerDown(e: ReactPointerEvent) {
     heldRef.current = false;
-    startPt.current = { x: e.clientX, y: e.clientY, t: performance.now() };
+    startPt.current = { x: e.clientX, y: e.clientY };
     holdTimer.current = window.setTimeout(() => {
       heldRef.current = true;
       setHeld(true);
@@ -159,32 +123,19 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
       return;
     }
     if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy)) {
-      if (dx < 0) {
-        if (index >= slides.length - 1) siblingStory(1);
-        else setIndex((i) => i + 1);
-      } else {
-        if (index === 0) siblingStory(-1);
-        else setIndex((i) => i - 1);
-      }
+      if (dx < 0) next();
+      else prev();
       return;
     }
     if (Math.abs(dx) < 20 && Math.abs(dy) < 20) {
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const relX = e.clientX - rect.left;
-      if (relX < rect.width * 0.4) prev();
+      if (e.clientX - rect.left < rect.width * 0.4) prev();
       else next();
     }
   }
 
-  const providers = useMemo(() => {
-    if (!directory) return [];
-    return directory.providers.filter((p) => p.treatments.some((t) => t.treatment_slug === slug)).slice(0, 3);
-  }, [directory, slug]);
-
-  const empty = !slidesLoading && slides.length === 0;
-
   return (
-    <div className="fixed inset-0 z-[200] overflow-hidden bg-[#111111]">
+    <div className="fixed inset-0 z-[200] overflow-hidden" style={{ backgroundColor: bg }}>
       <div
         className="relative size-full touch-none select-none"
         onPointerDown={onPointerDown}
@@ -194,29 +145,21 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           startPt.current = null;
         }}
       >
-        {bg && (
-          <img src={bg} alt="" className="absolute inset-0 size-full object-cover" aria-hidden />
-        )}
-        {bg && <span aria-hidden className="absolute inset-0 bg-[#111111]/35" />}
-        {bg && (
-          <span
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-3/5"
-            style={{ background: "linear-gradient(to bottom, rgba(17,17,17,0), rgba(17,17,17,0.85))" }}
-          />
-        )}
-
-        {/* progress: one segment per real slide */}
+        {/* one segment per rendered slide */}
         <div
           className="absolute inset-x-0 top-0 z-30 flex gap-1.5 px-4"
           style={{ paddingTop: "max(12px, env(safe-area-inset-top))" }}
         >
-          {(slides.length ? slides : [null]).map((_, i) => (
-            <span key={i} className="h-[3px] flex-1 overflow-hidden rounded-full" style={{ backgroundColor: "rgba(252,251,247,0.25)" }}>
+          {(slides.length ? slides : [null]).map((s, i) => (
+            <span
+              key={s ? s.key : i}
+              className="h-[3px] flex-1 overflow-hidden rounded-full"
+              style={{ backgroundColor: "rgba(17,17,17,0.2)" }}
+            >
               <span
                 className="block h-full"
                 style={{
-                  backgroundColor: CREAM,
+                  backgroundColor: INK,
                   width: i < index ? "100%" : i === index ? `${progress * 100}%` : "0%",
                 }}
               />
@@ -230,84 +173,33 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           onPointerUp={(e) => e.stopPropagation()}
           onClick={close}
           aria-label="close"
-          className="absolute right-4 z-40 grid size-9 place-items-center"
-          style={{ top: "max(26px, calc(env(safe-area-inset-top) + 18px))", color: CREAM }}
+          className="absolute right-4 z-40 grid size-10 place-items-center rounded-full"
+          style={{
+            top: "max(26px, calc(env(safe-area-inset-top) + 18px))",
+            backgroundColor: darker(bg, 12),
+            color: INK,
+          }}
         >
-          <X className="size-6" strokeWidth={2} />
+          <X className="size-5" strokeWidth={2} />
         </button>
 
-        {empty && (
-          <p className="absolute inset-0 grid place-items-center text-[14px] lowercase" style={{ color: CREAM }}>
-            no story yet for this treatment.
+        {isLoading && <span className="sr-only">loading story</span>}
+        {!isLoading && !source && (
+          <p className="absolute inset-0 grid place-items-center text-[14px] lowercase" style={{ color: INK }}>
+            no story here.
           </p>
         )}
 
         {slide && (
           <div
-            className="absolute inset-x-0 bottom-0 z-20 px-5 pb-24 transition-opacity duration-200"
-            style={{ opacity: held ? 0 : 1 }}
+            className="absolute inset-x-0 bottom-0 top-[42%] z-20 px-6 pb-10 transition-opacity duration-200"
+            style={{ opacity: held ? 0.35 : 1, color: INK }}
           >
-            {slide.kind === "downtime_cost" && treatment ? (
-              <StatBlocks treatment={treatment} slide={slide} />
-            ) : slide.kind === "real_results" ? (
-              <RealResults slide={slide} media={media} />
-            ) : slide.kind === "find_provider" ? (
-              <FindProvider
-                slide={slide}
-                providers={providers}
-                onSeeAll={() => {
-                  navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: "providers" } });
-                }}
-              />
-            ) : slide.kind === "who_its_for" ? (
-              <>
-                <Headline text={slide.headline} />
-                <ul className="mt-3 space-y-1.5">
-                  {slide.body
-                    .split("\n")
-                    .filter(Boolean)
-                    .slice(0, 4)
-                    .map((line) => (
-                      <li key={line} className="flex gap-2 text-[15px] leading-[1.5] lowercase" style={{ color: "rgba(252,251,247,0.85)" }}>
-                        <span className="mt-[7px] size-[5px] shrink-0 rounded-full" style={{ backgroundColor: CREAM }} />
-                        <span>{line}</span>
-                      </li>
-                    ))}
-                </ul>
-              </>
-            ) : (
-              <>
-                <Headline text={slide.headline} />
-                <Body text={slide.body} />
-              </>
-            )}
-          </div>
-        )}
-
-        {/* persistent treatment identity */}
-        {treatment && (
-          <div
-            className="absolute bottom-0 left-5 z-30 flex items-center gap-2"
-            style={{ paddingBottom: "max(18px, env(safe-area-inset-bottom))" }}
-          >
-            <span
-              className="relative size-7 overflow-hidden rounded-full"
-              style={{ backgroundColor: treatment.icon_url ? CREAM : `${treatment.accent_color}33` }}
-            >
-              {treatment.icon_url && (
-                <>
-                  <img src={treatment.icon_url} alt="" className="absolute inset-0 size-full object-cover" />
-                  <span
-                    aria-hidden
-                    className="absolute inset-0"
-                    style={{ backgroundColor: treatment.accent_color, opacity: 0.25, mixBlendMode: "multiply" }}
-                  />
-                </>
-              )}
-            </span>
-            <span className="text-[13px] lowercase" style={{ color: CREAM }}>
-              {treatment.name}
-            </span>
+            <SlideBody
+              slide={slide}
+              onFind={() => navigate({ to: "/search", search: { q: source?.name ?? slug, scope: "providers" } })}
+              onScan={() => navigate({ to: "/scan" })}
+            />
           </div>
         )}
       </div>
@@ -315,9 +207,24 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
   );
 }
 
-function Headline({ text }: { text: string }) {
+function Chip({ bg, label, icon }: { bg: string; label: string; icon: React.ReactNode }) {
   return (
-    <h1 className="line-clamp-3 text-[26px] font-semibold lowercase leading-tight" style={{ color: CREAM }}>
+    <span
+      className="inline-flex items-center gap-2 rounded-pill px-3.5 py-2 text-[12px] font-bold lowercase"
+      style={{ backgroundColor: darker(bg, 10), letterSpacing: "0.12em" }}
+    >
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function Headline({ text, size }: { text: string; size: 40 | 44 }) {
+  return (
+    <h1
+      className="mt-4 font-medium lowercase"
+      style={{ fontSize: `${size}px`, lineHeight: 1.05, letterSpacing: "-0.03em" }}
+    >
       {text}
     </h1>
   );
@@ -326,136 +233,169 @@ function Headline({ text }: { text: string }) {
 function Body({ text }: { text: string }) {
   if (!text) return null;
   return (
-    <p
-      className="mt-3 line-clamp-5 text-[15px] leading-[1.5] lowercase"
-      style={{ color: "rgba(252,251,247,0.85)" }}
-    >
-      {text.replace(/\n/g, " ")}
+    <p className="mt-4 max-w-[80%] text-[18px] lowercase" style={{ lineHeight: 1.6 }}>
+      {text}
     </p>
   );
 }
 
-function StatBlocks({ treatment, slide }: { treatment: CatalogTreatment; slide: StorySlideRow }) {
-  return (
-    <>
-      <Headline text={slide.headline} />
-      <div className="mt-4 flex gap-3">
-        <div className="flex-1 rounded-2xl px-4 py-3" style={{ backgroundColor: "rgba(252,251,247,0.12)" }}>
-          <p className="text-[11px] lowercase" style={{ color: "rgba(252,251,247,0.7)" }}>
-            downtime
-          </p>
-          <p className="mt-1 text-[22px] font-semibold lowercase leading-tight" style={{ color: CREAM }}>
-            {treatment.downtime_label}
-          </p>
-        </div>
-        <div className="flex-1 rounded-2xl px-4 py-3" style={{ backgroundColor: "rgba(252,251,247,0.12)" }}>
-          <p className="text-[11px] lowercase" style={{ color: "rgba(252,251,247,0.7)" }}>
-            typical range
-          </p>
-          <p className="mt-1 text-[22px] font-semibold lowercase leading-tight" style={{ color: CREAM }}>
-            {priceRangeLabel(treatment)}
-          </p>
-        </div>
-      </div>
-      <Body text={slide.body} />
-    </>
-  );
-}
-
-function RealResults({
+function SlideBody({
   slide,
-  media,
+  onFind,
+  onScan,
 }: {
-  slide: StorySlideRow;
-  media: Array<{ id: string; before_url: string; after_url: string; weeks: number | null }>;
+  slide: StorySlide;
+  onFind: () => void;
+  onScan: () => void;
 }) {
-  const item = media[0];
-  if (!item) return null;
-  return (
-    <>
-      <Headline text={slide.headline} />
-      <div className="mt-4 flex gap-3">
-        {(
-          [
-            { label: "before", url: item.before_url },
-            { label: "after", url: item.after_url },
-          ] as const
-        ).map((side) => (
-          <div key={side.label} className="flex-1">
-            <img
-              src={side.url}
-              alt={side.label}
-              loading="lazy"
-              className="aspect-[3/4] w-full rounded-2xl object-cover"
-            />
-            <p className="mt-1.5 text-[11px] lowercase" style={{ color: "rgba(252,251,247,0.7)" }}>
-              {side.label}
-              {side.label === "after" && item.weeks ? ` · ${item.weeks} weeks later` : ""}
-            </p>
-          </div>
-        ))}
-      </div>
-      <Body text={slide.body} />
-    </>
-  );
-}
+  const bg = slide.bg;
 
-function FindProvider({
-  slide,
-  providers,
-  onSeeAll,
-}: {
-  slide: StorySlideRow;
-  providers: Array<{
-    id: string;
-    name: string;
-    avatar_url: string | null;
-    storefronts: Array<{ name: string; lat: number; lng: number }>;
-  }>;
-  onSeeAll: () => void;
-}) {
-  return (
-    <>
-      <Headline text={slide.headline || "ready when you are"} />
-      <Body text={slide.body} />
-      {providers.length > 0 && (
-        <div className="mt-4 -mx-5 flex gap-2.5 overflow-x-auto px-5 no-scrollbar">
-          {providers.map((p) => (
-            <div
-              key={p.id}
-              className="w-[150px] shrink-0 rounded-2xl px-3 py-3"
-              style={{ backgroundColor: "rgba(252,251,247,0.12)" }}
+  if (slide.kind === "what_it_is") {
+    return (
+      <>
+        <Chip bg={bg} label={slide.chip} icon={<Sparkles className="size-3.5" />} />
+        <Headline text={`${slide.name}.`} size={44} />
+        <Body text={slide.body} />
+      </>
+    );
+  }
+
+  if (slide.kind === "who_its_for") {
+    return (
+      <>
+        <Chip bg={bg} label={slide.chip} icon={<User className="size-3.5" />} />
+        <Headline text="is this you?" size={40} />
+        <ul className="mt-5 space-y-2.5">
+          {slide.items.map((item) => (
+            <li
+              key={item}
+              className="flex items-start gap-3 rounded-2xl px-4 py-3.5 text-[16px] lowercase"
+              style={{ backgroundColor: lighter(bg, 55), lineHeight: 1.4 }}
             >
-              <Avatar name={p.name} url={p.avatar_url} size="size-10" />
-              <p className="mt-2 truncate text-[13px] font-semibold lowercase" style={{ color: CREAM }}>
-                {p.name}
-              </p>
-              {p.storefronts[0] && (
-                <p className="mt-1 truncate text-[11px] lowercase" style={{ color: "rgba(252,251,247,0.7)" }}>
-                  at {p.storefronts[0].name}
-                </p>
-              )}
-              <span className="sr-only">
-                {distanceKm(TORONTO_CENTROID, {
-                  lat: p.storefronts[0]?.lat ?? TORONTO_CENTROID.lat,
-                  lng: p.storefronts[0]?.lng ?? TORONTO_CENTROID.lng,
-                }).toFixed(0)}
-                km away
+              <span
+                className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full"
+                style={{ backgroundColor: INK }}
+              >
+                <Check className="size-3.5" strokeWidth={3} style={{ color: bg }} />
+              </span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+        {slide.pills.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {slide.pills.map((p) => (
+              <span
+                key={p}
+                className="rounded-pill px-3 py-1.5 text-[12px] font-bold lowercase"
+                style={{ backgroundColor: darker(bg, 10) }}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (slide.kind === "numbers") {
+    return (
+      <>
+        <Chip bg={bg} label={slide.chip} icon={<Clock className="size-3.5" />} />
+        <Headline text="the numbers." size={40} />
+        <div className="mt-5 space-y-2.5">
+          {slide.stats.map((s) => (
+            <div
+              key={s.label}
+              className="flex items-center justify-between rounded-2xl px-5 py-4"
+              style={{ backgroundColor: darker(bg, 10) }}
+            >
+              <span className="text-[16px] lowercase">{s.label}</span>
+              <span className="text-[28px] font-medium lowercase" style={{ letterSpacing: "-0.02em" }}>
+                {s.value}
               </span>
             </div>
           ))}
         </div>
-      )}
-      <button
-        type="button"
-        onPointerDown={(e) => e.stopPropagation()}
-        onPointerUp={(e) => e.stopPropagation()}
-        onClick={onSeeAll}
-        className="mt-5 h-13 w-full rounded-pill py-4 text-[16px] font-semibold lowercase"
-        style={{ backgroundColor: "#FF1F87", color: CREAM }}
-      >
-        see all providers
-      </button>
-    </>
+      </>
+    );
+  }
+
+  if (slide.kind === "results") {
+    if (slide.pairs.length === 0) {
+      return (
+        <>
+          <Chip bg={bg} label="real results" icon={<Lock className="size-3.5" />} />
+          <Headline text="real results, coming soon." size={44} />
+          <Body text="consented before and afters from real patients. nothing simulated." />
+        </>
+      );
+    }
+    return (
+      <>
+        <Headline text="real results." size={44} />
+        <div className="mt-5 -mx-6 flex gap-3 overflow-x-auto px-6 no-scrollbar">
+          {slide.pairs.map((pair) => (
+            <div key={pair.id} className="w-[260px] shrink-0">
+              <div className="flex gap-2">
+                {[
+                  { label: "before", url: pair.before_url },
+                  { label: "after", url: pair.after_url },
+                ].map((side) => (
+                  <img
+                    key={side.label}
+                    src={side.url}
+                    alt={side.label}
+                    loading="lazy"
+                    className="aspect-[3/4] w-1/2 rounded-2xl object-cover"
+                  />
+                ))}
+              </div>
+              <p className="mt-2 text-[13px] lowercase">{pair.interval}</p>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  if (slide.kind === "faq") {
+    return (
+      <>
+        <Chip bg={bg} label={slide.chip} icon={<MessageCircle className="size-3.5" />} />
+        <Headline text={slide.question} size={40} />
+        <Body text={slide.answer} />
+      </>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      <Chip bg={bg} label={slide.chip} icon={null} />
+      <Headline text="book now." size={40} />
+      <Body text="clinics and providers near you offer this." />
+      <div className="mt-auto">
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+          onClick={onFind}
+          className="w-full rounded-pill py-4 text-[17px] font-semibold lowercase"
+          style={{ backgroundColor: INK, color: "#FCFBF7" }}
+        >
+          find providers
+        </button>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => e.stopPropagation()}
+          onClick={onScan}
+          className="mt-3.5 w-full text-center text-[15px] lowercase underline"
+        >
+          scan first
+        </button>
+      </div>
+    </div>
   );
 }

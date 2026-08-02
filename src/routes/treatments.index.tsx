@@ -287,18 +287,14 @@ function CompactCard({
   catalog?: { icon_url: string | null; accent_color: string; has_story: boolean; downtime_label: string; avg_price_low: number | null; avg_price_high: number | null };
 }) {
   const navigate = useNavigate();
-  const hasStory = catalog?.has_story ?? false;
   const meta = catalog?.downtime_label || t.category;
   const price = t.price_from ?? catalog?.avg_price_low ?? null;
   return (
     <div className="relative">
       <button
         type="button"
-        onClick={() =>
-          hasStory
-            ? navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })
-            : navigate({ to: "/treatment/$slug", params: { slug: t.slug } })
-        }
+        onClick={() => navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })}
+
         className="flex w-full flex-col text-left rounded-2xl border border-line bg-cream overflow-hidden active:scale-[0.98] transition-transform"
       >
         <div
