@@ -425,17 +425,6 @@ function SearchPage() {
 
 
 
-          <div className="mt-4 flex items-center gap-2">
-            <button
-              type="button"
-              onClick={useMyLocation}
-              className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-white px-3 py-1.5 text-[12px] font-semibold lowercase"
-            >
-              {locating ? <Loader2 className="size-3.5 animate-spin" /> : <Navigation className="size-3.5" />}
-              use my location
-            </button>
-            <span className="text-[12px] text-ink-mute lowercase">near {locLabel}</span>
-          </div>
 
           <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
             {LOCATION_PRESETS.map((l) => (
