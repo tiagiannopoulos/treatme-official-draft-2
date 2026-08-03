@@ -22,7 +22,6 @@ import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
 import { Route as ProvidersSlugRouteImport } from './routes/providers.$slug'
 import { Route as ProviderIdRouteImport } from './routes/provider.$id'
 import { Route as MedspasSlugRouteImport } from './routes/medspas.$slug'
-import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -97,11 +96,6 @@ const MedspasSlugRoute = MedspasSlugRouteImport.update({
   path: '/medspas/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LearnSlugRoute = LearnSlugRouteImport.update({
-  id: '/learn/$slug',
-  path: '/learn/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
   id: '/dev/recommendations',
   path: '/dev/recommendations',
@@ -149,7 +143,6 @@ export interface FileRoutesByFullPath {
   '/api/chat': typeof ApiChatRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
-  '/learn/$slug': typeof LearnSlugRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
@@ -173,7 +166,6 @@ export interface FileRoutesByTo {
   '/api/chat': typeof ApiChatRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
-  '/learn/$slug': typeof LearnSlugRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
@@ -198,7 +190,6 @@ export interface FileRoutesById {
   '/api/chat': typeof ApiChatRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
-  '/learn/$slug': typeof LearnSlugRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
@@ -224,7 +215,6 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/book/consult'
     | '/dev/recommendations'
-    | '/learn/$slug'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
@@ -248,7 +238,6 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/book/consult'
     | '/dev/recommendations'
-    | '/learn/$slug'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
@@ -272,7 +261,6 @@ export interface FileRouteTypes {
     | '/api/chat'
     | '/book/consult'
     | '/dev/recommendations'
-    | '/learn/$slug'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
@@ -297,7 +285,6 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   BookConsultRoute: typeof BookConsultRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
-  LearnSlugRoute: typeof LearnSlugRoute
   MedspasSlugRoute: typeof MedspasSlugRoute
   ProviderIdRoute: typeof ProviderIdRoute
   ProvidersSlugRoute: typeof ProvidersSlugRoute
@@ -409,13 +396,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MedspasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/learn/$slug': {
-      id: '/learn/$slug'
-      path: '/learn/$slug'
-      fullPath: '/learn/$slug'
-      preLoaderRoute: typeof LearnSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dev/recommendations': {
       id: '/dev/recommendations'
       path: '/dev/recommendations'
@@ -481,7 +461,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   BookConsultRoute: BookConsultRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
-  LearnSlugRoute: LearnSlugRoute,
   MedspasSlugRoute: MedspasSlugRoute,
   ProviderIdRoute: ProviderIdRoute,
   ProvidersSlugRoute: ProvidersSlugRoute,

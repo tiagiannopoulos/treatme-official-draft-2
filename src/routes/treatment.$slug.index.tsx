@@ -277,17 +277,16 @@ function TreatmentDetailPage() {
         </section>
       )}
 
-      {/* floating book bar */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-[70px] z-40 px-4 pb-[env(safe-area-inset-bottom)]">
+      {/* sticky book bar */}
+      <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line/60 bg-white/95 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
         <button
           type="button"
           onClick={book}
-          className="pointer-events-auto h-14 w-full rounded-pill bg-ink text-[16px] font-bold lowercase text-white shadow-[0_12px_30px_-8px_rgba(17,17,17,0.55)] ring-1 ring-white/10 transition-transform duration-200 active:scale-[0.98]"
+          className="h-13 w-full rounded-pill bg-ink py-4 text-[16px] font-bold lowercase text-white"
         >
           book treatment
         </button>
       </div>
-
     </div>
   );
 }
