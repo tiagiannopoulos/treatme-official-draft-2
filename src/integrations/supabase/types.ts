@@ -122,8 +122,74 @@ export type Database = {
           },
         ]
       }
+      education_slides: {
+        Row: {
+          bg: string
+          body: string | null
+          chip: string | null
+          chip_icon: string | null
+          created_at: string
+          cta_label: string | null
+          cta_route: string | null
+          headline: string
+          id: string
+          items: string[]
+          kind: string
+          link_label: string | null
+          pills: string[]
+          sort_order: number
+          story_id: string
+          updated_at: string
+        }
+        Insert: {
+          bg?: string
+          body?: string | null
+          chip?: string | null
+          chip_icon?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_route?: string | null
+          headline: string
+          id?: string
+          items?: string[]
+          kind?: string
+          link_label?: string | null
+          pills?: string[]
+          sort_order?: number
+          story_id: string
+          updated_at?: string
+        }
+        Update: {
+          bg?: string
+          body?: string | null
+          chip?: string | null
+          chip_icon?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_route?: string | null
+          headline?: string
+          id?: string
+          items?: string[]
+          kind?: string
+          link_label?: string | null
+          pills?: string[]
+          sort_order?: number
+          story_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "education_slides_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "education_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education_stories: {
         Row: {
+          accent_color: string
           category: string | null
           cover_image: string | null
           cover_tone: Database["public"]["Enums"]["slide_overlay"]
@@ -131,10 +197,13 @@ export type Database = {
           id: string
           published: boolean
           slug: string
+          sort_order: number
+          subtitle: string | null
           title: string
           updated_at: string
         }
         Insert: {
+          accent_color?: string
           category?: string | null
           cover_image?: string | null
           cover_tone?: Database["public"]["Enums"]["slide_overlay"]
@@ -142,10 +211,13 @@ export type Database = {
           id?: string
           published?: boolean
           slug: string
+          sort_order?: number
+          subtitle?: string | null
           title: string
           updated_at?: string
         }
         Update: {
+          accent_color?: string
           category?: string | null
           cover_image?: string | null
           cover_tone?: Database["public"]["Enums"]["slide_overlay"]
@@ -153,6 +225,8 @@ export type Database = {
           id?: string
           published?: boolean
           slug?: string
+          sort_order?: number
+          subtitle?: string | null
           title?: string
           updated_at?: string
         }

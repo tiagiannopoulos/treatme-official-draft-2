@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { educationStoriesQuery } from "@/lib/education-stories";
 import { useMemo, useState } from "react";
 import { Info, Search, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,6 +209,12 @@ function TreatmentsPage() {
         </div>
       </div>
 
+      {!searching && <LearnRail />}
+
+
+
+
+
       {searching && (
         <p className="mt-4 text-[12px] text-ink-mute lowercase">
           {results.length} {results.length === 1 ? "match" : "matches"}
@@ -263,6 +270,55 @@ function TreatmentsPage() {
     </div>
   );
 }
+
+/** education stories, straight from the database. tapping opens the learn viewer. */
+function LearnRail() {
+  const { data: stories = [] } = useQuery(educationStoriesQuery);
+  if (stories.length === 0) return null;
+  return (
+    <section className="mt-6">
+      <h2 className="brand-eyebrow">learn</h2>
+      <div className="mt-3 -mx-6 overflow-x-auto scrollbar-none">
+        <div className="flex gap-3 px-6 pb-1">
+          {stories.map((s) => (
+            <Link
+              key={s.id}
+              to="/learn/$slug"
+              params={{ slug: s.slug }}
+              className="relative shrink-0 w-[150px] aspect-[9/16] rounded-2xl overflow-hidden border border-line"
+              style={{ backgroundColor: s.accent_color }}
+            >
+              <span
+                className="absolute inset-x-0 bottom-0 h-2/3"
+                style={{ background: "linear-gradient(to top, rgba(252,251,247,0.92), rgba(252,251,247,0))" }}
+                aria-hidden
+              />
+              <span className="absolute inset-x-2.5 top-2.5 flex gap-1" aria-hidden>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <span
+                    key={i}
+                    className="h-[3px] flex-1 rounded-full"
+                    style={{ backgroundColor: i === 0 ? "#111111" : "rgba(17,17,17,0.25)" }}
+                  />
+                ))}
+              </span>
+              <span className="absolute inset-x-3 bottom-3 block text-ink">
+                <span className="block text-[14px] font-bold leading-tight lowercase">{s.title}</span>
+                {s.subtitle && (
+                  <span className="mt-1 block text-[11px] leading-snug lowercase text-ink/70 line-clamp-2">
+                    {s.subtitle}
+                  </span>
+                )}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 
 function label(key: string) {
   return CONCERN_LABEL[key as ConcernKey] ?? key.replace(/([A-Z])/g, " $1").toLowerCase();
