@@ -38,7 +38,7 @@ const MINT = "#DFFFF8";
 const HOT = "#FF1F87";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[13px] font-bold lowercase text-ink">{children}</p>;
+  return <p className="text-[12px] font-bold lowercase text-ink">{children}</p>;
 }
 
 function TreatmentDetailPage() {
@@ -74,27 +74,27 @@ function TreatmentDetailPage() {
     stats.push({ label: "downtime", value: `${t.downtime_days} days`, icon: true });
 
   return (
-    <div className="pb-32">
-      <div className="px-5 pt-2">
+    <div className="pb-28">
+      <div className="px-4 pt-2">
         <Link
           to="/treatments"
-          className="inline-flex items-center gap-2 text-[15px] font-bold lowercase text-ink/55"
+          className="inline-flex items-center gap-1.5 text-[13px] font-bold lowercase text-ink/55"
         >
-          <ArrowLeft className="size-5" strokeWidth={2.4} /> all treatments
+          <ArrowLeft className="size-4" strokeWidth={2.4} /> all treatments
         </Link>
       </div>
 
       {/* hero */}
       <div
-        className="mx-5 mt-5 flex items-center gap-5 rounded-[20px] px-6 py-7"
+        className="mx-4 mt-3 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3.5 rounded-[18px] px-4 py-5"
         style={{ backgroundColor: `${t.accent_color}2b` }}
       >
-        <span className="grid size-[74px] shrink-0 place-items-center rounded-full bg-white/60 text-[26px] font-bold lowercase text-ink">
+        <span className="grid size-[52px] shrink-0 place-items-center rounded-full bg-white/60 text-[19px] font-bold lowercase text-ink">
           {t.name.charAt(0)}
         </span>
         <div className="min-w-0">
-          {t.family && <p className="text-[13px] font-bold lowercase text-ink">{t.family}</p>}
-          <h1 className="mt-1 text-[32px] font-medium lowercase leading-tight tracking-[-0.02em] text-ink break-words">
+          {t.family && <p className="truncate text-[11px] font-bold lowercase text-ink">{t.family}</p>}
+          <h1 className="mt-0.5 text-[22px] font-medium lowercase leading-[1.15] tracking-[-0.02em] text-ink break-words hyphens-auto">
             {t.name}
             <span style={{ color: HOT }}>.</span>
           </h1>
@@ -103,18 +103,17 @@ function TreatmentDetailPage() {
 
       {/* stats */}
       {stats.length > 0 && (
-        <div className="mt-4 grid grid-cols-3 gap-2.5 px-5">
+        <div className="mt-3 grid grid-cols-3 gap-2 px-4">
           {stats.map((s) => (
             <div
               key={s.label}
-              className="min-w-0 rounded-[16px] border border-[rgba(17,17,17,0.10)] bg-white px-3 py-3"
+              className="min-w-0 rounded-[14px] border border-[rgba(17,17,17,0.10)] bg-white px-2.5 py-2.5"
             >
-
-              <p className="flex items-center gap-1 text-[13px] lowercase text-ink/55">
-                {s.icon && <Clock className="size-3.5" />}
-                {s.label}
+              <p className="flex items-center gap-1 text-[11px] lowercase text-ink/55">
+                {s.icon && <Clock className="size-3 shrink-0" />}
+                <span className="truncate">{s.label}</span>
               </p>
-              <p className="mt-1 text-[20px] font-medium lowercase text-ink">{s.value}</p>
+              <p className="mt-0.5 text-[15px] font-medium lowercase text-ink">{s.value}</p>
             </div>
           ))}
         </div>
@@ -122,13 +121,13 @@ function TreatmentDetailPage() {
 
       {/* concerns */}
       {t.improves.length > 0 && (
-        <section className="mt-7 px-5">
+        <section className="mt-6 px-4">
           <SectionLabel>skin concerns it helps with</SectionLabel>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             {t.improves.map((c) => (
               <span
                 key={c}
-                className="rounded-pill px-4 py-2.5 text-[14px] font-bold lowercase text-ink"
+                className="rounded-pill px-3 py-1.5 text-[12px] font-bold lowercase text-ink"
                 style={{ backgroundColor: MINT }}
               >
                 {c}
@@ -140,19 +139,19 @@ function TreatmentDetailPage() {
 
       {/* what it is */}
       {t.what_it_is && (
-        <section className="mt-6 px-5">
-          <div className="rounded-[20px] bg-bubblegum/25 px-5 py-5">
-            <p className="text-[13px] font-bold lowercase text-ink">what it is</p>
-            <p className="mt-2 text-[16px] leading-[1.55] lowercase text-ink">{t.what_it_is}</p>
+        <section className="mt-5 px-4">
+          <div className="rounded-[18px] bg-bubblegum/25 px-4 py-4">
+            <p className="text-[12px] font-bold lowercase text-ink">what it is</p>
+            <p className="mt-1.5 text-[14px] leading-[1.5] lowercase text-ink">{t.what_it_is}</p>
           </div>
         </section>
       )}
 
-      <div className="mt-6 px-5">
+      <div className="mt-5 px-4">
         <button
           type="button"
           onClick={book}
-          className="h-14 w-full rounded-pill bg-ink text-[16px] font-bold lowercase text-white"
+          className="h-12 w-full rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
         >
           book treatment
         </button>
@@ -160,16 +159,16 @@ function TreatmentDetailPage() {
 
       {/* who it's for */}
       {t.who_its_for.length > 0 && (
-        <section className="mt-7 px-5">
+        <section className="mt-6 px-4">
           <SectionLabel>who it's for</SectionLabel>
-          <ul className="mt-3 space-y-2.5">
+          <ul className="mt-2.5 space-y-2">
             {t.who_its_for.map((w) => (
-              <li key={w} className="flex gap-3">
+              <li key={w} className="flex gap-2.5">
                 <span
-                  className="mt-2 size-[7px] shrink-0 rounded-full"
+                  className="mt-[7px] size-[6px] shrink-0 rounded-full"
                   style={{ backgroundColor: HOT }}
                 />
-                <span className="text-[16px] leading-[1.45] lowercase text-ink">{w}</span>
+                <span className="min-w-0 text-[14px] leading-[1.45] lowercase text-ink">{w}</span>
               </li>
             ))}
           </ul>
@@ -178,36 +177,36 @@ function TreatmentDetailPage() {
 
       {/* downtime */}
       {t.sensation && (
-        <section className="mt-7 px-5">
+        <section className="mt-6 px-4">
           <SectionLabel>downtime</SectionLabel>
-          <p className="mt-2 text-[16px] leading-[1.5] lowercase text-ink">{t.sensation}</p>
+          <p className="mt-1.5 text-[14px] leading-[1.5] lowercase text-ink">{t.sensation}</p>
         </section>
       )}
 
       {/* real results */}
-      <section className="mt-8 px-5">
+      <section className="mt-6 px-4">
         <SectionLabel>real results</SectionLabel>
-        <div className="mt-3 flex items-center gap-4 rounded-[18px] border border-dashed border-[rgba(17,17,17,0.22)] px-4 py-5">
+        <div className="mt-2.5 flex items-center gap-3 rounded-[16px] border border-dashed border-[rgba(17,17,17,0.22)] px-3.5 py-4">
           <span
-            className="grid size-11 shrink-0 place-items-center rounded-full"
+            className="grid size-9 shrink-0 place-items-center rounded-full"
             style={{ backgroundColor: MINT }}
           >
-            <Lock className="size-5 text-ink" strokeWidth={2.2} />
+            <Lock className="size-4 text-ink" strokeWidth={2.2} />
           </span>
           <div className="min-w-0">
-            <p className="text-[15px] font-bold lowercase text-ink">real results, coming soon</p>
-            <p className="mt-0.5 text-[14px] leading-snug lowercase text-ink/55">
+            <p className="text-[13px] font-bold lowercase text-ink">real results, coming soon</p>
+            <p className="mt-0.5 text-[12px] leading-snug lowercase text-ink/55">
               consented before and afters from real patients. nothing simulated.
             </p>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2.5">
-          <span className="inline-flex items-center gap-2 rounded-pill border border-[rgba(17,17,17,0.12)] px-4 py-2.5 text-[14px] font-bold lowercase text-ink">
-            <Star className="size-4" style={{ color: HOT }} strokeWidth={2.2} />
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-pill border border-[rgba(17,17,17,0.12)] px-3 py-1.5 text-[12px] font-bold lowercase text-ink">
+            <Star className="size-3.5 shrink-0" style={{ color: HOT }} strokeWidth={2.2} />
             treatme verified provider
           </span>
-          <span className="inline-flex items-center gap-2 rounded-pill border border-[rgba(17,17,17,0.12)] px-4 py-2.5 text-[14px] font-bold lowercase text-ink">
-            <Check className="size-4" style={{ color: HOT }} strokeWidth={2.6} />
+          <span className="inline-flex items-center gap-1.5 rounded-pill border border-[rgba(17,17,17,0.12)] px-3 py-1.5 text-[12px] font-bold lowercase text-ink">
+            <Check className="size-3.5 shrink-0" style={{ color: HOT }} strokeWidth={2.6} />
             license verified
           </span>
         </div>
@@ -215,9 +214,9 @@ function TreatmentDetailPage() {
 
       {/* providers */}
       {providers.length > 0 && (
-        <section className="mt-8 px-5">
+        <section className="mt-6 px-4">
           <SectionLabel>providers who offer this</SectionLabel>
-          <div className="mt-3 space-y-3">
+          <div className="mt-2.5 space-y-3">
             {providers.map((p) => {
               const shops = [...p.storefronts].sort(
                 (a, b) =>
@@ -230,11 +229,11 @@ function TreatmentDetailPage() {
               return <ProviderCard key={p.id} provider={p} km={km} shops={shops} />;
             })}
           </div>
-          <div className="mt-4 text-center">
+          <div className="mt-3.5 text-center">
             <Link
               to="/search"
               search={{ q: t.name, scope: "providers" }}
-              className="text-[16px] font-bold lowercase text-ink underline"
+              className="text-[14px] font-bold lowercase text-ink underline"
             >
               see all providers
             </Link>
@@ -244,31 +243,33 @@ function TreatmentDetailPage() {
 
       {/* faqs */}
       {t.faqs.length > 0 && (
-        <section className="mt-8 px-5">
+        <section className="mt-6 px-4">
           <SectionLabel>questions people ask</SectionLabel>
-          <div className="mt-3 space-y-3">
+          <div className="mt-2.5 space-y-2.5">
             {t.faqs.map((f) => {
               const open = openFaq === f.id;
               return (
                 <div
                   key={f.id}
-                  className="rounded-[16px] border border-[rgba(17,17,17,0.10)] px-4 py-4"
+                  className="rounded-[14px] border border-[rgba(17,17,17,0.10)] px-3.5 py-3.5"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(open ? null : f.id)}
                     aria-expanded={open}
-                    className="flex w-full items-center justify-between gap-3 text-left"
+                    className="flex w-full items-center justify-between gap-2.5 text-left"
                   >
-                    <span className="text-[16px] font-bold lowercase text-ink">{f.question}</span>
+                    <span className="min-w-0 text-[14px] font-bold lowercase text-ink">
+                      {f.question}
+                    </span>
                     {open ? (
-                      <Minus className="size-5 shrink-0 text-ink/50" strokeWidth={2.4} />
+                      <Minus className="size-4 shrink-0 text-ink/50" strokeWidth={2.4} />
                     ) : (
-                      <Plus className="size-5 shrink-0 text-ink/50" strokeWidth={2.4} />
+                      <Plus className="size-4 shrink-0 text-ink/50" strokeWidth={2.4} />
                     )}
                   </button>
                   {open && (
-                    <p className="mt-3 text-[15px] leading-[1.5] lowercase text-ink/70">{f.answer}</p>
+                    <p className="mt-2.5 text-[13px] leading-[1.5] lowercase text-ink/70">{f.answer}</p>
                   )}
                 </div>
               );
@@ -278,11 +279,11 @@ function TreatmentDetailPage() {
       )}
 
       {/* sticky book bar */}
-      <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line/60 bg-white/95 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line/60 bg-white/95 px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] backdrop-blur">
         <button
           type="button"
           onClick={book}
-          className="h-13 w-full rounded-pill bg-ink py-4 text-[16px] font-bold lowercase text-white"
+          className="h-12 w-full rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
         >
           book treatment
         </button>
