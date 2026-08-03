@@ -56,7 +56,7 @@ function TreatmentDetailPage() {
   }, [directory, slug]);
 
   function book() {
-    navigate({ to: "/treatments/$slug/book", params: { slug }, search: {} });
+    navigate({ to: "/treatments/$slug/book", params: { slug }, search: { area: undefined } });
   }
 
   if (isLoading) {

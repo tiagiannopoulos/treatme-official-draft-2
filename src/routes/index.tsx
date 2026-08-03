@@ -1,11 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
-import { useTreatmentStory } from "@/lib/treatment-story-store";
-import { PosterCard } from "@/components/treatme/PosterCard";
-import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
-import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,9 +74,6 @@ function MenuPage() {
         tone="mint"
       />
 
-      {/* 3b. learn about treatments */}
-      <StoryRail />
-
       {/* 4. Education */}
       <section className="px-6">
         <div className="flex items-center gap-2">
@@ -141,12 +134,12 @@ function TreatmentRail({
   );
 }
 
+/** menu cards go to the treatment one pager, never the story player. */
 function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
-  const { open } = useTreatmentStory();
   return (
-    <button
-      type="button"
-      onClick={() => open(t.slug)}
+    <Link
+      to="/treatment/$slug"
+      params={{ slug: t.slug }}
       className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden text-left"
     >
       <div className={`h-28 ${bg} grid place-items-center overflow-hidden`}>
@@ -163,9 +156,10 @@ function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
           <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${Math.round(t.price_from)}</p>
         )}
       </div>
-    </button>
+    </Link>
   );
 }
+
 
 
 function EduCard({ title, sub }: { title: string; sub: string }) {
@@ -177,36 +171,5 @@ function EduCard({ title, sub }: { title: string; sub: string }) {
       <p className="font-bold text-[13px] tracking-tight leading-tight lowercase">{title}</p>
       <p className="text-[11px] text-ink-mute mt-1 leading-snug">{sub}</p>
     </div>
-  );
-}
-
-/** horizontal poster rail. only treatments with a real story appear here. */
-function StoryRail() {
-  const navigate = useNavigate();
-  const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
-  const posters = catalog.filter((t) => t.has_story).slice(0, 10);
-  if (posters.length === 0) return null;
-
-  return (
-    <section>
-      <div className="px-6">
-        <p className="brand-eyebrow">learn about treatments</p>
-        <p className="mt-1 text-[13px] lowercase text-ink-mute">a minute each, no pressure.</p>
-      </div>
-      <div className="mt-4 flex gap-3 overflow-x-auto px-6 no-scrollbar">
-        {posters.map((t) => (
-          <PosterCard
-            key={t.slug}
-            name={t.name}
-            posterUrl={null}
-            accentColor={t.accent_color}
-            hasStory
-            meta={t.downtime_label}
-            className="w-[150px] shrink-0"
-            onPress={() => navigate({ to: "/treatment/$slug", params: { slug: t.slug } })}
-          />
-        ))}
-      </div>
-    </section>
   );
 }

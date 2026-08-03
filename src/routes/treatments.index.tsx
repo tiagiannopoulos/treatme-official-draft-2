@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, Sparkles, X } from "lucide-react";
+import { Info, Search, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
@@ -284,29 +284,39 @@ function CompactCard({
 }: {
   t: LibraryRow;
   alias: string | null;
-  catalog?: { icon_url: string | null; accent_color: string; has_story: boolean; downtime_label: string; avg_price_low: number | null; avg_price_high: number | null };
+  catalog?: {
+    icon_url: string | null;
+    accent_color: string;
+    has_story: boolean;
+    downtime_label: string;
+    blurb: string;
+    avg_price_low: number | null;
+    avg_price_high: number | null;
+  };
 }) {
   const navigate = useNavigate();
-  const meta = catalog?.downtime_label || t.category;
+  // tapping the card plays the story. the info link opens the full one pager.
+  const meta = catalog?.blurb || catalog?.downtime_label || t.category;
   const price = t.price_from ?? catalog?.avg_price_low ?? null;
   return (
-    <div className="relative">
+    <div className="relative flex flex-col rounded-2xl border border-line bg-cream overflow-hidden">
       <button
         type="button"
         onClick={() => navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })}
-
-        className="flex w-full flex-col text-left rounded-2xl border border-line bg-cream overflow-hidden active:scale-[0.98] transition-transform"
+        className="flex w-full flex-col text-left active:scale-[0.98] transition-transform"
       >
         <div
           className="h-28 grid place-items-center overflow-hidden"
           style={{ background: catalog?.accent_color || "rgba(248,161,198,0.35)" }}
         >
           <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
-
         </div>
         <div className="p-3">
           <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
           <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2 lowercase">{meta}</p>
+          <p className="text-[10px] text-ink-mute mt-1 lowercase">
+            {catalog?.downtime_label || "downtime varies"}
+          </p>
           {price !== null && (
             <p className="text-[11px] font-semibold mt-2" style={{ color: "#FF1F87" }}>
               from ${Math.round(price)}
@@ -314,6 +324,14 @@ function CompactCard({
           )}
         </div>
       </button>
+      <Link
+        to="/treatment/$slug"
+        params={{ slug: t.slug }}
+        className="mx-3 mb-3 -mt-1 self-start inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold lowercase text-ink-soft"
+      >
+        <Info className="size-3" />
+        treatment info
+      </Link>
       {alias && (
         <span className="absolute left-2 right-2 top-2 truncate rounded-full bg-hot px-2 py-1 text-[10px] font-bold lowercase text-white">
           matched your search
@@ -322,4 +340,5 @@ function CompactCard({
     </div>
   );
 }
+
 
