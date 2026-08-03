@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, Sparkles, X } from "lucide-react";
+import { Info, Search, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
@@ -322,17 +322,16 @@ function CompactCard({
               from ${Math.round(price)}
             </p>
           )}
-          <Link
-            to="/treatment/$slug"
-            params={{ slug: t.slug }}
-            onClick={(e) => e.stopPropagation()}
-            className="mt-2 inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold lowercase text-ink-soft"
-          >
-            <Info className="size-3" />
-            treatment info
-          </Link>
         </div>
       </button>
+      <Link
+        to="/treatment/$slug"
+        params={{ slug: t.slug }}
+        className="mx-3 mb-3 -mt-1 inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold lowercase text-ink-soft"
+      >
+        <Info className="size-3" />
+        treatment info
+      </Link>
       {alias && (
         <span className="absolute left-2 right-2 top-2 truncate rounded-full bg-hot px-2 py-1 text-[10px] font-bold lowercase text-white">
           matched your search
