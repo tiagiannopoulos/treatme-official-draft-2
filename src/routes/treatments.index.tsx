@@ -284,17 +284,25 @@ function CompactCard({
 }: {
   t: LibraryRow;
   alias: string | null;
-  catalog?: { icon_url: string | null; accent_color: string; has_story: boolean; downtime_label: string; avg_price_low: number | null; avg_price_high: number | null };
+  catalog?: {
+    icon_url: string | null;
+    accent_color: string;
+    has_story: boolean;
+    downtime_label: string;
+    blurb: string;
+    avg_price_low: number | null;
+    avg_price_high: number | null;
+  };
 }) {
   const navigate = useNavigate();
-  const meta = catalog?.downtime_label || t.category;
+  // tapping the card plays the story. the info link opens the full one pager.
+  const meta = catalog?.blurb || catalog?.downtime_label || t.category;
   const price = t.price_from ?? catalog?.avg_price_low ?? null;
   return (
     <div className="relative">
       <button
         type="button"
         onClick={() => navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })}
-
         className="flex w-full flex-col text-left rounded-2xl border border-line bg-cream overflow-hidden active:scale-[0.98] transition-transform"
       >
         <div
@@ -302,16 +310,27 @@ function CompactCard({
           style={{ background: catalog?.accent_color || "rgba(248,161,198,0.35)" }}
         >
           <Sparkles className="size-7 text-ink/40" strokeWidth={1.6} />
-
         </div>
         <div className="p-3">
           <p className="font-bold text-[14px] tracking-tight leading-tight lowercase">{t.name}</p>
           <p className="text-[11px] text-ink-mute mt-1 leading-snug line-clamp-2 lowercase">{meta}</p>
+          <p className="text-[10px] text-ink-mute mt-1 lowercase">
+            {catalog?.downtime_label || "downtime varies"}
+          </p>
           {price !== null && (
             <p className="text-[11px] font-semibold mt-2" style={{ color: "#FF1F87" }}>
               from ${Math.round(price)}
             </p>
           )}
+          <Link
+            to="/treatment/$slug"
+            params={{ slug: t.slug }}
+            onClick={(e) => e.stopPropagation()}
+            className="mt-2 inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-[10px] font-semibold lowercase text-ink-soft"
+          >
+            <Info className="size-3" />
+            treatment info
+          </Link>
         </div>
       </button>
       {alias && (
@@ -322,4 +341,5 @@ function CompactCard({
     </div>
   );
 }
+
 
