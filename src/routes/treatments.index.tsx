@@ -205,9 +205,12 @@ function TreatmentsPage() {
               {label(c)}
             </button>
           ))}
+        </div>
       </div>
 
       {!searching && <LearnRail />}
+
+
 
 
 
