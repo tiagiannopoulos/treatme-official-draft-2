@@ -5,7 +5,10 @@ export const Route = createFileRoute("/book/consult")({
   validateSearch: z.object({
     providerId: z.string().optional(),
     storefrontId: z.string().optional(),
+    bundleId: z.string().optional(),
+    treatmentSlug: z.string().optional(),
   }),
+
   head: () => ({
     meta: [
       { title: "book a consult · treatme" },
