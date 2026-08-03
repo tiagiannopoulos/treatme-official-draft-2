@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { educationStoriesQuery } from "@/lib/education-stories";
 import { useMemo, useState } from "react";
 import { Info, Search, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
