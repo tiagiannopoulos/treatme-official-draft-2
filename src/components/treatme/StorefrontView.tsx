@@ -488,7 +488,10 @@ function BundleCard({
   storefrontId: string;
   nameForSlug: Map<string, string>;
 }) {
-  const included = bundle.treatmentSlugs.map((slug) => noDash(nameForSlug.get(slug) ?? slug));
+  const included = bundle.treatmentSlugs.map((slug) =>
+    noDash(nameForSlug.get(slug) ?? slug.replace(/-/g, " ")),
+  );
+
   const meta = [
     bundle.sessions ? `${bundle.sessions} sessions` : null,
     bundle.validityMonths ? `valid ${bundle.validityMonths} months` : null,
