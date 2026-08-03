@@ -5,6 +5,8 @@ function titleFor(pathname: string) {
   if (pathname.startsWith("/treatments") || pathname.startsWith("/treatment/")) return "treatments";
   if (pathname.startsWith("/profile")) return "profile";
   if (pathname.startsWith("/scan")) return "scan";
+  if (pathname.startsWith("/storefront") || pathname.startsWith("/medspas")) return "clinic";
+
   return "menu";
 }
 
