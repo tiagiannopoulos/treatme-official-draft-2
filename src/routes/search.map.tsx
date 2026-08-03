@@ -109,8 +109,9 @@ function MapView() {
                 {(providerCounts[s.id] ?? 0) === 1 ? "" : "s"}
               </p>
               <Link
-                to="/medspas/$slug"
-                params={{ slug: s.slug }}
+                to="/storefront/$id"
+                params={{ id: s.id }}
+
                 className="mt-1.5 inline-block text-[12px] font-semibold text-hot lowercase"
               >
                 view storefront

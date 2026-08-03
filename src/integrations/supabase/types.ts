@@ -56,6 +56,72 @@ export type Database = {
         }
         Relationships: []
       }
+      clinic_bundles: {
+        Row: {
+          active: boolean
+          badge: string | null
+          compare_at_price: number | null
+          created_at: string
+          id: string
+          name: string
+          price: number | null
+          sessions: number | null
+          sort_order: number
+          storefront_id: string
+          tagline: string | null
+          treatment_slugs: string[]
+          updated_at: string
+          validity_months: number | null
+        }
+        Insert: {
+          active?: boolean
+          badge?: string | null
+          compare_at_price?: number | null
+          created_at?: string
+          id?: string
+          name: string
+          price?: number | null
+          sessions?: number | null
+          sort_order?: number
+          storefront_id: string
+          tagline?: string | null
+          treatment_slugs?: string[]
+          updated_at?: string
+          validity_months?: number | null
+        }
+        Update: {
+          active?: boolean
+          badge?: string | null
+          compare_at_price?: number | null
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number | null
+          sessions?: number | null
+          sort_order?: number
+          storefront_id?: string
+          tagline?: string | null
+          treatment_slugs?: string[]
+          updated_at?: string
+          validity_months?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_bundles_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clinic_bundles_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education_stories: {
         Row: {
           category: string | null
