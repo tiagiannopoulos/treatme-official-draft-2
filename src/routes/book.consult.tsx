@@ -39,7 +39,7 @@ function ConsultStub() {
         {treatmentSlug && <p>treatment: {treatmentSlug.replace(/-/g, " ")}</p>}
       </div>
 
-      <Link to="/search" search={{ q: undefined }} className="mt-6 inline-block text-[13px] text-hot lowercase">
+      <Link to="/search" search={{ q: undefined, scope: undefined }} className="mt-6 inline-block text-[13px] text-hot lowercase">
         back to search
       </Link>
     </div>

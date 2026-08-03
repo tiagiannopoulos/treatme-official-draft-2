@@ -49,7 +49,7 @@ export function TreatmentJourney() {
       label: "book with a provider",
       detail: logCount > 0 ? "you are in the room" : "real people, tagged to the medspa they work at",
       done: logCount > 0,
-      cta: logCount > 0 ? undefined : { label: "find a provider", go: () => navigate({ to: "/search" }) },
+      cta: logCount > 0 ? undefined : { label: "find a provider", go: () => navigate({ to: "/search", search: { q: undefined, scope: undefined } }) },
     },
     {
       key: "record",

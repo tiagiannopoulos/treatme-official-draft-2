@@ -37,7 +37,7 @@ export const Route = createFileRoute("/storefront/$id")({
       <h1 className="text-[24px] font-medium lowercase">storefront not found.</h1>
       <Link
         to="/search"
-        search={{ q: undefined }}
+        search={{ q: undefined, scope: undefined }}
         className="mt-2 inline-block text-[13px] text-hot lowercase"
       >
         back to search

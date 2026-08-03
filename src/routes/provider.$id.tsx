@@ -37,7 +37,7 @@ export const Route = createFileRoute("/provider/$id")({
       <h1 className="brand-display text-[26px]">provider not found.</h1>
       <Link
         to="/search"
-        search={{ q: undefined }}
+        search={{ q: undefined, scope: undefined }}
         className="text-[13px] text-hot lowercase mt-2 inline-block"
       >
         back to search
