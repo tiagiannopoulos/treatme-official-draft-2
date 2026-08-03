@@ -456,8 +456,9 @@ export function StorefrontPopover({
         )}
       </div>
       <Link
-        to="/medspas/$slug"
-        params={{ slug: storefront.slug }}
+        to="/storefront/$id"
+        params={{ id: storefront.id }}
+
         className="mt-2 inline-block text-[12px] font-semibold text-hot lowercase"
       >
         view storefront
