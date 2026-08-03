@@ -141,12 +141,12 @@ function TreatmentRail({
   );
 }
 
+/** menu cards go to the treatment one pager, never the story player. */
 function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
-  const { open } = useTreatmentStory();
   return (
-    <button
-      type="button"
-      onClick={() => open(t.slug)}
+    <Link
+      to="/treatment/$slug"
+      params={{ slug: t.slug }}
       className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden text-left"
     >
       <div className={`h-28 ${bg} grid place-items-center overflow-hidden`}>
@@ -163,9 +163,10 @@ function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
           <p className="text-[11px] text-ink-soft font-semibold mt-2">from ${Math.round(t.price_from)}</p>
         )}
       </div>
-    </button>
+    </Link>
   );
 }
+
 
 
 function EduCard({ title, sub }: { title: string; sub: string }) {
