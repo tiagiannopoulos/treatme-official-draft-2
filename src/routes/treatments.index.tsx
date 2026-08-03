@@ -205,8 +205,11 @@ function TreatmentsPage() {
               {label(c)}
             </button>
           ))}
-        </div>
       </div>
+
+      {!searching && <LearnRail />}
+
+
 
       {searching && (
         <p className="mt-4 text-[12px] text-ink-mute lowercase">
