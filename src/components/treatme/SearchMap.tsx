@@ -6,6 +6,7 @@ import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getGoogleMapsKey } from "@/lib/map.functions";
 import type { LatLng, Storefront } from "@/lib/search-data";
+import { loadGoogleMaps } from "@/lib/google-maps-loader";
 
 
 const HOT = "#FF1F87";
@@ -20,7 +21,7 @@ const keyQuery = {
 } as const;
 
 /** suppress poi and transit labels for a clean, editorial look. */
-const MAP_STYLE: google.maps.MapTypeStyle[] = [
+const LOCAL_MAP_STYLE: google.maps.MapTypeStyle[] = [
   { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
   { featureType: "poi.business", stylers: [{ visibility: "off" }] },
   { featureType: "transit", elementType: "labels", stylers: [{ visibility: "off" }] },
@@ -94,7 +95,7 @@ export function SearchMap({
           zoomControl: true,
           clickableIcons: false,
           gestureHandling,
-          styles: MAP_STYLE,
+          styles: LOCAL_MAP_STYLE,
           mapTypeId: "roadmap",
         });
         mapRef.current = map;
@@ -379,34 +380,7 @@ function createPinIcon(active: boolean): google.maps.Icon {
   };
 }
 
-let loadPromise: Promise<void> | null = null;
 
-function loadGoogleMaps(browserKey: string, trackingId: string | null): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  if (typeof window.google === "object" && typeof window.google.maps === "object") {
-    return Promise.resolve();
-  }
-  if (loadPromise) return loadPromise;
-
-  loadPromise = new Promise((resolve, reject) => {
-    const callbackName = "treatmeGoogleMapsInit";
-    (window as any)[callbackName] = () => {
-      resolve();
-      delete (window as any)[callbackName];
-    };
-    const script = document.createElement("script");
-    const channel = encodeURIComponent(trackingId ?? "treatme");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(browserKey)}&loading=async&callback=${callbackName}&channel=${channel}`;
-    script.async = true;
-    script.onerror = () => {
-      loadPromise = null;
-      reject(new Error("Google Maps script failed to load"));
-    };
-    document.head.appendChild(script);
-  });
-
-  return loadPromise;
-}
 
 function Teardrop({ active }: { active: boolean }) {
   return (
