@@ -736,6 +736,7 @@ export type Database = {
           caption: string | null
           created_at: string
           id: string
+          kind: string
           sort_order: number
           storefront_id: string
           updated_at: string
@@ -745,6 +746,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           id?: string
+          kind?: string
           sort_order?: number
           storefront_id: string
           updated_at?: string
@@ -754,6 +756,7 @@ export type Database = {
           caption?: string | null
           created_at?: string
           id?: string
+          kind?: string
           sort_order?: number
           storefront_id?: string
           updated_at?: string
@@ -780,6 +783,8 @@ export type Database = {
         Row: {
           accessibility: string[]
           address_line: string
+          booked_count_30d: number
+          brand_accent: string | null
           cancellation_policy: string | null
           city: string
           claimed: boolean
@@ -792,9 +797,11 @@ export type Database = {
           hero_image_url: string | null
           hours: Json | null
           id: string
+          languages: string[]
           lat: number
           late_policy: string | null
           lng: number
+          logo_url: string | null
           name: string
           neighbourhood: string | null
           owner_user_id: string | null
@@ -802,6 +809,7 @@ export type Database = {
           peel_depths: string[]
           phone: string | null
           postcode: string
+          price_band: string | null
           product_lines: string[]
           rating: number
           review_count: number
@@ -809,10 +817,14 @@ export type Database = {
           tagline: string
           transit_note: string | null
           updated_at: string
+          website: string | null
+          year_opened: number | null
         }
         Insert: {
           accessibility?: string[]
           address_line?: string
+          booked_count_30d?: number
+          brand_accent?: string | null
           cancellation_policy?: string | null
           city?: string
           claimed?: boolean
@@ -825,9 +837,11 @@ export type Database = {
           hero_image_url?: string | null
           hours?: Json | null
           id?: string
+          languages?: string[]
           lat: number
           late_policy?: string | null
           lng: number
+          logo_url?: string | null
           name: string
           neighbourhood?: string | null
           owner_user_id?: string | null
@@ -835,6 +849,7 @@ export type Database = {
           peel_depths?: string[]
           phone?: string | null
           postcode?: string
+          price_band?: string | null
           product_lines?: string[]
           rating?: number
           review_count?: number
@@ -842,10 +857,14 @@ export type Database = {
           tagline?: string
           transit_note?: string | null
           updated_at?: string
+          website?: string | null
+          year_opened?: number | null
         }
         Update: {
           accessibility?: string[]
           address_line?: string
+          booked_count_30d?: number
+          brand_accent?: string | null
           cancellation_policy?: string | null
           city?: string
           claimed?: boolean
@@ -858,9 +877,11 @@ export type Database = {
           hero_image_url?: string | null
           hours?: Json | null
           id?: string
+          languages?: string[]
           lat?: number
           late_policy?: string | null
           lng?: number
+          logo_url?: string | null
           name?: string
           neighbourhood?: string | null
           owner_user_id?: string | null
@@ -868,6 +889,7 @@ export type Database = {
           peel_depths?: string[]
           phone?: string | null
           postcode?: string
+          price_band?: string | null
           product_lines?: string[]
           rating?: number
           review_count?: number
@@ -875,6 +897,8 @@ export type Database = {
           tagline?: string
           transit_note?: string | null
           updated_at?: string
+          website?: string | null
+          year_opened?: number | null
         }
         Relationships: []
       }
