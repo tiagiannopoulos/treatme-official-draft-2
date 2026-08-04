@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Lock, BookOpen, ArrowRight, Plus } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
 
