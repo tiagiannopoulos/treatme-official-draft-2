@@ -23,7 +23,7 @@ import {
   reviewDate,
   type ProviderResult,
 } from "@/lib/provider-profile";
-import { providerFit, fitzRoman } from "@/lib/provider-fit";
+import { providerFit } from "@/lib/provider-fit";
 import { usePatient } from "@/lib/patient-store";
 import { TreatmentSheet } from "@/components/treatme/TreatmentSheet";
 import { ResultViewer } from "@/components/treatme/ResultViewer";
