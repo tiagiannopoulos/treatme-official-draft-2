@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, MapPin } from "lucide-react";
 
@@ -19,6 +19,7 @@ interface Upcoming {
   provider_name: string | null;
   provider_slug: string | null;
   storefront_name: string | null;
+  storefront_id: string | null;
 }
 
 function longDate(iso: string) {
@@ -60,9 +61,9 @@ async function fetchUpcoming(): Promise<Upcoming[]> {
   const storefrontRes = providerIds.length
     ? await supabase
         .from("provider_storefronts")
-        .select("provider_id, is_primary, storefronts(name)")
+        .select("provider_id, is_primary, storefronts(id, name)")
         .in("provider_id", providerIds)
-    : ({ data: [] as Array<{ provider_id: string; is_primary: boolean; storefronts: { name: string } | null }> });
+    : ({ data: [] as Array<{ provider_id: string; is_primary: boolean; storefronts: { id: string; name: string } | null }> });
 
   return data.map((r) => {
     const prov = (provRes.data ?? []).find((p) => p.id === r.provider_id);
@@ -75,6 +76,7 @@ async function fetchUpcoming(): Promise<Upcoming[]> {
       provider_name: prov?.name ?? null,
       provider_slug: prov?.slug ?? null,
       storefront_name: store?.storefronts?.name ?? null,
+      storefront_id: store?.storefronts?.id ?? null,
     };
   });
 }
@@ -136,16 +138,39 @@ export function UpcomingAppointments() {
                 {longDate(r.due_at)}
               </p>
               {(r.provider_name || r.storefront_name) && (
-                <button
-                  type="button"
-                  disabled={!r.provider_slug}
-                  onClick={() => r.provider_slug && navigate({ to: "/providers/$slug", params: { slug: r.provider_slug } })}
-                  className="mt-2 flex items-center gap-1.5 text-left text-[12.5px] lowercase"
+                <p
+                  className="mt-2 flex flex-wrap items-center gap-1.5 text-[12.5px] lowercase"
                   style={{ color: "rgba(17,17,17,0.60)" }}
                 >
                   <MapPin className="size-3.5" strokeWidth={1.6} />
-                  {[r.provider_name, r.storefront_name].filter(Boolean).join(" at ").toLowerCase()}
-                </button>
+                  {r.provider_name && (
+                    r.provider_slug ? (
+                      <Link
+                        to="/providers/$slug"
+                        params={{ slug: r.provider_slug }}
+                        className="underline decoration-transparent"
+                      >
+                        {r.provider_name.toLowerCase()}
+                      </Link>
+                    ) : (
+                      <span>{r.provider_name.toLowerCase()}</span>
+                    )
+                  )}
+                  {r.provider_name && r.storefront_name && <span>at</span>}
+                  {r.storefront_name && (
+                    r.storefront_id ? (
+                      <Link
+                        to="/storefront/$id"
+                        params={{ id: r.storefront_id }}
+                        className="underline decoration-transparent"
+                      >
+                        {r.storefront_name.toLowerCase()}
+                      </Link>
+                    ) : (
+                      <span>{r.storefront_name.toLowerCase()}</span>
+                    )
+                  )}
+                </p>
               )}
             </article>
           ))}
