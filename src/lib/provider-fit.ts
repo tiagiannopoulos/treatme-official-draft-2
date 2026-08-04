@@ -32,17 +32,24 @@ function fitzNumber(value: string | null): number | null {
   return i > 0 ? i : null;
 }
 
-export function providerFit(p: Provider, profile: PatientProfile): FitSignal[] {
+export function providerFit(p: Provider, _profile: PatientProfile): FitSignal[] {
   const out: FitSignal[] = [];
 
-  if (p.fitzpatrick_min !== null && p.fitzpatrick_max !== null) {
+  out.push({
+    id: "all-tones",
+    icon: "skin",
+    label: "works with every skin tone",
+    tone: "match",
+  });
+
+  const favourites = lower(
+    (p.treatments ?? []).filter((t) => t.is_signature).map((t) => t.name),
+  );
+  if (favourites.length) {
     out.push({
-      id: "fitz",
-      icon: "skin",
-      label:
-        p.fitzpatrick_min === p.fitzpatrick_max
-          ? `works with fitzpatrick ${fitzRoman(p.fitzpatrick_min)}`
-          : `works with fitzpatrick ${fitzRoman(p.fitzpatrick_min)} to ${fitzRoman(p.fitzpatrick_max)}`,
+      id: "favourites",
+      icon: "treats",
+      label: `favourite treatments: ${favourites.slice(0, 4).join(", ")}`,
       tone: "neutral",
     });
   }
@@ -62,22 +69,9 @@ export function providerFit(p: Provider, profile: PatientProfile): FitSignal[] {
     out.push({ id: "devices", icon: "device", label: `devices on site: ${devices.join(", ")}`, tone: "neutral" });
   }
 
-  // compare against the patient's saved skin type. silent when they have none.
-  const patientFitz = fitzNumber(profile.skinType);
-  if (patientFitz !== null && p.fitzpatrick_min !== null && p.fitzpatrick_max !== null) {
-    const inside = patientFitz >= p.fitzpatrick_min && patientFitz <= p.fitzpatrick_max;
-    out.push({
-      id: "skin-match",
-      icon: "skin",
-      label: inside
-        ? "matches your skin type"
-        : "this provider does not list experience with your skin type",
-      tone: inside ? "match" : "plain",
-    });
-  }
-
   return out;
 }
+
 
 /** "license verified · cno #123456". never render a negative or pending state. */
 export function licenseLine(p: Provider): string | null {
