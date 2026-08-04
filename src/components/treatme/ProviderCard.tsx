@@ -140,11 +140,15 @@ export function ProviderCardCompact({
   via,
   km,
   shops,
+  widthClass = "w-[172px]",
+  matchesSkinType = false,
 }: {
   provider: Provider;
   via?: string;
   km: number;
   shops: Array<Storefront & { is_primary: boolean }>;
+  widthClass?: string;
+  matchesSkinType?: boolean;
 }) {
   const navigate = useNavigate();
   const nearest = shops[0] ?? provider.storefronts[0];
@@ -155,9 +159,18 @@ export function ProviderCardCompact({
     <Link
       to="/providers/$slug"
       params={{ slug: provider.slug }}
-      className="shrink-0 w-[172px] rounded-[20px] border border-line bg-white p-3.5 active:scale-[0.98] transition-transform"
+      className={cn(
+        "shrink-0 rounded-[20px] border border-line bg-white p-3.5 active:scale-[0.98] transition-transform",
+        widthClass,
+      )}
     >
       <Avatar name={provider.name} url={provider.avatar_url} size="size-12" />
+      {matchesSkinType && (
+        <span className="mt-2.5 inline-block rounded-pill bg-mint px-2 py-0.5 text-[10px] font-semibold lowercase">
+          matches your skin type
+        </span>
+      )}
+
       <p className="mt-3 text-[14px] font-semibold lowercase leading-tight truncate">{provider.name}</p>
       <p className="text-[12px] text-ink/60 lowercase truncate">{provider.title}</p>
       <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink/70 lowercase">

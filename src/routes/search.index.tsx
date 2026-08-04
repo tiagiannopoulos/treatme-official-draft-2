@@ -8,6 +8,8 @@ import {
   Star,
   ArrowRight,
   BadgeCheck,
+  ChevronRight,
+
 } from "lucide-react";
 
 import {
@@ -29,7 +31,11 @@ import {
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
+import { usePatient } from "@/lib/patient-store";
 import { cn } from "@/lib/utils";
+
+const FITZ_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
+
 
 
 export const Route = createFileRoute("/search/")({
@@ -75,6 +81,8 @@ function SearchPage() {
 
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+  const patient = usePatient();
+
 
   const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
@@ -148,6 +156,25 @@ function SearchPage() {
       .filter((r) => r.hit && r.shops.length > 0)
       .sort((a, b) => a.km - b.km);
   }, [data.providers, needle, inRangeIds, center]);
+
+  /** five nearest providers, skin type matches first, for the explore row. */
+  const nearbyProviders = useMemo(() => {
+    const fitz = patient.profile.skinType ? FITZ_NUMBER[patient.profile.skinType] ?? null : null;
+    const withMatch = providerResults.map((r) => ({
+      ...r,
+      matches:
+        fitz !== null &&
+        r.p.fitzpatrick_min !== null &&
+        r.p.fitzpatrick_max !== null &&
+        fitz >= r.p.fitzpatrick_min &&
+        fitz <= r.p.fitzpatrick_max,
+    }));
+    return [...withMatch]
+      .sort((a, b) => Number(b.matches) - Number(a.matches))
+      .slice(0, 5);
+  }, [providerResults, patient.profile.skinType]);
+
+
 
   const medspaResults = useMemo(
     () => storefrontsInRange.filter((s) => matchStorefront(s, needle)),
@@ -468,8 +495,8 @@ function SearchPage() {
             </section>
           )}
 
-          {/* d) nearby providers rail */}
-          {showProviders && (
+          {/* d) providers near you */}
+          {nearbyProviders.length > 0 && (
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="brand-eyebrow">providers near you</p>
@@ -478,12 +505,36 @@ function SearchPage() {
                 </span>
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                {providerResults.map(({ p, shops, km }) => (
-                  <ProviderCardCompact key={p.id} provider={p} km={km} shops={shops} />
+                {nearbyProviders.map(({ p, shops, km, matches }) => (
+                  <ProviderCardCompact
+                    key={p.id}
+                    provider={p}
+                    km={km}
+                    shops={shops}
+                    widthClass="w-[78vw] max-w-[320px]"
+                    matchesSkinType={matches}
+                  />
                 ))}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQ("");
+                    setScope("providers");
+                  }}
+                  className="shrink-0 w-[78vw] max-w-[320px] rounded-[20px] border border-dashed border-[rgba(17,17,17,0.25)] bg-transparent p-3.5 text-left active:scale-[0.98] transition-transform"
+                >
+                  <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
+                    <ChevronRight className="size-5 text-ink" />
+                  </span>
+                  <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">see all providers</p>
+                  <p className="text-[12px] text-ink/60 lowercase">
+                    browse everyone within {radius} km
+                  </p>
+                </button>
               </div>
             </section>
           )}
+
 
           {showMedspas && (
             <section className="mt-6">
