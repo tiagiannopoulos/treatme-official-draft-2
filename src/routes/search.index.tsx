@@ -81,6 +81,8 @@ function SearchPage() {
 
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+  const patient = usePatient();
+
 
   const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
