@@ -60,6 +60,7 @@ export const TORONTO_CENTROID: LatLng = { lat: 43.6532, lng: -79.3832 };
 export interface ProviderTreatment {
   treatment_slug: string;
   price_from: number | null;
+  is_signature: boolean;
   name: string;
   category: string;
 }
@@ -87,6 +88,11 @@ export interface Provider {
   license_number: string | null;
   /** every storefront this human works at. a provider can work at more than one. */
   storefronts: Array<Storefront & { is_primary: boolean }>;
+
+  /** instagram style profile fields. all optional on a seeded provider. */
+  credential_line: string | null;
+  designations: string[];
+  accepting_new: boolean;
 
   treatments: ProviderTreatment[];
 }
@@ -131,7 +137,7 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
     supabase.from("storefronts").select("*").order("name"),
     supabase.from("providers").select("*").order("name"),
     supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
-    supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from"),
+    supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from, is_signature"),
     supabase.from("treatments").select("slug, name, category"),
     // treatme ratings are derived live from the treatme reviews table, never stored.
     supabase.from("provider_rating_stats").select("provider_id, rating, review_count"),
@@ -187,6 +193,7 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
         return {
           treatment_slug: t.treatment_slug,
           price_from: t.price_from,
+          is_signature: Boolean(t.is_signature),
           name: displayTreatmentName(meta?.name ?? t.treatment_slug.replace(/-/g, " "), t.treatment_slug),
           category: displayTreatmentCategory(meta?.category ?? "", t.treatment_slug),
         };

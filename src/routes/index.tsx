@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Sparkles, Lock, BookOpen, ArrowRight, Plus } from "lucide-react";
+import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
 
@@ -179,7 +179,6 @@ function EducationCards({ stories }: { stories: { slug: string; title: string; s
           onClick={() => setExpanded(true)}
           className="mt-4 w-full h-12 rounded-full border border-line bg-cream flex items-center justify-center gap-2 text-[13px] font-semibold lowercase text-ink"
         >
-          <Plus className="size-[16px]" strokeWidth={2.2} />
           show {hiddenCount} more
         </button>
       )}

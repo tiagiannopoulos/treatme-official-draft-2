@@ -65,3 +65,51 @@ export function reviewDate(iso: string): string {
     .toLocaleDateString("en-CA", { month: "short", year: "numeric" })
     .toLowerCase();
 }
+
+export interface ProviderResult {
+  id: string;
+  treatment_slug: string;
+  before_url: string;
+  after_url: string;
+  interval_weeks: number | null;
+  caption: string | null;
+  sessions: number | null;
+  product_used: string | null;
+}
+
+/**
+ * published before and after pairs. rls also enforces published + consented,
+ * the explicit filters keep the intent readable in the client.
+ */
+export function providerResultsQuery(providerId: string) {
+  return queryOptions({
+    queryKey: ["provider-results", providerId],
+    queryFn: async (): Promise<ProviderResult[]> => {
+      const { data, error } = await supabase
+        .from("provider_results")
+        .select(
+          "id, treatment_slug, before_url, after_url, interval_weeks, caption, sessions, product_used",
+        )
+        .eq("provider_id", providerId)
+        .eq("is_published", true)
+        .eq("patient_consented", true)
+        .order("sort_order")
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []) as ProviderResult[];
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** "at 6 weeks". never a dash, never a range. */
+export function intervalLabel(weeks: number | null): string {
+  if (!weeks) return "";
+  return `at ${weeks} week${weeks === 1 ? "" : "s"}`;
+}
+
+/** first name only, for "book this with sarah". */
+export function firstName(name: string): string {
+  const parts = name.toLowerCase().replace(/^dr\.?\s+/, "").split(/\s+/);
+  return parts[0] ?? name.toLowerCase();
+}
