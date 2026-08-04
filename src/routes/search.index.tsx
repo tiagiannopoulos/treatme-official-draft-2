@@ -151,6 +151,25 @@ function SearchPage() {
       .sort((a, b) => a.km - b.km);
   }, [data.providers, needle, inRangeIds, center]);
 
+  /** five nearest providers, skin type matches first, for the explore row. */
+  const nearbyProviders = useMemo(() => {
+    const fitz = patient.profile.skinType ? FITZ_NUMBER[patient.profile.skinType] ?? null : null;
+    const withMatch = providerResults.map((r) => ({
+      ...r,
+      matches:
+        fitz !== null &&
+        r.p.fitzpatrick_min !== null &&
+        r.p.fitzpatrick_max !== null &&
+        fitz >= r.p.fitzpatrick_min &&
+        fitz <= r.p.fitzpatrick_max,
+    }));
+    return [...withMatch]
+      .sort((a, b) => Number(b.matches) - Number(a.matches))
+      .slice(0, 5);
+  }, [providerResults, patient.profile.skinType]);
+
+
+
   const medspaResults = useMemo(
     () => storefrontsInRange.filter((s) => matchStorefront(s, needle)),
     [storefrontsInRange, needle],
