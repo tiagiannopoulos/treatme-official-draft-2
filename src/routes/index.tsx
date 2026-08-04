@@ -179,7 +179,6 @@ function EducationCards({ stories }: { stories: { slug: string; title: string; s
           onClick={() => setExpanded(true)}
           className="mt-4 w-full h-12 rounded-full border border-line bg-cream flex items-center justify-center gap-2 text-[13px] font-semibold lowercase text-ink"
         >
-          <Plus className="size-[16px]" strokeWidth={2.2} />
           show {hiddenCount} more
         </button>
       )}
