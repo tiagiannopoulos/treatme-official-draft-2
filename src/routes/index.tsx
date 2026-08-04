@@ -83,7 +83,7 @@ function MenuPage() {
           <BookOpen className="size-[18px] text-ink" strokeWidth={2.2} />
           <h2 className="brand-display text-[26px]">kin education</h2>
         </div>
-        <p className="text-[13px] text-ink-mute mt-1">learn the basics before you treat.</p>
+        
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           {eduStories.map((s) => (
