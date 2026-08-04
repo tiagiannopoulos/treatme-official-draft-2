@@ -106,10 +106,10 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
 
   const credentials = [
     [provider.licensing_body, provider.license_number].filter(Boolean).join(" #"),
-    provider.years_experience > 0 && `${provider.years_experience} years practising`,
-    provider.designations.length > 0 && provider.designations.join(" · ").toLowerCase(),
-    provider.specialties.length > 0 && `trained in ${provider.specialties.join(", ")}`,
-  ].filter(Boolean);
+    provider.years_experience > 0 ? `${provider.years_experience} years practising` : "",
+    provider.designations.length > 0 ? provider.designations.join(" · ").toLowerCase() : "",
+    provider.specialties.length > 0 ? `trained in ${provider.specialties.join(", ")}` : "",
+  ].filter((c): c is string => Boolean(c));
 
   const isSaved = saved.has(provider.id);
   const first = firstName(provider.name);
