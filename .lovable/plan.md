@@ -1,67 +1,31 @@
-## goal
+# providers near you, under the map
 
-Clicking any med spa anywhere in the app opens a storefront page that feels like the clinic's own beautifully built website: big editorial hero, clear booking calls to action throughout, and their onboarding bundles presented as premium offers.
+Turn the section right under the map card on the search tab into a proper provider browsing row, and keep medspas as its own section below it.
 
-## 1. make every med spa tap land on the storefront
+## what changes
 
-Audit and fix each med spa entry point so all of them resolve to `/storefront/$id`:
-- search tab medspa rail cards and list rows
-- map pin popover "view storefront" (currently `/medspas/$slug`, which redirects — keep working, but point cards directly at the canonical route)
-- storefront chips on provider cards and provider profiles
-Report any that were dead.
+**providers near you (under the map card, explore state only)**
 
-## 2. bundles in the database
+- Header "providers near you" in the same eyebrow style as every other section header on this page. Not "top providers", not "best providers".
+- A horizontal scroll row of provider cards, reusing the existing search result provider card. No second card component is built.
+- Each card is about 78 percent of the viewport width, so the next card peeks in from the right and it reads as scrollable.
+- Five providers, ordered by distance from the patient (nearest first), using the location and radius already chosen above the row.
+- If the patient has a skin type saved, providers whose fitzpatrick range covers it are ordered first and carry a small mint tag reading "matches your skin type".
+- The last item in the row is a dashed outline card the same height as the others, with a chevron and "see all providers". Tapping it lands on the full provider list on this same tab: providers pill active, search field empty. No separate explore page.
+- Tapping any provider card opens that provider profile, as it already does.
+- If no providers fall inside the radius, the whole section is hidden. No placeholder.
 
-New table `clinic_bundles` (one row per bundle a clinic sells), created via migration with grants, RLS and public read:
-- storefront_id, name, tagline, included treatment slugs, sessions count, price, compare_at price (to show savings), validity months, sort order, active flag, badge (e.g. "most booked")
-- public can read active bundles; only the clinic owner can create, edit or remove their own
-Seed a few realistic bundles for the claimed demo clinics so the page looks real immediately.
+**medspas near you**
 
-## 3. rebuild the storefront page as a full editorial site
+Stays where it is, as its own horizontal rail below the providers section. Unchanged.
 
-Same route, same data sources, new composition:
+## rules kept
 
-```text
-full bleed hero image, clinic name over it, verified badge,
-neighbourhood, treatme + google ratings, primary "book now"
---------------------------------------------------------
-quick facts strip: hours today, phone, area, providers count
---------------------------------------------------------
-BUNDLES  premium cards: name, what's included, sessions,
-price with struck compare price and "save $X", book bundle
---------------------------------------------------------
-who works here  provider cards with per provider book
---------------------------------------------------------
-treatments offered  pills with from price, opens quick sheet,
-each with book treatment
---------------------------------------------------------
-the space  edge to edge gallery with lightbox
---------------------------------------------------------
-what they have on site  devices, product lines, peel depths
---------------------------------------------------------
-getting there  address, map link, transit, parking, access,
-full hours with today highlighted
---------------------------------------------------------
-good to know  policies
---------------------------------------------------------
-unclaimed clinics: quiet claim card instead of bundles
---------------------------------------------------------
-sticky bottom bar: "book at {clinic}"
-```
-
-Visual treatment stays on brand: cream, bubblegum, hot pink, butter, mint, ink, Helvetica Neue, all copy lowercase, no dashes anywhere, mobile first at 390px. Upgrades are typographic and spatial: larger hero type, generous section rhythm, hairline dividers, cards with soft radius, accent colour used sparingly on price and calls to action.
-
-## 4. booking that carries what was tapped
-
-Extend the consult route's search params to accept `bundleId` and `treatmentSlug` alongside `providerId` and `storefrontId`, and show which bundle or treatment is being booked on that screen. Every call to action passes the right ids:
-- hero and sticky bar: storefront only
-- bundle card: storefront plus bundle
-- roster row: storefront plus provider
-- treatment pill: storefront plus treatment slug
+All copy lowercase. No dashes of any kind in visible copy. Mobile first at 390 px, no sideways page scroll, only the row itself scrolls.
 
 ## technical notes
 
-- `clinic_bundles` read through the existing `directoryQuery` pattern as its own query keyed by storefront id, so unclaimed clinics fetch nothing extra.
-- Sections with no data stay hidden, so a bare unclaimed clinic still renders a clean short page.
-- Reuse `ProviderCard` and the global treatment quick sheet; no duplicate components.
-- Sanitize all bundle copy through the existing `noDash` helper.
+- `src/routes/search.index.tsx`: replace the existing "providers near you" rail block (currently a plain rail of every in range provider) with the new row. The existing `providerResults` memo already gives distance sorted providers filtered to the radius, so ordering reuses it, then a stable sort puts fitzpatrick matches first before slicing to five.
+- Skin type comes from `usePatient()` in `src/lib/patient-store.ts` (`profile.skinType`), matched against `fitzpatrick_min` / `fitzpatrick_max` on the provider, using the same numeric mapping as `src/lib/provider-fit.ts`.
+- `src/components/treatme/ProviderCard.tsx`: `ProviderCardCompact` gains two optional props, a width class override (so the row can use `w-[78vw]`) and a `matchesSkinType` flag that renders the mint tag. Existing call sites keep their current 172 px width by default, so search results are untouched.
+- The "see all providers" card is a small local component in `search.index.tsx` that sets scope to `providers` and clears the query, matching the existing pill behaviour.
