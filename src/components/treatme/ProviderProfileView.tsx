@@ -361,6 +361,31 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
         </section>
       )}
 
+      {/* section 9: who this provider is right for */}
+      {fit.length > 0 && (
+        <section className="px-6 mt-5">
+          <div className="rounded-2xl border border-line p-4 space-y-2">
+            {fit.map((f) => {
+              const Icon =
+                f.icon === "language" ? Languages : f.icon === "device" ? Zap : f.icon === "treats" ? Sparkles : Droplet;
+              return (
+                <div
+                  key={f.id}
+                  className={cn(
+                    "flex items-start gap-2 text-[13px] lowercase leading-snug",
+                    f.tone === "match" && "text-ink",
+                    f.tone !== "match" && "text-ink-soft",
+                  )}
+                >
+                  <Icon className="mt-[2px] size-3.5 shrink-0 text-hot" />
+                  <span>{f.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* section 8: details collapsed */}
       <section className="px-6 mt-6">
         <button
