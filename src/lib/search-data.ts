@@ -21,6 +21,15 @@ export interface Storefront {
   google_place_id: string | null;
   /** clinic detail fields. arrays default to empty, text fields may be null. */
   cover_url: string | null;
+  /** branded storefront fields. every one of these can be null on an unclaimed listing. */
+  logo_url: string | null;
+  brand_accent: string | null;
+  website: string | null;
+  price_band: string | null;
+  languages: string[];
+  booked_count_30d: number;
+  year_opened: number | null;
+
   neighbourhood: string | null;
   phone: string | null;
   hours: unknown;
