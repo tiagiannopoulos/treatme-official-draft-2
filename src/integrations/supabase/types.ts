@@ -124,58 +124,67 @@ export type Database = {
       }
       education_slides: {
         Row: {
-          bg: string
+          bg: string | null
           body: string | null
           chip: string | null
           chip_icon: string | null
-          created_at: string
+          chip_label: string | null
+          created_at: string | null
           cta_label: string | null
           cta_route: string | null
           headline: string
           id: string
-          items: string[]
-          kind: string
+          items: string[] | null
+          kind: string | null
           link_label: string | null
-          pills: string[]
+          link_route: string | null
+          pills: string[] | null
           sort_order: number
-          story_id: string
-          updated_at: string
+          story_id: string | null
+          story_slug: string | null
+          updated_at: string | null
         }
         Insert: {
-          bg?: string
+          bg?: string | null
           body?: string | null
           chip?: string | null
           chip_icon?: string | null
-          created_at?: string
+          chip_label?: string | null
+          created_at?: string | null
           cta_label?: string | null
           cta_route?: string | null
           headline: string
           id?: string
-          items?: string[]
-          kind?: string
+          items?: string[] | null
+          kind?: string | null
           link_label?: string | null
-          pills?: string[]
+          link_route?: string | null
+          pills?: string[] | null
           sort_order?: number
-          story_id: string
-          updated_at?: string
+          story_id?: string | null
+          story_slug?: string | null
+          updated_at?: string | null
         }
         Update: {
-          bg?: string
+          bg?: string | null
           body?: string | null
           chip?: string | null
           chip_icon?: string | null
-          created_at?: string
+          chip_label?: string | null
+          created_at?: string | null
           cta_label?: string | null
           cta_route?: string | null
           headline?: string
           id?: string
-          items?: string[]
-          kind?: string
+          items?: string[] | null
+          kind?: string | null
           link_label?: string | null
-          pills?: string[]
+          link_route?: string | null
+          pills?: string[] | null
           sort_order?: number
-          story_id?: string
-          updated_at?: string
+          story_id?: string | null
+          story_slug?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -189,46 +198,49 @@ export type Database = {
       }
       education_stories: {
         Row: {
-          accent_color: string
+          accent: string | null
+          accent_color: string | null
           category: string | null
           cover_image: string | null
-          cover_tone: Database["public"]["Enums"]["slide_overlay"]
-          created_at: string
+          cover_tone: Database["public"]["Enums"]["slide_overlay"] | null
+          created_at: string | null
           id: string
-          published: boolean
+          published: boolean | null
           slug: string
           sort_order: number
           subtitle: string | null
           title: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          accent_color?: string
+          accent?: string | null
+          accent_color?: string | null
           category?: string | null
           cover_image?: string | null
-          cover_tone?: Database["public"]["Enums"]["slide_overlay"]
-          created_at?: string
+          cover_tone?: Database["public"]["Enums"]["slide_overlay"] | null
+          created_at?: string | null
           id?: string
-          published?: boolean
+          published?: boolean | null
           slug: string
           sort_order?: number
           subtitle?: string | null
           title: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          accent_color?: string
+          accent?: string | null
+          accent_color?: string | null
           category?: string | null
           cover_image?: string | null
-          cover_tone?: Database["public"]["Enums"]["slide_overlay"]
-          created_at?: string
+          cover_tone?: Database["public"]["Enums"]["slide_overlay"] | null
+          created_at?: string | null
           id?: string
-          published?: boolean
+          published?: boolean | null
           slug?: string
           sort_order?: number
           subtitle?: string | null
           title?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
