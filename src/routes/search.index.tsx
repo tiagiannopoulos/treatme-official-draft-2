@@ -778,7 +778,8 @@ function MedspaCardCompact({
           </span>
         </div>
       </div>
-    </div>
+    </Link>
+
   );
 }
 
