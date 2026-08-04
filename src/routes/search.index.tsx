@@ -737,13 +737,16 @@ function MedspaCardCompact({
   onSelect: () => void;
 }) {
   return (
-    <div
+    <Link
+      to="/storefront/$id"
+      params={{ id: storefront.id }}
       onClick={onSelect}
       className={cn(
-        "shrink-0 w-[220px] rounded-[20px] border overflow-hidden bg-white",
+        "shrink-0 w-[220px] rounded-[20px] border overflow-hidden bg-white block active:scale-[0.98] transition-transform",
         active ? "border-hot" : "border-line",
       )}
     >
+
       {storefront.hero_image_url ? (
         <img
           src={storefront.hero_image_url}
