@@ -25,12 +25,8 @@ function lower(list: string[]): string[] {
   return list.map((s) => s.toLowerCase().trim()).filter(Boolean);
 }
 
-/** patient skin type is stored as a roman numeral string, e.g. "iv". */
-function fitzNumber(value: string | null): number | null {
-  if (!value) return null;
-  const i = ROMAN.indexOf(value.toLowerCase().trim());
-  return i > 0 ? i : null;
-}
+
+
 
 export function providerFit(p: Provider, _profile: PatientProfile): FitSignal[] {
   const out: FitSignal[] = [];
