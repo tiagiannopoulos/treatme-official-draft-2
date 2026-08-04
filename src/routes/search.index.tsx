@@ -31,7 +31,11 @@ import {
 } from "@/lib/search-data";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
+import { usePatient } from "@/lib/patient-store";
 import { cn } from "@/lib/utils";
+
+const FITZ_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
+
 
 
 export const Route = createFileRoute("/search/")({
