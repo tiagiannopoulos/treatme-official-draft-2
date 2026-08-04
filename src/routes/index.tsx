@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
+import { eduStoriesQuery } from "@/lib/education-story";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/")({
   }),
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(searchTreatmentsQuery);
+    context.queryClient.ensureQueryData(eduStoriesQuery);
   },
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
@@ -25,6 +27,7 @@ export const Route = createFileRoute("/")({
 
 function MenuPage() {
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
+  const { data: eduStories } = useSuspenseQuery(eduStoriesQuery);
   const forYou = treatments.slice(0, 4);
   const trending = treatments.slice(4, 8);
 
@@ -83,10 +86,9 @@ function MenuPage() {
         <p className="text-[13px] text-ink-mute mt-1">learn the basics before you treat.</p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <EduCard title="what is skin structure?" sub="understanding the layers of your skin." />
-          <EduCard title="skin health vs structure" sub="learn the key differences." />
-          <EduCard title="common concerns" sub="what affects your skin most." />
-          <EduCard title="treatment types explained" sub="from injectables to lasers." />
+          {eduStories.map((s) => (
+            <EduCard key={s.slug} slug={s.slug} title={s.title} sub={s.subtitle} />
+          ))}
         </div>
       </section>
     </div>
@@ -162,14 +164,18 @@ function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
 
 
 
-function EduCard({ title, sub }: { title: string; sub: string }) {
+function EduCard({ slug, title, sub }: { slug: string; title: string; sub: string }) {
   return (
-    <div className="rounded-2xl border border-line p-4 bg-cream">
+    <Link
+      to="/learn/$slug"
+      params={{ slug }}
+      className="block rounded-2xl border border-line p-4 bg-cream text-left"
+    >
       <div className="size-8 rounded-full bg-bubblegum/40 grid place-items-center mb-3">
         <BookOpen className="size-4 text-ink" strokeWidth={2.2} />
       </div>
       <p className="font-bold text-[13px] tracking-tight leading-tight lowercase">{title}</p>
       <p className="text-[11px] text-ink-mute mt-1 leading-snug">{sub}</p>
-    </div>
+    </Link>
   );
 }
