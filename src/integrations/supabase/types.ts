@@ -480,6 +480,72 @@ export type Database = {
           },
         ]
       }
+      provider_results: {
+        Row: {
+          after_url: string
+          before_url: string
+          caption: string | null
+          created_at: string
+          id: string
+          interval_weeks: number | null
+          is_published: boolean
+          patient_consented: boolean
+          product_used: string | null
+          provider_id: string
+          sessions: number | null
+          sort_order: number
+          treatment_slug: string
+          updated_at: string
+        }
+        Insert: {
+          after_url: string
+          before_url: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          interval_weeks?: number | null
+          is_published?: boolean
+          patient_consented?: boolean
+          product_used?: string | null
+          provider_id: string
+          sessions?: number | null
+          sort_order?: number
+          treatment_slug: string
+          updated_at?: string
+        }
+        Update: {
+          after_url?: string
+          before_url?: string
+          caption?: string | null
+          created_at?: string
+          id?: string
+          interval_weeks?: number | null
+          is_published?: boolean
+          patient_consented?: boolean
+          product_used?: string | null
+          provider_id?: string
+          sessions?: number | null
+          sort_order?: number
+          treatment_slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_results_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_rating_stats"
+            referencedColumns: ["provider_id"]
+          },
+          {
+            foreignKeyName: "provider_results_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_reviews: {
         Row: {
           body: string
@@ -591,6 +657,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_signature: boolean
           price_from: number | null
           provider_id: string
           treatment_slug: string
@@ -598,6 +665,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_signature?: boolean
           price_from?: number | null
           provider_id: string
           treatment_slug: string
@@ -605,6 +673,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_signature?: boolean
           price_from?: number | null
           provider_id?: string
           treatment_slug?: string
@@ -628,11 +697,14 @@ export type Database = {
       }
       providers: {
         Row: {
+          accepting_new: boolean
           avatar_url: string | null
           bio: string
           claimed: boolean
           created_at: string
+          credential_line: string | null
           credentials: string
+          designations: string[]
           devices: string[]
           fitzpatrick_max: number | null
           fitzpatrick_min: number | null
@@ -656,11 +728,14 @@ export type Database = {
           years_experience: number
         }
         Insert: {
+          accepting_new?: boolean
           avatar_url?: string | null
           bio?: string
           claimed?: boolean
           created_at?: string
+          credential_line?: string | null
           credentials?: string
+          designations?: string[]
           devices?: string[]
           fitzpatrick_max?: number | null
           fitzpatrick_min?: number | null
@@ -684,11 +759,14 @@ export type Database = {
           years_experience?: number
         }
         Update: {
+          accepting_new?: boolean
           avatar_url?: string | null
           bio?: string
           claimed?: boolean
           created_at?: string
+          credential_line?: string | null
           credentials?: string
+          designations?: string[]
           devices?: string[]
           fitzpatrick_max?: number | null
           fitzpatrick_min?: number | null
