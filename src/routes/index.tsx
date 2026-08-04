@@ -81,7 +81,7 @@ function MenuPage() {
       <section className="px-6">
         <div className="flex items-center gap-2">
           <BookOpen className="size-[18px] text-ink" strokeWidth={2.2} />
-          <h2 className="brand-display text-[26px]">Skin education</h2>
+          <h2 className="brand-display text-[26px]">kin education</h2>
         </div>
         <p className="text-[13px] text-ink-mute mt-1">learn the basics before you treat.</p>
 
