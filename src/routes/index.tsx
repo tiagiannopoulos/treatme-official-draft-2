@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Lock, BookOpen, ArrowRight, Plus } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
 
@@ -85,11 +86,7 @@ function MenuPage() {
         </div>
         
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {eduStories.map((s) => (
-            <EduCard key={s.slug} slug={s.slug} title={s.title} sub={s.subtitle} />
-          ))}
-        </div>
+        <EducationCards stories={eduStories} />
       </section>
     </div>
   );
@@ -163,6 +160,32 @@ function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
 }
 
 
+
+function EducationCards({ stories }: { stories: { slug: string; title: string; subtitle: string }[] }) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? stories : stories.slice(0, 4);
+  const hiddenCount = stories.length - 4;
+  if (!stories.length) return null;
+  return (
+    <div className="mt-4">
+      <div className="grid grid-cols-2 gap-3">
+        {visible.map((s) => (
+          <EduCard key={s.slug} slug={s.slug} title={s.title} sub={s.subtitle} />
+        ))}
+      </div>
+      {!expanded && hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="mt-4 w-full h-12 rounded-full border border-line bg-cream flex items-center justify-center gap-2 text-[13px] font-semibold lowercase text-ink"
+        >
+          <Plus className="size-[16px]" strokeWidth={2.2} />
+          show {hiddenCount} more
+        </button>
+      )}
+    </div>
+  );
+}
 
 function EduCard({ slug, title, sub }: { slug: string; title: string; sub: string }) {
   return (
