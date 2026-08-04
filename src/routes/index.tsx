@@ -86,11 +86,7 @@ function MenuPage() {
         </div>
         
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {eduStories.map((s) => (
-            <EduCard key={s.slug} slug={s.slug} title={s.title} sub={s.subtitle} />
-          ))}
-        </div>
+        <EducationCards stories={eduStories} />
       </section>
     </div>
   );
