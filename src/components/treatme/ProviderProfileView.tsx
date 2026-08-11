@@ -427,18 +427,6 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
         provider details are supplied by the clinic. your provider confirms what is right for you at consult.
       </p>
 
-      {/* sticky book bar */}
-      {provider.accepting_new && (
-        <div className="fixed bottom-[76px] inset-x-0 px-6 z-20">
-          <Link
-            to="/book/consult"
-            search={{ providerId: provider.id, storefrontId: sortedStores[0]?.id }}
-            className="flex items-center justify-center rounded-pill bg-hot text-cream py-3.5 text-[14px] font-semibold lowercase"
-          >
-            book a consult
-          </Link>
-        </div>
-      )}
 
       {viewerIndex !== null && (
         <ResultViewer
