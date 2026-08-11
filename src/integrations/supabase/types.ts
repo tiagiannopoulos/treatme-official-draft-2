@@ -95,7 +95,8 @@ export type Database = {
           provider_id: string
           status: string
           storefront_id: string
-          treatment_id: string
+          treatment_id: string | null
+          treatment_slug: string | null
         }
         Insert: {
           created_at?: string
@@ -109,7 +110,8 @@ export type Database = {
           provider_id: string
           status?: string
           storefront_id: string
-          treatment_id: string
+          treatment_id?: string | null
+          treatment_slug?: string | null
         }
         Update: {
           created_at?: string
@@ -123,7 +125,8 @@ export type Database = {
           provider_id?: string
           status?: string
           storefront_id?: string
-          treatment_id?: string
+          treatment_id?: string | null
+          treatment_slug?: string | null
         }
         Relationships: []
       }
