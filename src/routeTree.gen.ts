@@ -28,7 +28,6 @@ import { Route as BookConsultRouteImport } from './routes/book.consult'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
 import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug.index'
-import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
 import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
 import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$slug.reviews'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
@@ -128,11 +127,6 @@ const TreatmentSlugIndexRoute = TreatmentSlugIndexRouteImport.update({
   path: '/treatment/$slug/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TreatmentsSlugBookRoute = TreatmentsSlugBookRouteImport.update({
-  id: '/treatments/$slug/book',
-  path: '/treatments/$slug/book',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TreatmentSlugStoryRoute = TreatmentSlugStoryRouteImport.update({
   id: '/treatment/$slug/story',
   path: '/treatment/$slug/story',
@@ -170,7 +164,6 @@ export interface FileRoutesByFullPath {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
-  '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
@@ -195,7 +188,6 @@ export interface FileRoutesByTo {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
-  '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatment/$slug': typeof TreatmentSlugIndexRoute
   '/treatments/$slug': typeof TreatmentsSlugIndexRoute
 }
@@ -221,7 +213,6 @@ export interface FileRoutesById {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
-  '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
   '/treatments/$slug/': typeof TreatmentsSlugIndexRoute
 }
@@ -248,7 +239,6 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
-    | '/treatments/$slug/book'
     | '/treatment/$slug/'
     | '/treatments/$slug/'
   fileRoutesByTo: FileRoutesByTo
@@ -273,7 +263,6 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
-    | '/treatments/$slug/book'
     | '/treatment/$slug'
     | '/treatments/$slug'
   id:
@@ -298,7 +287,6 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
-    | '/treatments/$slug/book'
     | '/treatment/$slug/'
     | '/treatments/$slug/'
   fileRoutesById: FileRoutesById
@@ -324,7 +312,6 @@ export interface RootRouteChildren {
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
   TreatmentSlugReviewsRoute: typeof TreatmentSlugReviewsRoute
   TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
-  TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
   TreatmentSlugIndexRoute: typeof TreatmentSlugIndexRoute
   TreatmentsSlugIndexRoute: typeof TreatmentsSlugIndexRoute
 }
@@ -464,13 +451,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentSlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/treatments/$slug/book': {
-      id: '/treatments/$slug/book'
-      path: '/treatments/$slug/book'
-      fullPath: '/treatments/$slug/book'
-      preLoaderRoute: typeof TreatmentsSlugBookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/treatment/$slug/story': {
       id: '/treatment/$slug/story'
       path: '/treatment/$slug/story'
@@ -516,7 +496,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
   TreatmentSlugReviewsRoute: TreatmentSlugReviewsRoute,
   TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
-  TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
   TreatmentSlugIndexRoute: TreatmentSlugIndexRoute,
   TreatmentsSlugIndexRoute: TreatmentsSlugIndexRoute,
 }
