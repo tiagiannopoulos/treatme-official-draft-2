@@ -56,6 +56,77 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_request_notes: {
+        Row: {
+          request_id: string
+          resolution: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          request_id: string
+          resolution?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          request_id?: string
+          resolution?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_request_notes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "booking_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_requests: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          patient_email: string
+          patient_id: string
+          patient_name: string
+          patient_phone: string
+          preferred_slots: Json
+          provider_id: string
+          status: string
+          storefront_id: string
+          treatment_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          patient_email: string
+          patient_id: string
+          patient_name: string
+          patient_phone: string
+          preferred_slots: Json
+          provider_id: string
+          status?: string
+          storefront_id: string
+          treatment_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          patient_email?: string
+          patient_id?: string
+          patient_name?: string
+          patient_phone?: string
+          preferred_slots?: Json
+          provider_id?: string
+          status?: string
+          storefront_id?: string
+          treatment_id?: string
+        }
+        Relationships: []
+      }
       clinic_bundles: {
         Row: {
           active: boolean
