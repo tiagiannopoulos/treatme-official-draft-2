@@ -545,7 +545,7 @@ function SearchPage() {
                 </span>
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                {medspaResults.map((s) => (
+                {medspaResults.slice(0, 8).map((s) => (
                   <MedspaCardCompact
                     key={s.id}
                     storefront={s}
@@ -555,7 +555,26 @@ function SearchPage() {
                     onSelect={() => setSelected(s.id)}
                   />
                 ))}
+                {medspaResults.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQ("");
+                      setScope("medspas");
+                    }}
+                    className="shrink-0 w-[220px] rounded-[20px] border border-dashed border-[rgba(17,17,17,0.25)] bg-transparent p-3.5 text-left active:scale-[0.98] transition-transform"
+                  >
+                    <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
+                      <ChevronRight className="size-5 text-ink" />
+                    </span>
+                    <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">see all medspas</p>
+                    <p className="text-[12px] text-ink/60 lowercase">
+                      browse all {medspaResults.length} within {radius} km
+                    </p>
+                  </button>
+                )}
               </div>
+
             </section>
           )}
 
