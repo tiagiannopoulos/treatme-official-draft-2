@@ -12,6 +12,7 @@ import {
   bookingOptionsQuery,
   slotDateLabel,
   submitBookingRequest,
+  type BookingOptions,
   type PreferredSlot,
   type TimeOfDay,
 } from "@/lib/booking";
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/book/consult")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: BookingFlow;
+  component: BookingFlow,
 });
 
 const STEPS = ["selection", "times", "details", "review"] as const;
@@ -506,7 +507,7 @@ function PickerSheet({
   onClose,
 }: {
   kind: "provider" | "clinic" | "treatment";
-  options: NonNullable<ReturnType<typeof useBookingOptionsType>>;
+  options: BookingOptions;
   onPick: (value: string) => void;
   onClose: () => void;
 }) {
@@ -545,13 +546,6 @@ function PickerSheet({
     </div>
   );
 }
-
-// type helper so the sheet stays in sync with the query shape
-declare function useBookingOptionsType(): ReturnType<typeof bookingOptionsQuery>["queryFn"] extends
-  | undefined
-  | ((...args: never[]) => Promise<infer R>)
-  ? R
-  : never;
 
 function SentScreen() {
   return (
