@@ -144,7 +144,7 @@ export async function submitBookingRequest(input: SubmitBooking): Promise<void> 
     provider_id: input.providerId,
     storefront_id: input.storefrontId,
     treatment_slug: input.treatmentSlug,
-    preferred_slots: input.slots,
+    preferred_slots: input.slots.map((s) => ({ date: s.date, time_of_day: s.time_of_day })),
     note: input.note.trim() ? input.note.trim() : null,
     patient_name: input.name.trim(),
     patient_phone: input.phone.trim(),
