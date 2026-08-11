@@ -34,6 +34,12 @@ function MapView() {
   const { data } = useSuspenseQuery(directoryQuery);
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
+  const [viewport, setViewport] = useState<{
+    minLat: number;
+    maxLat: number;
+    minLng: number;
+    maxLng: number;
+  } | null>(null);
 
   const pinned = useMemo(
     () => data.storefronts.filter((s) => typeof s.lat === "number" && typeof s.lng === "number"),
@@ -45,6 +51,32 @@ function MapView() {
     for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
     return counts;
   }, [data.providers]);
+
+  // only the medspas inside the current map view, closest to the middle first.
+  const inView = useMemo(() => {
+    if (!viewport) return pinned;
+    const midLat = (viewport.minLat + viewport.maxLat) / 2;
+    const midLng = (viewport.minLng + viewport.maxLng) / 2;
+    return pinned
+      .filter(
+        (s) =>
+          s.lat >= viewport.minLat &&
+          s.lat <= viewport.maxLat &&
+          s.lng >= viewport.minLng &&
+          s.lng <= viewport.maxLng,
+      )
+      .sort(
+        (a, b) =>
+          (a.lat - midLat) ** 2 + (a.lng - midLng) ** 2 - ((b.lat - midLat) ** 2 + (b.lng - midLng) ** 2),
+      );
+  }, [pinned, viewport]);
+
+  const areaLabel = useMemo(() => {
+    const cities = new Set(inView.map((s) => s.city.toLowerCase()).filter(Boolean));
+    if (cities.size === 0) return "this area";
+    if (cities.size <= 2) return [...cities].join(" and ");
+    return `${cities.size} areas`;
+  }, [inView]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background">
@@ -58,6 +90,7 @@ function MapView() {
             providerCounts={providerCounts}
             height="h-full"
             gestureHandling="greedy"
+            onViewportChange={setViewport}
             className="rounded-none border-0"
 
           />
@@ -75,12 +108,18 @@ function MapView() {
       {/* bottom sheet: everything currently in view */}
       <div className="absolute inset-x-0 bottom-0 z-30 max-h-[52%] overflow-y-auto rounded-t-[24px] border-t border-line bg-background px-5 pb-8 pt-3 shadow-[0_-8px_30px_rgba(17,17,17,0.08)]">
         <span aria-hidden className="mx-auto mb-3 block h-1 w-10 rounded-pill bg-[rgba(17,17,17,0.15)]" />
-        <p className="brand-eyebrow">in view</p>
+        <p className="brand-eyebrow">in this area</p>
         <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-          {pinned.length} medspa{pinned.length === 1 ? "" : "s"}
+          {inView.length} medspa{inView.length === 1 ? "" : "s"} in {areaLabel} · move the map to search elsewhere
         </p>
+
         <div className="mt-3 space-y-2">
-          {pinned.map((s) => (
+          {inView.length === 0 && (
+            <p className="rounded-2xl border border-dashed border-[rgba(17,17,17,0.25)] p-4 text-[13px] text-ink-mute lowercase">
+              no medspas in view. zoom out or pan to a busier area.
+            </p>
+          )}
+          {inView.map((s) => (
             <button
               key={s.id}
               type="button"

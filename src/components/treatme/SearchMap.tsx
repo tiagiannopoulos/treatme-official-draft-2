@@ -40,6 +40,8 @@ interface Props {
   height?: string;
   /** shows the expand button that pushes to the full screen map. */
   expandable?: boolean;
+  /** fires with the visible map bounds whenever panning or zooming settles. */
+  onViewportChange?: (bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number } | null) => void;
   /** cooperative keeps the page scrolling inside the small card; greedy suits full screen. */
   gestureHandling?: "greedy" | "cooperative";
   className?: string;
@@ -54,6 +56,7 @@ export function SearchMap({
   radiusKm,
   height = "h-[220px]",
   expandable = false,
+  onViewportChange,
   gestureHandling = "cooperative",
   className,
 }: Props) {
@@ -69,6 +72,9 @@ export function SearchMap({
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
+
+  const onViewportChangeRef = useRef(onViewportChange);
+  onViewportChangeRef.current = onViewportChange;
 
   const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
@@ -101,6 +107,15 @@ export function SearchMap({
         mapRef.current = map;
 
         map.addListener("click", () => onSelect(null));
+
+        map.addListener("idle", () => {
+          const b = map.getBounds();
+          const cb = onViewportChangeRef.current;
+          if (!b || !cb) return;
+          const ne = b.getNorthEast();
+          const sw = b.getSouthWest();
+          cb({ minLat: sw.lat(), maxLat: ne.lat(), minLng: sw.lng(), maxLng: ne.lng() });
+        });
 
         setReady(true);
 
