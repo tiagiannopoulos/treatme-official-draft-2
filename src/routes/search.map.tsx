@@ -114,7 +114,12 @@ function MapView() {
         </p>
 
         <div className="mt-3 space-y-2">
-          {pinned.map((s) => (
+          {inView.length === 0 && (
+            <p className="rounded-2xl border border-dashed border-[rgba(17,17,17,0.25)] p-4 text-[13px] text-ink-mute lowercase">
+              no medspas in view. zoom out or pan to a busier area.
+            </p>
+          )}
+          {inView.map((s) => (
             <button
               key={s.id}
               type="button"
