@@ -100,9 +100,8 @@ function TreatmentDetail() {
 
       <div className="px-6 mt-6">
         <Link
-          to="/treatments/$slug/book"
-          params={{ slug: t.slug }}
-          search={{ area: selectedArea?.area_slug }}
+          to="/book/consult"
+          search={{ treatmentSlug: t.slug }}
         >
           <PillButton fullWidth>
             {selectedArea ? `book ${selectedArea.name.toLowerCase()}` : "book treatment"}
