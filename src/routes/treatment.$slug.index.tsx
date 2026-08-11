@@ -159,15 +159,6 @@ function TreatmentDetailPage() {
         </section>
       )}
 
-      <div className="mt-5 px-4">
-        <button
-          type="button"
-          onClick={book}
-          className="h-12 w-full rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
-        >
-          book treatment
-        </button>
-      </div>
 
       {/* who it's for */}
       {t.who_its_for.length > 0 && (
