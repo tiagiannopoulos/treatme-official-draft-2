@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Sparkles, Lock, BookOpen, ArrowRight } from "lucide-react";
+import { Sparkles, Lock, BookOpen, ArrowRight, Star, BadgeCheck } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
+import { directoryQuery, neighbourhood, type Provider } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
 
 export const Route = createFileRoute("/")({
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(searchTreatmentsQuery);
     context.queryClient.ensureQueryData(eduStoriesQuery);
+    context.queryClient.ensureQueryData(directoryQuery);
   },
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
@@ -26,11 +28,23 @@ export const Route = createFileRoute("/")({
   component: MenuPage,
 });
 
+/** default city until the patient sets a location. */
+const DEFAULT_CITY = "toronto";
+
 function MenuPage() {
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const { data: eduStories } = useSuspenseQuery(eduStoriesQuery);
+  const { data: directory } = useSuspenseQuery(directoryQuery);
   const forYou = treatments.slice(0, 4);
-  const trending = treatments.slice(4, 8);
+
+  const inCity = directory.providers.filter((p) =>
+    p.storefronts.some((s) => s.city.toLowerCase().includes(DEFAULT_CITY)),
+  );
+  const pool = inCity.length ? inCity : directory.providers;
+  const topProviders = [...pool]
+    .sort((a, b) => b.rating - a.rating || b.review_count - a.review_count)
+    .slice(0, 10);
+
 
 
   return (
