@@ -43,7 +43,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function TreatmentDetailPage() {
   const { slug } = Route.useParams();
-  const navigate = useNavigate();
   const { data: treatment, isLoading } = useQuery(treatmentDetailQuery(slug));
   const { data: directory } = useQuery(directoryQuery);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
@@ -55,9 +54,6 @@ function TreatmentDetailPage() {
       .slice(0, 2);
   }, [directory, slug]);
 
-  function book() {
-    navigate({ to: "/treatments/$slug/book", params: { slug }, search: { area: undefined } });
-  }
 
   if (isLoading) {
     return <div className="px-6 pt-8 text-[14px] lowercase text-ink/55">loading treatment...</div>;
