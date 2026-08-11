@@ -70,13 +70,9 @@ function MenuPage() {
         tone="butter"
       />
 
-      {/* 3. Trending now */}
-      <TreatmentRail
-        eyebrow="Trending now"
-        title="popular this week"
-        items={trending}
-        tone="mint"
-      />
+      {/* 3. Top providers near you */}
+      <ProviderRail providers={topProviders} />
+
 
       {/* 4. Education */}
       <section className="px-6">
