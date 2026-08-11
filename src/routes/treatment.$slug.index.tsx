@@ -281,16 +281,6 @@ function TreatmentDetailPage() {
         </section>
       )}
 
-      {/* sticky book bar */}
-      <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line/60 bg-white/95 px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] backdrop-blur">
-        <button
-          type="button"
-          onClick={book}
-          className="h-12 w-full rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
-        >
-          book treatment
-        </button>
-      </div>
     </div>
   );
 }
