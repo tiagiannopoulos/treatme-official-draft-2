@@ -119,6 +119,18 @@ function TreatmentDetailPage() {
         </div>
       )}
 
+      <div className="mt-3 px-4">
+        <Link
+          to="/treatment/$slug/reviews"
+          params={{ slug }}
+          className="flex h-12 w-full items-center justify-center rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
+        >
+          what people think
+        </Link>
+      </div>
+
+
+
       {/* concerns */}
       {t.improves.length > 0 && (
         <section className="mt-6 px-4">
@@ -147,15 +159,6 @@ function TreatmentDetailPage() {
         </section>
       )}
 
-      <div className="mt-5 px-4">
-        <button
-          type="button"
-          onClick={book}
-          className="h-12 w-full rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
-        >
-          book treatment
-        </button>
-      </div>
 
       {/* who it's for */}
       {t.who_its_for.length > 0 && (
