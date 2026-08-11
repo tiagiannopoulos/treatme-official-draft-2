@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Clock, Lock, Minus, Plus, Star } from "lucide-react";
 
@@ -43,7 +43,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 function TreatmentDetailPage() {
   const { slug } = Route.useParams();
-  const navigate = useNavigate();
   const { data: treatment, isLoading } = useQuery(treatmentDetailQuery(slug));
   const { data: directory } = useQuery(directoryQuery);
   const [openFaq, setOpenFaq] = useState<string | null>(null);
@@ -55,9 +54,6 @@ function TreatmentDetailPage() {
       .slice(0, 2);
   }, [directory, slug]);
 
-  function book() {
-    navigate({ to: "/treatments/$slug/book", params: { slug }, search: { area: undefined } });
-  }
 
   if (isLoading) {
     return <div className="px-6 pt-8 text-[14px] lowercase text-ink/55">loading treatment...</div>;
@@ -281,16 +277,6 @@ function TreatmentDetailPage() {
         </section>
       )}
 
-      {/* sticky book bar */}
-      <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line/60 bg-white/95 px-4 py-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] backdrop-blur">
-        <button
-          type="button"
-          onClick={book}
-          className="h-12 w-full rounded-pill bg-ink text-[14px] font-bold lowercase text-white"
-        >
-          book treatment
-        </button>
-      </div>
     </div>
   );
 }
