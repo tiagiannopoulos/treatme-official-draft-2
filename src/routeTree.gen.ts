@@ -30,6 +30,7 @@ import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$sl
 import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug.index'
 import { Route as TreatmentsSlugBookRouteImport } from './routes/treatments.$slug.book'
 import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
+import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$slug.reviews'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -137,6 +138,11 @@ const TreatmentSlugStoryRoute = TreatmentSlugStoryRouteImport.update({
   path: '/treatment/$slug/story',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TreatmentSlugReviewsRoute = TreatmentSlugReviewsRouteImport.update({
+  id: '/treatment/$slug/reviews',
+  path: '/treatment/$slug/reviews',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
   id: '/api/public/analyze',
   path: '/api/public/analyze',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatment/$slug': typeof TreatmentSlugIndexRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatments/$slug/book': typeof TreatmentsSlugBookRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatments/$slug/book'
     | '/treatment/$slug/'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/treatments'
     | '/api/public/analyze'
+    | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatments/$slug/book'
     | '/treatment/$slug'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatments/$slug/book'
     | '/treatment/$slug/'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
+  TreatmentSlugReviewsRoute: typeof TreatmentSlugReviewsRoute
   TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
   TreatmentsSlugBookRoute: typeof TreatmentsSlugBookRoute
   TreatmentSlugIndexRoute: typeof TreatmentSlugIndexRoute
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentSlugStoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/treatment/$slug/reviews': {
+      id: '/treatment/$slug/reviews'
+      path: '/treatment/$slug/reviews'
+      fullPath: '/treatment/$slug/reviews'
+      preLoaderRoute: typeof TreatmentSlugReviewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/analyze': {
       id: '/api/public/analyze'
       path: '/api/public/analyze'
@@ -494,6 +514,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
+  TreatmentSlugReviewsRoute: TreatmentSlugReviewsRoute,
   TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
   TreatmentsSlugBookRoute: TreatmentsSlugBookRoute,
   TreatmentSlugIndexRoute: TreatmentSlugIndexRoute,
@@ -502,13 +523,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
