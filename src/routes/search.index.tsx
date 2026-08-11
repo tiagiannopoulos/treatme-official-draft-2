@@ -545,7 +545,7 @@ function SearchPage() {
                 </span>
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                {medspaResults.slice(0, 8).map((s) => (
+                {(scope === "all" ? medspaResults.slice(0, 8) : medspaResults).map((s) => (
                   <MedspaCardCompact
                     key={s.id}
                     storefront={s}
@@ -555,7 +555,7 @@ function SearchPage() {
                     onSelect={() => setSelected(s.id)}
                   />
                 ))}
-                {medspaResults.length > 0 && (
+                {scope === "all" && medspaResults.length > 8 && (
                   <button
                     type="button"
                     onClick={() => {
