@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { generateText, Output } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { TREATMENTS } from "@/lib/treatments-data";
@@ -49,6 +49,10 @@ downtime values must be one of: "none", "a day", "a weekend", "a full week".
 provider_preference must be one of: "no preference", "woman", "man".
 carry forward every extracted value you already know, and add new ones. omit anything still unknown.
 
+respond with json only, no prose and no code fences, in exactly this shape:
+{"message":"...","chips":["...","..."],"stage":"intake","extracted":{"primary_concern":"...","budget":"...","downtime":"...","provider_preference":"...","timeline":"...","notes":"..."},"treatment_slugs":[]}
+omit any key inside "extracted" you don't know yet.
+
 treatment catalog (use these slugs in treatment_slugs, and plain names in message):
 ${CATALOG}`;
 
@@ -88,15 +92,26 @@ export const Route = createFileRoute("/api/consult-chat")({
           .join("\n\n");
 
         try {
-          const { output } = await generateText({
+          const { text } = await generateText({
             model: gateway("google/gemini-3-flash-preview"),
             system: SYSTEM,
-            output: Output.object({ schema: TurnSchema }),
             messages: [
               { role: "user" as const, content: context },
               ...history.map((m) => ({ role: m.role, content: m.text })),
             ],
           });
+
+          const raw = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+          const start = raw.indexOf("{");
+          const end = raw.lastIndexOf("}");
+          const parsed = TurnSchema.safeParse(
+            JSON.parse(start >= 0 && end > start ? raw.slice(start, end + 1) : raw),
+          );
+          if (!parsed.success) {
+            console.error("consult chat schema miss:", raw.slice(0, 400));
+            return new Response("the chat couldn't answer just now.", { status: 502 });
+          }
+          const output = parsed.data;
 
           const known = new Set(TREATMENTS.map((t) => t.slug));
           const turn = {
