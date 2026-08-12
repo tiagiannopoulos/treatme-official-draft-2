@@ -22,6 +22,7 @@ import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
 import { Route as ProvidersSlugRouteImport } from './routes/providers.$slug'
 import { Route as ProviderIdRouteImport } from './routes/provider.$id'
 import { Route as MedspasSlugRouteImport } from './routes/medspas.$slug'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
@@ -97,6 +98,11 @@ const MedspasSlugRoute = MedspasSlugRouteImport.update({
   path: '/medspas/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LearnSlugRoute = LearnSlugRouteImport.update({
   id: '/learn/$slug',
   path: '/learn/$slug',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
+    | '/legal/privacy'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
+    | '/legal/privacy'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
+    | '/legal/privacy'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   BookConsultRoute: typeof BookConsultRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
   MedspasSlugRoute: typeof MedspasSlugRoute
   ProviderIdRoute: typeof ProviderIdRoute
   ProvidersSlugRoute: typeof ProvidersSlugRoute
@@ -409,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MedspasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/learn/$slug': {
       id: '/learn/$slug'
       path: '/learn/$slug'
@@ -482,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookConsultRoute: BookConsultRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,
+  LegalPrivacyRoute: LegalPrivacyRoute,
   MedspasSlugRoute: MedspasSlugRoute,
   ProviderIdRoute: ProviderIdRoute,
   ProvidersSlugRoute: ProvidersSlugRoute,
