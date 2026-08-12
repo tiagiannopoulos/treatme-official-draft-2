@@ -18,6 +18,7 @@ import { Route as StorefrontIdRouteImport } from './routes/storefront.$id'
 import { Route as SearchMapRouteImport } from './routes/search.map'
 import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
+import { Route as ScanCaptureRouteImport } from './routes/scan.capture'
 import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
 import { Route as ProvidersSlugRouteImport } from './routes/providers.$slug'
 import { Route as ProviderIdRouteImport } from './routes/provider.$id'
@@ -77,6 +78,11 @@ const ScanResultsRoute = ScanResultsRouteImport.update({
 const ScanChatRoute = ScanChatRouteImport.update({
   id: '/scan/chat',
   path: '/scan/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanCaptureRoute = ScanCaptureRouteImport.update({
+  id: '/scan/capture',
+  path: '/scan/capture',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ScanAnalyzingRoute = ScanAnalyzingRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/capture': typeof ScanCaptureRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/capture': typeof ScanCaptureRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/capture': typeof ScanCaptureRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/provider/$id'
     | '/providers/$slug'
     | '/scan/analyzing'
+    | '/scan/capture'
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/provider/$id'
     | '/providers/$slug'
     | '/scan/analyzing'
+    | '/scan/capture'
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
@@ -301,6 +312,7 @@ export interface FileRouteTypes {
     | '/provider/$id'
     | '/providers/$slug'
     | '/scan/analyzing'
+    | '/scan/capture'
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
@@ -328,6 +340,7 @@ export interface RootRouteChildren {
   ProviderIdRoute: typeof ProviderIdRoute
   ProvidersSlugRoute: typeof ProvidersSlugRoute
   ScanAnalyzingRoute: typeof ScanAnalyzingRoute
+  ScanCaptureRoute: typeof ScanCaptureRoute
   ScanChatRoute: typeof ScanChatRoute
   ScanResultsRoute: typeof ScanResultsRoute
   SearchMapRoute: typeof SearchMapRoute
@@ -405,6 +418,13 @@ declare module '@tanstack/react-router' {
       path: '/scan/chat'
       fullPath: '/scan/chat'
       preLoaderRoute: typeof ScanChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/capture': {
+      id: '/scan/capture'
+      path: '/scan/capture'
+      fullPath: '/scan/capture'
+      preLoaderRoute: typeof ScanCaptureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/scan/analyzing': {
@@ -528,6 +548,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProviderIdRoute: ProviderIdRoute,
   ProvidersSlugRoute: ProvidersSlugRoute,
   ScanAnalyzingRoute: ScanAnalyzingRoute,
+  ScanCaptureRoute: ScanCaptureRoute,
   ScanChatRoute: ScanChatRoute,
   ScanResultsRoute: ScanResultsRoute,
   SearchMapRoute: SearchMapRoute,
