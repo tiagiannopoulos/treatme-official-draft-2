@@ -99,6 +99,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <AuthProvider>
       <ScanProvider>
         <TreatmentStoryProvider>
           <TreatmentSheetProvider>
@@ -114,6 +115,7 @@ function RootComponent() {
           </TreatmentSheetProvider>
         </TreatmentStoryProvider>
       </ScanProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
