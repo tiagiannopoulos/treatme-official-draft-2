@@ -23,30 +23,32 @@ export const deleteMyScanPhotos = createServerFn({ method: "POST" })
     return { removed };
   });
 
+/** wipes everything for one user, including the auth row. */
+async function wipeAccount(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  await wipePhotos(userId);
+
+  const { data: scans } = await supabaseAdmin.from("scans").select("id").eq("user_id", userId);
+  const scanIds = (scans ?? []).map((s) => s.id);
+  if (scanIds.length > 0) {
+    await supabaseAdmin.from("scan_results").delete().in("scan_id", scanIds);
+  }
+  await supabaseAdmin.from("consult_chats").delete().eq("user_id", userId);
+  await supabaseAdmin.from("scans").delete().eq("user_id", userId);
+  await supabaseAdmin.from("scan_consents").delete().eq("user_id", userId);
+  await supabaseAdmin.from("profiles").delete().eq("id", userId);
+
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  if (error) throw new Error(error.message);
+
+  return { ok: true as const };
+}
+
 /** deletes my account: photos, scans, results, chats, profile row, then the auth user itself. */
 export const deleteMyAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const userId = context.userId;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    await wipePhotos(userId);
-
-    const { data: scans } = await supabaseAdmin.from("scans").select("id").eq("user_id", userId);
-    const scanIds = (scans ?? []).map((s) => s.id);
-    if (scanIds.length > 0) {
-      await supabaseAdmin.from("scan_results").delete().in("scan_id", scanIds);
-    }
-    await supabaseAdmin.from("consult_chats").delete().eq("user_id", userId);
-    await supabaseAdmin.from("scans").delete().eq("user_id", userId);
-    await supabaseAdmin.from("scan_consents").delete().eq("user_id", userId);
-    await supabaseAdmin.from("profiles").delete().eq("id", userId);
-
-    const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (error) throw new Error(error.message);
-
-    return { ok: true };
-  });
+  .handler(async ({ context }) => wipeAccount(context.userId));
 
 /**
  * one entry point for every data request the profile tab can make.
@@ -89,5 +91,5 @@ export const deleteMyData = createServerFn({ method: "POST" })
       return { ok: true, removed };
     }
 
-    return await deleteMyAccount();
+    return await wipeAccount(context.userId);
   });
