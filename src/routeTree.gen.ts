@@ -33,6 +33,7 @@ import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$sl
 import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug.index'
 import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
 import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$slug.reviews'
+import { Route as ScanConcernKeyRouteImport } from './routes/scan.concern.$key'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
 const ProfileRoute = ProfileRouteImport.update({
@@ -155,6 +156,11 @@ const TreatmentSlugReviewsRoute = TreatmentSlugReviewsRouteImport.update({
   path: '/treatment/$slug/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScanConcernKeyRoute = ScanConcernKeyRouteImport.update({
+  id: '/scan/concern/$key',
+  path: '/scan/concern/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
   id: '/api/public/analyze',
   path: '/api/public/analyze',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatment/$slug': typeof TreatmentSlugIndexRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/scan/concern/$key'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatment/$slug/'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/treatments'
     | '/api/public/analyze'
+    | '/scan/concern/$key'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatment/$slug'
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/scan/concern/$key'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatment/$slug/'
@@ -349,6 +361,7 @@ export interface RootRouteChildren {
   SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
+  ScanConcernKeyRoute: typeof ScanConcernKeyRoute
   TreatmentSlugReviewsRoute: typeof TreatmentSlugReviewsRoute
   TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
   TreatmentSlugIndexRoute: typeof TreatmentSlugIndexRoute
@@ -525,6 +538,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentSlugReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scan/concern/$key': {
+      id: '/scan/concern/$key'
+      path: '/scan/concern/$key'
+      fullPath: '/scan/concern/$key'
+      preLoaderRoute: typeof ScanConcernKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/analyze': {
       id: '/api/public/analyze'
       path: '/api/public/analyze'
@@ -557,6 +577,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
+  ScanConcernKeyRoute: ScanConcernKeyRoute,
   TreatmentSlugReviewsRoute: TreatmentSlugReviewsRoute,
   TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
   TreatmentSlugIndexRoute: TreatmentSlugIndexRoute,

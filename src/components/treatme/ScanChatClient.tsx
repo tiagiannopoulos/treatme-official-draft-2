@@ -1,4 +1,5 @@
 import { useChat } from "@ai-sdk/react";
+import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { DefaultChatTransport } from "ai";
 import { Link } from "@tanstack/react-router";
 import { useMemo, type FormEvent } from "react";
@@ -110,6 +111,7 @@ export function ScanChatClient() {
             <PromptInputSubmit status={status} />
           </PromptInputFooter>
         </PromptInput>
+        <AnalysisFooter className="mt-3 text-center" />
       </div>
     </div>
   );
