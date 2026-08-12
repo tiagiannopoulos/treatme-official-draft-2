@@ -104,6 +104,101 @@ export const CONCERN_OVERLAY: Record<string, OverlaySpec> = {
   eyelid_heaviness: { mode: "stroked", shapes: R.upperLid },
 };
 
+/** one named patch of face the overlay can paint on its own */
+export interface OverlayRegion {
+  key: string;
+  label: string;
+  shapes: Shape[];
+}
+
+/**
+ * the same overlays, broken into named regions so per-region intensity from
+ * region_scores can be drawn and so sub-concerns can isolate one patch.
+ */
+export const CONCERN_REGIONS: Record<string, OverlayRegion[]> = {
+  redness: [
+    { key: "cheeks", label: "cheeks", shapes: R.cheeks },
+    { key: "nose", label: "nose", shapes: R.nose },
+    { key: "chin", label: "chin", shapes: R.chin },
+    { key: "forehead", label: "forehead", shapes: R.forehead },
+  ],
+  pores: [
+    { key: "t_zone", label: "t zone", shapes: R.tZone },
+    { key: "cheeks", label: "cheeks", shapes: R.cheeks },
+  ],
+  oiliness: [{ key: "t_zone", label: "t zone", shapes: R.tZone }],
+  breakouts: [
+    { key: "forehead", label: "forehead", shapes: [R.breakouts[0]] },
+    { key: "cheeks", label: "cheeks", shapes: [R.breakouts[1], R.breakouts[2]] },
+    { key: "chin", label: "chin and jaw", shapes: [R.breakouts[3]] },
+  ],
+  pigmentation: [
+    { key: "cheeks", label: "cheeks", shapes: R.cheeks },
+    { key: "forehead", label: "forehead", shapes: R.forehead },
+  ],
+  uniformness: [{ key: "full_face", label: "whole face", shapes: R.fullFace }],
+  radiance: [{ key: "full_face", label: "whole face", shapes: R.contour }],
+  hydration: [{ key: "full_face", label: "whole face", shapes: R.fullFace }],
+  texture: [{ key: "full_face", label: "whole face", shapes: R.fullFace }],
+  lines: [
+    { key: "forehead", label: "forehead", shapes: R.foreheadLines },
+    { key: "glabellar", label: "between brows", shapes: R.glabellar },
+    { key: "crowsfeet", label: "around eyes", shapes: R.crowsfeet },
+    { key: "nasolabial", label: "smile lines", shapes: R.nasolabial },
+    { key: "marionette", label: "mouth corners", shapes: R.marionette },
+  ],
+  firmness: [
+    { key: "jawline", label: "jawline", shapes: R.jawline },
+    { key: "lower_cheeks", label: "lower cheeks", shapes: R.lowerCheekArcs },
+  ],
+  volume_loss: [{ key: "midface", label: "midface", shapes: R.midface }],
+  dark_circles: [{ key: "under_eye", label: "under eye", shapes: R.underEye }],
+  under_eye_puffiness: [{ key: "under_eye", label: "under eye", shapes: R.underEye }],
+  tear_trough: [{ key: "tear_trough", label: "tear trough", shapes: R.tearTrough }],
+  eyelid_heaviness: [{ key: "upper_lid", label: "upper lids", shapes: R.upperLid }],
+};
+
+/** sub-concerns worth splitting out, each isolating one or more regions */
+export interface SubConcern {
+  key: string;
+  label: string;
+  regions: string[];
+}
+
+export const CONCERN_SUBS: Record<string, SubConcern[]> = {
+  lines: [
+    { key: "forehead", label: "forehead lines", regions: ["forehead"] },
+    { key: "glabellar", label: "frown lines", regions: ["glabellar"] },
+    { key: "crowsfeet", label: "crow's feet", regions: ["crowsfeet"] },
+    { key: "nasolabial", label: "smile lines", regions: ["nasolabial"] },
+    { key: "marionette", label: "mouth corners", regions: ["marionette"] },
+  ],
+  pores: [
+    { key: "t_zone", label: "t zone", regions: ["t_zone"] },
+    { key: "cheeks", label: "cheeks", regions: ["cheeks"] },
+  ],
+  breakouts: [
+    { key: "forehead", label: "forehead", regions: ["forehead"] },
+    { key: "cheeks", label: "cheeks", regions: ["cheeks"] },
+    { key: "chin", label: "chin and jaw", regions: ["chin"] },
+  ],
+  pigmentation: [
+    { key: "cheeks", label: "cheeks", regions: ["cheeks"] },
+    { key: "forehead", label: "forehead", regions: ["forehead"] },
+  ],
+  redness: [
+    { key: "cheeks", label: "cheeks", regions: ["cheeks"] },
+    { key: "nose", label: "nose", regions: ["nose"] },
+    { key: "chin", label: "chin", regions: ["chin"] },
+    { key: "forehead", label: "forehead", regions: ["forehead"] },
+  ],
+  firmness: [
+    { key: "jawline", label: "jawline", regions: ["jawline"] },
+    { key: "lower_cheeks", label: "lower cheeks", regions: ["lower_cheeks"] },
+  ],
+};
+
+
 export interface FaceBox {
   x: number;
   y: number;
