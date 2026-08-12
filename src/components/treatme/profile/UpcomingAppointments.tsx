@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { INK, HOT } from "@/lib/treatment-catalog";
 import { PillButton } from "@/components/treatme/PillButton";
 import { displayTreatmentName } from "@/lib/treatment-labels";
+import { myBookingsQuery, slotDateLabel, statusChip } from "@/lib/booking";
 
 const MONTHS = [
   "january", "february", "march", "april", "may", "june",
@@ -84,6 +85,8 @@ async function fetchUpcoming(): Promise<Upcoming[]> {
 export function UpcomingAppointments() {
   const navigate = useNavigate();
   const { data: rows = [] } = useQuery({ queryKey: ["upcoming-appointments"], queryFn: fetchUpcoming });
+  const { data: requests = [] } = useQuery(myBookingsQuery);
+  const isEmpty = rows.length === 0 && requests.length === 0;
 
   return (
     <section className="mt-8">
@@ -91,7 +94,7 @@ export function UpcomingAppointments() {
         upcoming appointments
       </h2>
 
-      {rows.length === 0 ? (
+      {isEmpty ? (
         <div
           className="mt-3 rounded-[18px] border p-6"
           style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
@@ -174,6 +177,48 @@ export function UpcomingAppointments() {
               )}
             </article>
           ))}
+
+          {requests.map((b) => {
+            const chip = statusChip(b.status);
+            return (
+              <article
+                key={b.id}
+                className="rounded-[18px] border p-4"
+                style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[14.5px] font-medium lowercase" style={{ color: INK }}>
+                    {b.treatmentName.toLowerCase()}
+                  </p>
+                  <span
+                    className="shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-semibold lowercase"
+                    style={{ backgroundColor: chip.bg, color: chip.fg }}
+                  >
+                    {chip.label}
+                  </span>
+                </div>
+                <p
+                  className="mt-2 flex flex-wrap items-center gap-1.5 text-[12.5px] lowercase"
+                  style={{ color: "rgba(17,17,17,0.60)" }}
+                >
+                  <MapPin className="size-3.5" strokeWidth={1.6} />
+                  <Link to="/provider/$id" params={{ id: b.providerId }} className="underline decoration-transparent">
+                    {b.providerName.toLowerCase()}
+                  </Link>
+                  <span>at</span>
+                  <Link to="/storefront/$id" params={{ id: b.storefrontId }} className="underline decoration-transparent">
+                    {b.storefrontName.toLowerCase()}
+                    {b.neighbourhood ? ` · ${b.neighbourhood.toLowerCase()}` : ""}
+                  </Link>
+                </p>
+                {b.slots.length > 0 && (
+                  <p className="mt-2 text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.50)" }}>
+                    you asked for {b.slots.map((s) => `${slotDateLabel(s.date)} ${s.time_of_day}`).join(", ")}
+                  </p>
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
     </section>
