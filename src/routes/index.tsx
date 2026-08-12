@@ -154,6 +154,7 @@ function ProviderRail({ providers }: { providers: Provider[] }) {
         </div>
         <Link
           to="/search"
+          search={{ q: undefined, scope: undefined }}
           className="text-[12px] font-semibold lowercase text-ink-soft inline-flex items-center gap-0.5"
         >
           see all <ArrowRight className="size-3" />

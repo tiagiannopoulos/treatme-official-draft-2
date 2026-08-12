@@ -6,7 +6,6 @@ import { SavedTreatments } from "@/components/treatme/profile/SavedTreatments";
 import { TreatmentJourney } from "@/components/treatme/profile/TreatmentJourney";
 import { UpcomingAppointments } from "@/components/treatme/profile/UpcomingAppointments";
 import { TxLog } from "@/components/treatme/profile/TxLog";
-import { MyBookings } from "@/components/treatme/profile/MyBookings";
 import { AboutYourSkin } from "@/components/treatme/profile/AboutYourSkin";
 
 export const Route = createFileRoute("/profile")({
@@ -37,7 +36,6 @@ function ProfilePage() {
       </div>
       <TreatmentJourney />
       <SavedTreatments />
-      <MyBookings />
       <UpcomingAppointments />
       <TxLog />
       <AboutYourSkin />
