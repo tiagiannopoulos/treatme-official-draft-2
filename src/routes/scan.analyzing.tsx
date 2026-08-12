@@ -1,10 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
-import { analyze, topConcerns, ANALYSIS_MIN_MS } from "@/lib/skinAnalysis";
+import { topConcerns } from "@/lib/skinAnalysis";
+import { resultFromAnalysis } from "@/lib/skinAnalysis/fromAnalysis";
 import { getRecommendations } from "@/lib/recommendations";
 import { uploadScanPhoto } from "@/lib/scan-photo";
+import { landmarksFromDataUrl } from "@/lib/facemesh";
+import { saveScan } from "@/lib/scan-persist";
+import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
 
 export const Route = createFileRoute("/scan/analyzing")({
   head: () => ({
@@ -20,71 +24,187 @@ export const Route = createFileRoute("/scan/analyzing")({
   component: AnalyzingPage,
 });
 
-const STEPS = [
-  "checking the light",
-  "mapping your face",
-  "reading 15 markers",
-  "matching treatments",
+const FACTS = [
+  "your skin replaces itself roughly every 28 days.",
+  "collagen starts slowing down in your mid twenties.",
+  "sunscreen is the closest thing to an anti aging treatment.",
+  "dehydrated skin can still be oily. they're different things.",
+  "pore size is mostly genetic. how clear they look isn't.",
+  "most injectables settle in around two weeks.",
+  "your skin barrier repairs itself fastest while you sleep.",
 ];
 
-function AnalyzingPage() {
-  const { photoDataUrl, goals, setResult, setPhotoPath } = useScan();
-  const navigate = useNavigate();
-  const started = useRef(false);
-  const [step, setStep] = useState(0);
+const TIMEOUT_MS = 30_000;
 
+type Phase = "working" | "quality" | "timeout" | "failed";
+
+function useFactRotator(active: boolean) {
+  const [i, setI] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setStep((s) => (s + 1) % STEPS.length), ANALYSIS_MIN_MS / STEPS.length);
+    if (!active) return;
+    const id = setInterval(() => setI((n) => (n + 1) % FACTS.length), 2000);
     return () => clearInterval(id);
-  }, []);
+  }, [active]);
+  return FACTS[i];
+}
 
+function AnalyzingPage() {
+  const navigate = useNavigate();
+  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta } = useScan();
+
+  const started = useRef(false);
+  const [phase, setPhase] = useState<Phase>("working");
+  const [progress, setProgress] = useState(6);
+  const pending = useRef<{ analysis: SkinAnalysis } | null>(null);
+  const fact = useFactRotator(phase === "working");
+
+  // progress creeps toward 92 and completes when we navigate
   useEffect(() => {
-    if (started.current) return;
+    if (phase !== "working") return;
+    const id = setInterval(() => setProgress((p) => (p < 92 ? p + Math.max(1, (92 - p) / 12) : p)), 320);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  const finish = useCallback(
+    async (analysis: SkinAnalysis, photoPath: string | null, landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>>) => {
+      const result = resultFromAnalysis(analysis, crypto.randomUUID());
+      const concerns = topConcerns(result);
+      const { scanDriven, goalDriven } = await getRecommendations(concerns, goals);
+
+      await saveScan({
+        photoPath,
+        storePhoto,
+        landmarks,
+        result,
+        photoQuality: analysis.photoQuality,
+        medicalFlag: analysis.medicalFlag,
+      });
+
+      setAnalysis(analysis);
+      setScanMeta({ medicalFlag: analysis.medicalFlag, photoQuality: analysis.photoQuality });
+      setProgress(100);
+      setResult(result, scanDriven, goalDriven);
+      navigate({ to: "/scan/results" });
+    },
+    [goals, navigate, setAnalysis, setResult, setScanMeta, storePhoto],
+  );
+
+  const run = useCallback(async () => {
     if (!photoDataUrl) {
       navigate({ to: "/scan" });
       return;
     }
-    started.current = true;
 
-    (async () => {
-      const hold = new Promise((r) => setTimeout(r, ANALYSIS_MIN_MS));
-      try {
-        const storagePath = await uploadScanPhoto(photoDataUrl).catch(() => null);
-        setPhotoPath(storagePath);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        const result = await analyze([{ dataUrl: photoDataUrl, storagePath }]);
-        if (!result.image_quality.ok) {
-          await hold;
-          toast.error("that photo was hard to read. try again in better light.");
-          navigate({ to: "/scan" });
-          return;
-        }
+    try {
+      const [landmarks, photoPath] = await Promise.all([
+        landmarksFromDataUrl(photoDataUrl),
+        storePhoto ? uploadScanPhoto(photoDataUrl).catch(() => null) : Promise.resolve(null),
+      ]);
+      setPhotoPath(photoPath);
 
-        const concerns = topConcerns(result);
-        const { scanDriven, goalDriven } = await getRecommendations(concerns, goals);
+      const res = await fetch("/api/public/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl: photoDataUrl }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("analysis_failed");
 
-        await hold;
-        setResult(result, scanDriven, goalDriven);
-        navigate({ to: "/scan/results" });
-      } catch (e) {
-        console.error(e);
-        await hold;
-        toast.error("couldn't finish that scan. try again.");
-        navigate({ to: "/scan" });
+      const json = (await res.json()) as { analysis?: unknown };
+      const analysis = AnalysisSchema.parse(json.analysis);
+
+      if (analysis.photoQuality === "poor") {
+        pending.current = { analysis };
+        pendingMeta.current = { photoPath, landmarks };
+        setPhase("quality");
+        return;
       }
-    })();
-  }, [photoDataUrl, goals, setResult, setPhotoPath, navigate]);
+
+      await finish(analysis, photoPath, landmarks);
+    } catch (err) {
+      clearTimeout(timer);
+      const aborted = err instanceof DOMException && err.name === "AbortError";
+      console.error("scan analysis failed", err);
+      setPhase(aborted ? "timeout" : "failed");
+    }
+  }, [finish, navigate, photoDataUrl, setPhotoPath, storePhoto]);
+
+  const pendingMeta = useRef<{ photoPath: string | null; landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>> }>({
+    photoPath: null,
+    landmarks: null,
+  });
+
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void run();
+  }, [run]);
+
+  const useAnyway = () => {
+    const held = pending.current;
+    if (!held) return;
+    setPhase("working");
+    void finish(held.analysis, pendingMeta.current.photoPath, pendingMeta.current.landmarks);
+  };
+
+  const retake = () => navigate({ to: "/scan/capture" });
 
   return (
-    <div className="px-6 pt-10 min-h-[70vh] flex flex-col items-center justify-center text-center">
-      <div className="relative size-32">
-        <div className="absolute inset-0 rounded-full bg-bubblegum/60 animate-ping" />
-        <div className="absolute inset-2 rounded-full bg-bubblegum" />
-        <div className="absolute inset-6 rounded-full bg-hot" />
+    <div className="px-6 pt-8 pb-10 min-h-[calc(100vh-3.5rem-5.5rem)] flex flex-col">
+      <div className="relative rounded-3xl overflow-hidden bg-ink aspect-[4/5]">
+        {photoDataUrl && (
+          <img src={photoDataUrl} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
+        )}
+        {phase === "working" && (
+          <>
+            <div className="absolute inset-0 bg-ink/25" />
+            <div className="absolute inset-x-0 h-[38%] scan-sweep bg-gradient-to-b from-transparent via-cream/45 to-transparent" />
+          </>
+        )}
       </div>
-      <p className="brand-eyebrow mt-8">analyzing</p>
-      <h1 className="brand-display text-[34px] mt-2">reading your skin<span className="text-hot">…</span></h1>
-      <p className="mt-3 text-ink-mute text-[14px] max-w-[28ch]">{STEPS[step]}</p>
+
+      {phase === "working" && (
+        <div className="mt-7">
+          <p className="brand-eyebrow">analysing</p>
+          <h1 className="brand-display text-[30px] mt-2">reading your skin<span className="text-hot">…</span></h1>
+          <div className="mt-5 h-1.5 rounded-full bg-ink/10 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-ink transition-[width] duration-300"
+              style={{ width: `${Math.round(progress)}%` }}
+            />
+          </div>
+          <p className="mt-4 text-[13px] text-ink-mute">{fact}</p>
+        </div>
+      )}
+
+      {phase === "quality" && (
+        <div className="mt-7">
+          <h1 className="brand-display text-[28px]">the lighting made that hard to read. want to retake?</h1>
+          <div className="mt-6 space-y-3">
+            <PillButton fullWidth onClick={retake}>
+              retake
+            </PillButton>
+            <PillButton fullWidth variant="outline" onClick={useAnyway}>
+              use it anyway
+            </PillButton>
+          </div>
+        </div>
+      )}
+
+      {(phase === "timeout" || phase === "failed") && (
+        <div className="mt-7">
+          <h1 className="brand-display text-[28px]">that didn't go through. try again?</h1>
+          <div className="mt-6">
+            <PillButton fullWidth onClick={retake}>
+              try again
+            </PillButton>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
