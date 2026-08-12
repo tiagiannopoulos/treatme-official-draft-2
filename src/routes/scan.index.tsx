@@ -1,124 +1,123 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Camera } from "lucide-react";
-import { useRef, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { Check } from "lucide-react";
 import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
-import { toast } from "sonner";
-import { DevConcernToggle } from "@/components/treatme/DevConcernToggle";
+import { recordConsent } from "@/lib/scan-consent";
+import { warmFacemesh } from "@/lib/facemesh";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/scan/")({
   head: () => ({
     meta: [
-      { title: "scan · treatme" },
-      { name: "description", content: "take one photo. we'll read your skin in seconds." },
-      { property: "og:title", content: "scan · treatme" },
-      { property: "og:description", content: "take one photo. we'll read your skin in seconds." },
+      { title: "before we scan · treatme" },
+      { name: "description", content: "what we do with your photo, in plain words, before the camera opens." },
+      { property: "og:title", content: "before we scan · treatme" },
+      { property: "og:description", content: "what we do with your photo, in plain words, before the camera opens." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: ScanPage,
+  component: ConsentPage,
 });
 
-async function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// downscale a data URL to max 1024px so the payload stays small.
-async function downscale(dataUrl: string, max = 1024): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const ratio = Math.min(1, max / Math.max(img.width, img.height));
-      const w = Math.round(img.width * ratio);
-      const h = Math.round(img.height * ratio);
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d")!;
-      ctx.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => reject(new Error("decode_failed"));
-    img.src = dataUrl;
-  });
-}
-
-function isHeic(file: File) {
-  const t = (file.type || "").toLowerCase();
-  const n = file.name.toLowerCase();
-  return t.includes("heic") || t.includes("heif") || n.endsWith(".heic") || n.endsWith(".heif");
-}
-
-function ScanPage() {
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const { setPhoto } = useScan();
-  const navigate = useNavigate();
-  const [taps, setTaps] = useState(0);
-
-  const onFile = async (file?: File | null) => {
-    if (!file) return;
-    if (isHeic(file)) {
-      toast.error("heic photos aren't supported yet. switch your iphone camera to 'most compatible' (settings → camera → formats), or upload a jpg/png.");
-      return;
-    }
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("photo too large. try a smaller one.");
-      return;
-    }
-    try {
-      const raw = await fileToDataUrl(file);
-      const small = await downscale(raw);
-      setPhoto(small);
-      navigate({ to: "/scan/analyzing" });
-    } catch {
-      toast.error("couldn't read that photo. try a jpg or png.");
-    }
-  };
-
+function CheckRow({
+  checked,
+  onToggle,
+  children,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col min-h-[calc(100vh-3.5rem-5.5rem)] px-4 py-4">
-      <div className="relative flex-1 rounded-3xl bg-bubblegum/45 border border-bubblegum overflow-hidden">
-        <svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
-          <ellipse
-            cx="50" cy="55" rx="29" ry="40"
-            fill="none" stroke="#FF1F87" strokeWidth="0.9"
-            strokeDasharray="3 3" opacity="0.75"
-          />
-          <line x1="50" y1="17" x2="50" y2="27" stroke="#FF1F87" strokeWidth="0.6" opacity="0.5" />
-          <line x1="21" y1="55" x2="29" y2="55" stroke="#FF1F87" strokeWidth="0.6" opacity="0.5" />
-          <line x1="71" y1="55" x2="79" y2="55" stroke="#FF1F87" strokeWidth="0.6" opacity="0.5" />
-        </svg>
-
-        <div className="absolute inset-x-0 bottom-0 p-6 text-center">
-          <div className="size-12 rounded-full bg-ink text-cream grid place-items-center mx-auto">
-            <Camera className="size-5" strokeWidth={2.2} />
-          </div>
-          <button
-            type="button"
-            onClick={() => setTaps((t) => t + 1)}
-            className="mt-3 font-semibold text-[15px] block w-full text-center select-none"
-          >
-            line your face up inside the oval.
-          </button>
-          <p className="text-ink-mute text-[13px] mt-1">good light. no makeup. straight on.</p>
-
-          <div className="mt-5">
-            <PillButton fullWidth onClick={() => cameraRef.current?.click()} icon={<Camera className="size-[18px]" />}>
-              scan me
-            </PillButton>
-          </div>
-        </div>
-      </div>
-
-      {taps >= 5 && <DevConcernToggle />}
-
-      <input ref={cameraRef} type="file" accept="image/jpeg,image/png" capture="user" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-    </div>
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={checked}
+      className="w-full flex items-start gap-3 text-left rounded-2xl border border-ink/10 bg-white px-4 py-4"
+    >
+      <span
+        className={cn(
+          "mt-[1px] size-5 shrink-0 rounded-[7px] border grid place-items-center transition-colors",
+          checked ? "bg-ink border-ink text-cream" : "border-ink/25 bg-transparent",
+        )}
+      >
+        {checked && <Check className="size-[13px]" strokeWidth={3} />}
+      </span>
+      <span className="text-[14px] leading-snug lowercase">{children}</span>
+    </button>
   );
 }
 
+function ConsentPage() {
+  const navigate = useNavigate();
+  const { setStorePhoto } = useScan();
+  const [processing, setProcessing] = useState(false);
+  const [policy, setPolicy] = useState(false);
+  const [keepPhoto, setKeepPhoto] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  const ready = processing && policy;
+
+  const onContinue = async () => {
+    if (!ready || busy) return;
+    setBusy(true);
+    setStorePhoto(keepPhoto);
+    warmFacemesh();
+    await recordConsent(keepPhoto);
+    navigate({ to: "/scan/capture" });
+  };
+
+  return (
+    <div className="min-h-[calc(100vh-3.5rem-5.5rem)] px-6 pt-8 pb-8 flex flex-col">
+      <p className="brand-eyebrow">consent</p>
+      <h1 className="brand-display text-[34px] mt-2">before we scan<span className="text-hot">.</span></h1>
+
+      <p className="mt-4 text-[14px] leading-relaxed text-ink-mute">
+        treatme analyses a photo of your face to estimate skin concerns. that photo and the map we
+        build from it are biometric information. we store them so you can compare future scans, and
+        you can delete them any time from your profile.
+      </p>
+
+      <div className="mt-6 space-y-3">
+        <CheckRow checked={processing} onToggle={() => setProcessing((v) => !v)}>
+          i consent to treatme processing a photo of my face to produce a skin analysis.
+        </CheckRow>
+
+        <CheckRow checked={policy} onToggle={() => setPolicy((v) => !v)}>
+          i've read the{" "}
+          <Link to="/legal/privacy" onClick={(e) => e.stopPropagation()} className="underline">
+            privacy policy
+          </Link>{" "}
+          and{" "}
+          <Link to="/legal/terms" onClick={(e) => e.stopPropagation()} className="underline">
+            terms
+          </Link>
+          .
+        </CheckRow>
+
+        <CheckRow checked={keepPhoto} onToggle={() => setKeepPhoto((v) => !v)}>
+          save my photo so i can compare future scans.
+        </CheckRow>
+
+        {!keepPhoto && (
+          <p className="text-[12px] text-ink-mute px-1">
+            we'll read this photo in memory and never write it to storage.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-auto pt-8">
+        <PillButton fullWidth disabled={!ready || busy} onClick={onContinue}>
+          continue
+        </PillButton>
+        <div className="text-center mt-4">
+          <Link to="/" className="text-[13px] font-semibold text-ink-mute lowercase">
+            not now
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}

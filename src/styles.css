@@ -157,3 +157,12 @@
   .scrollbar-none::-webkit-scrollbar { display: none; }
   .scrollbar-none { scrollbar-width: none; }
 }
+
+/* scan sweep on the analysing screen */
+@keyframes scan-sweep {
+  0% { transform: translateY(-40%); }
+  100% { transform: translateY(160%); }
+}
+.scan-sweep {
+  animation: scan-sweep 2.2s ease-in-out infinite;
+}

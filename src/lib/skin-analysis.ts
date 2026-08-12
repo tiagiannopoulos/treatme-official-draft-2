@@ -85,6 +85,8 @@ export const AnalysisSchema = z.object({
   strengths: z.array(z.string()).min(1).max(5),
   weaknesses: z.array(z.string()).min(1).max(5),
   recommendedTreatments: z.array(z.string()).min(2).max(6),
+  photoQuality: z.enum(["good", "fair", "poor"]),
+  medicalFlag: z.string().max(240).nullable(),
 });
 
 export type SkinAnalysis = z.infer<typeof AnalysisSchema>;

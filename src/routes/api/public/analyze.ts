@@ -28,6 +28,8 @@ rules:
 - skinAge: integer estimate.
 - blurb: ~3 short sentences. brand-voice. lead with the headline finding.
 - strengths/weaknesses: 2–4 short phrases each.
+- photoQuality: "good", "fair", or "poor" — "poor" only when lighting, blur, or angle genuinely made the read unreliable.
+- medicalFlag: null almost always. a short lowercase phrase only when you see something that a doctor should look at rather than an aesthetics provider (e.g. an irregular mole, a lesion, suspected infection). never name a diagnosis.
 - recommendedTreatments: pick 3–5 slugs from this exact list — return slugs only, no prose:
 ${TREATMENTS.map((t) => `  - ${t.slug} (${t.category})`).join("\n")}
 `;
@@ -41,7 +43,9 @@ required keys:
 - blurb: 2-3 short sentences
 - strengths: array of 2-4 short phrases
 - weaknesses: array of 2-4 short phrases
-- recommendedTreatments: array of 3-5 slugs from this list only: ${Array.from(VALID_TREATMENT_SLUGS).join(", ")}`;
+- recommendedTreatments: array of 3-5 slugs from this list only: ${Array.from(VALID_TREATMENT_SLUGS).join(", ")}
+- photoQuality: one of good, fair, poor
+- medicalFlag: null, or a short lowercase phrase if something should be seen by a doctor`;
 
 type Analysis = z.infer<typeof AnalysisSchema>;
 
@@ -137,6 +141,13 @@ function normalizeAnalysis(raw: unknown): Analysis {
     strengths: strengths.slice(0, 5),
     weaknesses: weaknesses.slice(0, 5),
     recommendedTreatments: sanitizeTreatments(record.recommendedTreatments),
+    photoQuality: (["good", "fair", "poor"] as const).includes(record.photoQuality as never)
+      ? record.photoQuality
+      : "good",
+    medicalFlag:
+      typeof record.medicalFlag === "string" && record.medicalFlag.trim()
+        ? record.medicalFlag.trim().slice(0, 240)
+        : null,
   };
 
   return AnalysisSchema.parse(analysis);

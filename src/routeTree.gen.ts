@@ -18,10 +18,13 @@ import { Route as StorefrontIdRouteImport } from './routes/storefront.$id'
 import { Route as SearchMapRouteImport } from './routes/search.map'
 import { Route as ScanResultsRouteImport } from './routes/scan.results'
 import { Route as ScanChatRouteImport } from './routes/scan.chat'
+import { Route as ScanCaptureRouteImport } from './routes/scan.capture'
 import { Route as ScanAnalyzingRouteImport } from './routes/scan.analyzing'
 import { Route as ProvidersSlugRouteImport } from './routes/providers.$slug'
 import { Route as ProviderIdRouteImport } from './routes/provider.$id'
 import { Route as MedspasSlugRouteImport } from './routes/medspas.$slug'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
@@ -77,6 +80,11 @@ const ScanChatRoute = ScanChatRouteImport.update({
   path: '/scan/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ScanCaptureRoute = ScanCaptureRouteImport.update({
+  id: '/scan/capture',
+  path: '/scan/capture',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScanAnalyzingRoute = ScanAnalyzingRouteImport.update({
   id: '/scan/analyzing',
   path: '/scan/analyzing',
@@ -95,6 +103,16 @@ const ProviderIdRoute = ProviderIdRouteImport.update({
 const MedspasSlugRoute = MedspasSlugRouteImport.update({
   id: '/medspas/$slug',
   path: '/medspas/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnSlugRoute = LearnSlugRouteImport.update({
@@ -150,10 +168,13 @@ export interface FileRoutesByFullPath {
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/capture': typeof ScanCaptureRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
@@ -174,10 +195,13 @@ export interface FileRoutesByTo {
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/capture': typeof ScanCaptureRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
@@ -199,10 +223,13 @@ export interface FileRoutesById {
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/medspas/$slug': typeof MedspasSlugRoute
   '/provider/$id': typeof ProviderIdRoute
   '/providers/$slug': typeof ProvidersSlugRoute
   '/scan/analyzing': typeof ScanAnalyzingRoute
+  '/scan/capture': typeof ScanCaptureRoute
   '/scan/chat': typeof ScanChatRoute
   '/scan/results': typeof ScanResultsRoute
   '/search/map': typeof SearchMapRoute
@@ -225,10 +252,13 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
     | '/scan/analyzing'
+    | '/scan/capture'
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
@@ -249,10 +279,13 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
     | '/scan/analyzing'
+    | '/scan/capture'
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
@@ -273,10 +306,13 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/medspas/$slug'
     | '/provider/$id'
     | '/providers/$slug'
     | '/scan/analyzing'
+    | '/scan/capture'
     | '/scan/chat'
     | '/scan/results'
     | '/search/map'
@@ -298,10 +334,13 @@ export interface RootRouteChildren {
   BookConsultRoute: typeof BookConsultRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalTermsRoute: typeof LegalTermsRoute
   MedspasSlugRoute: typeof MedspasSlugRoute
   ProviderIdRoute: typeof ProviderIdRoute
   ProvidersSlugRoute: typeof ProvidersSlugRoute
   ScanAnalyzingRoute: typeof ScanAnalyzingRoute
+  ScanCaptureRoute: typeof ScanCaptureRoute
   ScanChatRoute: typeof ScanChatRoute
   ScanResultsRoute: typeof ScanResultsRoute
   SearchMapRoute: typeof SearchMapRoute
@@ -381,6 +420,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScanChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/scan/capture': {
+      id: '/scan/capture'
+      path: '/scan/capture'
+      fullPath: '/scan/capture'
+      preLoaderRoute: typeof ScanCaptureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scan/analyzing': {
       id: '/scan/analyzing'
       path: '/scan/analyzing'
@@ -407,6 +453,20 @@ declare module '@tanstack/react-router' {
       path: '/medspas/$slug'
       fullPath: '/medspas/$slug'
       preLoaderRoute: typeof MedspasSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn/$slug': {
@@ -482,10 +542,13 @@ const rootRouteChildren: RootRouteChildren = {
   BookConsultRoute: BookConsultRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,
+  LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalTermsRoute: LegalTermsRoute,
   MedspasSlugRoute: MedspasSlugRoute,
   ProviderIdRoute: ProviderIdRoute,
   ProvidersSlugRoute: ProvidersSlugRoute,
   ScanAnalyzingRoute: ScanAnalyzingRoute,
+  ScanCaptureRoute: ScanCaptureRoute,
   ScanChatRoute: ScanChatRoute,
   ScanResultsRoute: ScanResultsRoute,
   SearchMapRoute: SearchMapRoute,
