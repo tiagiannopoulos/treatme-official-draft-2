@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -61,11 +63,13 @@ export function AuthSheet({
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("toronto");
   const [busy, setBusy] = useState(false);
+  const [adult, setAdult] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setMode("signup");
     setPassword("");
+    setAdult(false);
     setBusy(false);
   }, [open]);
 
@@ -122,7 +126,9 @@ export function AuthSheet({
         ? firstName.trim().length > 1
         : mode === "confirm"
           ? true
-          : emailOk && password.length >= 6;
+          : mode === "signup"
+            ? emailOk && password.length >= 6 && adult
+            : emailOk && password.length >= 6;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end bg-ink/45" onClick={onClose}>
@@ -180,6 +186,22 @@ export function AuthSheet({
             <Field label="password" value={password} onChange={setPassword} type="password" placeholder="six characters or more" />
           )}
 
+          {mode === "signup" && (
+            <button
+              type="button"
+              onClick={() => setAdult((v) => !v)}
+              aria-pressed={adult}
+              className="flex items-start gap-3 rounded-[14px] border border-ink/10 bg-white px-4 py-3 text-left"
+            >
+              <span
+                className={`mt-[1px] grid size-5 shrink-0 place-items-center rounded-[7px] border ${adult ? "border-ink bg-ink text-cream" : "border-ink/25"}`}
+              >
+                {adult && <Check className="size-[13px]" strokeWidth={3} />}
+              </span>
+              <span className="text-[13px] lowercase leading-snug">you must be 18 or older</span>
+            </button>
+          )}
+
           {mode === "confirm" ? (
             <PillButton fullWidth onClick={onClose}>
               got it
@@ -212,7 +234,15 @@ export function AuthSheet({
         </div>
 
         <p className="mt-4 text-[11.5px] lowercase leading-relaxed text-ink/45">
-          browsing treatme is always open. an account is only for scanning and booking.
+          browsing treatme is always open. an account is only for scanning and booking. by continuing you agree to our{" "}
+          <Link to="/terms" onClick={onClose} className="underline">
+            terms
+          </Link>{" "}
+          and{" "}
+          <Link to="/privacy" onClick={onClose} className="underline">
+            privacy policy
+          </Link>
+          .
         </p>
       </div>
     </div>
