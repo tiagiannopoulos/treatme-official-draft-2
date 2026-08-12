@@ -24,7 +24,7 @@ export const Route = createFileRoute("/scan/results")({
 });
 
 function ResultsPage() {
-  const { photoDataUrl, result, recommendations, goalRecommendations } = useScan();
+  const { photoDataUrl, result, recommendations, goalRecommendations, medicalFlag } = useScan();
   const navigate = useNavigate();
   const { open: openStory } = useTreatmentStory();
   const [active, setActive] = useState<ConcernKey | "all" | "none">("none");
@@ -64,6 +64,14 @@ function ResultsPage() {
 
   return (
     <div className="pt-4 pb-10">
+      {medicalFlag && (
+        <div
+          className="mx-6 mb-4 rounded-2xl px-4 py-4 text-[14px] leading-snug text-ink"
+          style={{ backgroundColor: "#FFEDB4" }}
+        >
+          there's something here worth having a doctor look at rather than an aesthetics provider.
+        </div>
+      )}
       <div className="px-6">
         <p className="brand-eyebrow">your read</p>
         <h1 className="brand-display text-[32px] mt-2 text-balance">
