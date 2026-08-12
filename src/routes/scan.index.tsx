@@ -6,6 +6,7 @@ import { useScan } from "@/lib/scan-store";
 import { recordConsent } from "@/lib/scan-consent";
 import { warmFacemesh } from "@/lib/facemesh";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/scan/")({
   head: () => ({
@@ -53,6 +54,7 @@ function CheckRow({
 function ConsentPage() {
   const navigate = useNavigate();
   const { setStorePhoto } = useScan();
+  const { requireAuth } = useAuth();
   const [processing, setProcessing] = useState(false);
   const [policy, setPolicy] = useState(false);
   const [keepPhoto, setKeepPhoto] = useState(true);
@@ -60,13 +62,19 @@ function ConsentPage() {
 
   const ready = processing && policy;
 
-  const onContinue = async () => {
-    if (!ready || busy) return;
+  const start = async () => {
     setBusy(true);
     setStorePhoto(keepPhoto);
     warmFacemesh();
     await recordConsent(keepPhoto);
     navigate({ to: "/scan/capture" });
+  };
+
+  const onContinue = () => {
+    if (!ready || busy) return;
+    requireAuth(() => {
+      void start();
+    }, "you'll need an account to scan, so your results save. takes a second.");
   };
 
   return (
