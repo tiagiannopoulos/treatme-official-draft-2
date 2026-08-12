@@ -243,7 +243,7 @@ function ConcernDetailPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => navigate({ to: "/treatment/$slug", params: { slug: t.slug } })}
+                  onClick={() => navigate({ to: "/match/$slug", params: { slug: t.slug } })}
                   className="mt-4 h-11 w-full rounded-full bg-ink text-white text-[14px] font-semibold lowercase"
                 >
                   see providers
