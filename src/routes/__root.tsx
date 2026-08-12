@@ -18,6 +18,7 @@ import { BottomNav } from "@/components/treatme/BottomNav";
 import { TreatmentStoryProvider } from "@/lib/treatment-story-store";
 import { TreatmentStory } from "@/components/treatme/TreatmentStory";
 import { TreatmentSheetProvider } from "@/lib/treatment-sheet-store";
+import { AuthProvider } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
