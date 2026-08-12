@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -41,6 +42,11 @@ import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$sl
 import { Route as ScanConcernKeyRouteImport } from './routes/scan.concern.$key'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/reset-password'
+    | '/terms'
     | '/api/chat'
     | '/api/consult-chat'
     | '/api/generate-scan-pdf'
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/reset-password'
+    | '/terms'
     | '/api/chat'
     | '/api/consult-chat'
     | '/api/generate-scan-pdf'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/reset-password'
+    | '/terms'
     | '/api/chat'
     | '/api/consult-chat'
     | '/api/generate-scan-pdf'
@@ -404,6 +416,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiConsultChatRoute: typeof ApiConsultChatRoute
   ApiGenerateScanPdfRoute: typeof ApiGenerateScanPdfRoute
@@ -435,6 +448,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -660,6 +680,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiConsultChatRoute: ApiConsultChatRoute,
   ApiGenerateScanPdfRoute: ApiGenerateScanPdfRoute,
