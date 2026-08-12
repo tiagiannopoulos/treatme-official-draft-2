@@ -51,6 +51,7 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       score: r.score,
       band: r.band,
       sub_scores: r.sub_scores as unknown as never,
+      region_scores: r.region_scores as unknown as never,
     })),
   );
   if (resultsError) console.warn("scan results insert failed", resultsError.message);

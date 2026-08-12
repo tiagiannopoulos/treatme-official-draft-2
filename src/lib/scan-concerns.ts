@@ -78,6 +78,8 @@ export interface ScanConcernRow {
   score: number;
   band: Band;
   sub_scores: Record<string, number> | null;
+  /** per-region health score, keyed by the region keys in CONCERN_REGIONS */
+  region_scores: Record<string, number> | null;
 }
 
 /**
@@ -106,6 +108,47 @@ export function toConcernRows(result: ScanResult): ScanConcernRow[] {
     eyelid_heaviness: health(avg(sev("laxity"), sev("underEyes"))),
   };
 
+  // per-region reads, so the overlay can paint one patch heavier than another
+  const regions: Record<string, Record<string, number>> = {
+    redness: {
+      cheeks: health(sev("redness")),
+      nose: health(sev("redness") * 1.1),
+      chin: health(sev("redness") * 0.8),
+      forehead: health(sev("redness") * 0.7),
+    },
+    pores: { t_zone: health(sev("pores") * 1.15), cheeks: health(sev("pores") * 0.85) },
+    oiliness: { t_zone: raw.oiliness },
+    breakouts: {
+      forehead: health(sev("acne") * 0.9),
+      cheeks: health(sev("acne")),
+      chin: health(sev("acne") * 1.1),
+    },
+    pigmentation: {
+      cheeks: health(sev("pigmentation") * 1.1),
+      forehead: health(sev("pigmentation") * 0.85),
+    },
+    uniformness: { full_face: raw.uniformness },
+    radiance: { full_face: raw.radiance },
+    hydration: { full_face: raw.hydration },
+    texture: { full_face: raw.texture },
+    lines: {
+      forehead: health(sev("wrinkles")),
+      glabellar: health(sev("wrinkles") * 1.1),
+      crowsfeet: health(sev("fineLines") * 1.1),
+      nasolabial: health(avg(sev("fineLines"), sev("volumeLoss"))),
+      marionette: health(avg(sev("wrinkles"), sev("laxity"))),
+    },
+    firmness: {
+      jawline: health(sev("laxity") * 1.1),
+      lower_cheeks: health(sev("laxity") * 0.9),
+    },
+    volume_loss: { midface: raw.volume_loss },
+    dark_circles: { under_eye: raw.dark_circles },
+    under_eye_puffiness: { under_eye: raw.under_eye_puffiness },
+    tear_trough: { tear_trough: raw.tear_trough },
+    eyelid_heaviness: { upper_lid: raw.eyelid_heaviness },
+  };
+
   return SCAN_CONCERN_KEYS.map((key) => ({
     concern_key: key,
     score: raw[key] ?? 0,
@@ -114,6 +157,7 @@ export function toConcernRows(result: ScanResult): ScanConcernRow[] {
       key === "lines"
         ? { fine: health(sev("fineLines")), deep: health(sev("wrinkles")) }
         : null,
+    region_scores: regions[key] ?? null,
   }));
 }
 

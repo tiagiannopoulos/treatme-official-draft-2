@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import type { Landmark } from "@/lib/facemesh";
-import { CONCERN_OVERLAY, DEFAULT_FACE_BOX, faceBoxFromLandmarks, type Shape } from "@/lib/scan-overlay";
+import {
+  CONCERN_OVERLAY,
+  CONCERN_REGIONS,
+  DEFAULT_FACE_BOX,
+  faceBoxFromLandmarks,
+  type Shape,
+} from "@/lib/scan-overlay";
 
 interface Props {
   /** canonical concern key, e.g. "dark_circles" */
@@ -8,6 +14,10 @@ interface Props {
   /** tint for the concern's band */
   tint: string;
   landmarks?: Landmark[] | null;
+  /** per-region health scores; lower score paints heavier */
+  regionScores?: Record<string, number> | null;
+  /** when set, only these region keys are drawn */
+  regionFilter?: string[] | null;
 }
 
 /** maps a face-local (0..100) coordinate into photo space (0..100) */
@@ -44,7 +54,15 @@ function mapPath(d: string, t: ReturnType<typeof place>) {
   return out.trim();
 }
 
-export function ConcernOverlay({ concernKey, tint, landmarks }: Props) {
+/** how hard to paint a region: worse score = stronger */
+function intensity(score: number | undefined, filled: boolean) {
+  const severity = score === undefined ? 55 : Math.max(0, Math.min(100, 100 - score));
+  const base = filled ? 0.16 : 0.5;
+  const span = filled ? 0.5 : 0.5;
+  return base + (severity / 100) * span;
+}
+
+export function ConcernOverlay({ concernKey, tint, landmarks, regionScores, regionFilter }: Props) {
   const spec = CONCERN_OVERLAY[concernKey];
   const box = useMemo(
     () => (landmarks?.length ? faceBoxFromLandmarks(landmarks) : DEFAULT_FACE_BOX),
@@ -55,7 +73,18 @@ export function ConcernOverlay({ concernKey, tint, landmarks }: Props) {
   const t = place(box);
   const filled = spec.mode === "filled";
 
-  const render = (shape: Shape, i: number) => {
+  const regions = CONCERN_REGIONS[concernKey];
+  const groups: { key: string; shapes: Shape[]; opacity: number }[] = regions
+    ? regions
+        .filter((r) => !regionFilter?.length || regionFilter.includes(r.key))
+        .map((r) => ({
+          key: r.key,
+          shapes: r.shapes,
+          opacity: intensity(regionScores?.[r.key], filled),
+        }))
+    : [{ key: "all", shapes: spec.shapes, opacity: filled ? 0.42 : 0.95 }];
+
+  const render = (shape: Shape, i: number, opacity: number) => {
     if (shape.kind === "ellipse") {
       return (
         <ellipse
@@ -67,7 +96,7 @@ export function ConcernOverlay({ concernKey, tint, landmarks }: Props) {
           fill={filled ? tint : "none"}
           stroke={filled ? "none" : tint}
           strokeWidth={spec.mode === "outline" ? 1.1 : 0.9}
-          opacity={filled ? 0.42 : 0.95}
+          opacity={opacity}
         />
       );
     }
@@ -79,7 +108,7 @@ export function ConcernOverlay({ concernKey, tint, landmarks }: Props) {
         stroke={filled ? "none" : tint}
         strokeWidth={0.9}
         strokeLinecap="round"
-        opacity={filled ? 0.42 : 0.95}
+        opacity={opacity}
       />
     );
   };
@@ -91,8 +120,11 @@ export function ConcernOverlay({ concernKey, tint, landmarks }: Props) {
       className="absolute inset-0 w-full h-full pointer-events-none"
       aria-hidden="true"
     >
-      {filled && <g style={{ filter: "blur(0.6px)" }}>{spec.shapes.map(render)}</g>}
-      {!filled && spec.shapes.map(render)}
+      {groups.map((g) => (
+        <g key={g.key} style={filled ? { filter: "blur(0.6px)" } : undefined}>
+          {g.shapes.map((shape, i) => render(shape, i, g.opacity))}
+        </g>
+      ))}
     </svg>
   );
 }
