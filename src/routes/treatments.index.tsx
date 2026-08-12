@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Info, Search, Sparkles, X } from "lucide-react";
+import { Info, Search, Sparkles, X, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
@@ -9,6 +9,13 @@ import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-
 
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/treatments/")({
   head: () => ({
