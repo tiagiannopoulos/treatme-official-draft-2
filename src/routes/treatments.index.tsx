@@ -216,36 +216,39 @@ function TreatmentsPage() {
             <div className="mt-4 space-y-6 overflow-y-auto max-h-[calc(85vh-120px)] scrollbar-none pr-1">
               <section>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute mb-3">start here</p>
-                <button
-                  type="button"
-                  onClick={() => setConcern(null)}
-                  className={cn(
-                    "w-full text-left rounded-2xl border px-4 h-14 text-[14px] font-semibold lowercase transition",
-                    concern === null
-                      ? "bg-ink text-cream border-ink"
-                      : "bg-cream text-ink border-line hover:border-ink/40",
-                  )}
-                >
-                  everything
-                </button>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => setConcern(null)}
+                    className={cn(
+                      "w-full text-left rounded-2xl border px-4 h-14 text-[14px] font-semibold lowercase transition",
+                      concern === null
+                        ? "bg-ink text-cream border-ink"
+                        : "bg-cream text-ink border-line hover:border-ink/40",
+                    )}
+                  >
+                    everything
+                  </button>
+                </SheetClose>
               </section>
               <section>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute mb-3">all concerns</p>
                 <div className="grid grid-cols-2 gap-3">
                   {concerns.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setConcern(c)}
-                      className={cn(
-                        "text-left rounded-2xl border p-4 text-[13px] font-semibold lowercase leading-tight transition min-h-[64px] flex items-center",
-                        concern === c
-                          ? "bg-ink text-cream border-ink"
-                          : "bg-cream text-ink border-line hover:border-ink/40",
-                      )}
-                    >
-                      {label(c)}
-                    </button>
+                    <SheetClose key={c} asChild>
+                      <button
+                        type="button"
+                        onClick={() => setConcern(c)}
+                        className={cn(
+                          "text-left rounded-2xl border p-4 text-[13px] font-semibold lowercase leading-tight transition min-h-[64px] flex items-center",
+                          concern === c
+                            ? "bg-ink text-cream border-ink"
+                            : "bg-cream text-ink border-line hover:border-ink/40",
+                        )}
+                      >
+                        {label(c)}
+                      </button>
+                    </SheetClose>
                   ))}
                 </div>
               </section>
