@@ -71,7 +71,7 @@ function AnalyzingPage() {
       const concerns = topConcerns(result);
       const { scanDriven, goalDriven } = await getRecommendations(concerns, goals);
 
-      await saveScan({
+      const scanId = await saveScan({
         photoPath,
         storePhoto,
         landmarks,
@@ -80,6 +80,7 @@ function AnalyzingPage() {
         medicalFlag: analysis.medicalFlag,
       });
 
+      setScanId(scanId);
       setLandmarks(landmarks);
       setAnalysis(analysis);
       setScanMeta({ medicalFlag: analysis.medicalFlag, photoQuality: analysis.photoQuality });
