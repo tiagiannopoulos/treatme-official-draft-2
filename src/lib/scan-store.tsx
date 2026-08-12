@@ -14,11 +14,16 @@ export type ScanState = {
   goals: string[];
   goalRecommendations: Recommendation[];
   startedAt: number | null;
+  storePhoto: boolean;
+  medicalFlag: string | null;
+  photoQuality: string | null;
 };
 
 type ScanContextValue = ScanState & {
   setPhoto: (dataUrl: string) => void;
   setPhotoPath: (path: string | null) => void;
+  setStorePhoto: (v: boolean) => void;
+  setScanMeta: (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => void;
   setAnalysis: (analysis: SkinAnalysis) => void;
   setGoals: (goals: string[]) => void;
   setResult: (
@@ -40,6 +45,9 @@ const EMPTY: ScanState = {
   goals: [],
   goalRecommendations: [],
   startedAt: null,
+  storePhoto: true,
+  medicalFlag: null,
+  photoQuality: null,
 };
 
 export function ScanProvider({ children }: { children: ReactNode }) {
@@ -66,12 +74,33 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   }, [state]);
 
   const setPhoto = useCallback((dataUrl: string) => {
-    setState((prev) => ({ ...EMPTY, goals: prev.goals, photoDataUrl: dataUrl, startedAt: Date.now() }));
+    setState((prev) => ({
+      ...EMPTY,
+      goals: prev.goals,
+      storePhoto: prev.storePhoto,
+      photoDataUrl: dataUrl,
+      startedAt: Date.now(),
+    }));
   }, []);
 
   const setPhotoPath = useCallback((path: string | null) => {
     setState((prev) => ({ ...prev, photoPath: path }));
   }, []);
+
+  const setStorePhoto = useCallback((v: boolean) => {
+    setState((prev) => ({ ...prev, storePhoto: v }));
+  }, []);
+
+  const setScanMeta = useCallback(
+    (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => {
+      setState((prev) => ({
+        ...prev,
+        medicalFlag: meta.medicalFlag !== undefined ? meta.medicalFlag : prev.medicalFlag,
+        photoQuality: meta.photoQuality !== undefined ? meta.photoQuality : prev.photoQuality,
+      }));
+    },
+    [],
+  );
 
   const setAnalysis = useCallback((analysis: SkinAnalysis) => {
     setState((prev) => ({ ...prev, analysis }));
@@ -99,7 +128,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, setPhoto, setPhotoPath, setAnalysis, setGoals, setResult, reset }}
+      value={{ ...state, setPhoto, setPhotoPath, setStorePhoto, setScanMeta, setAnalysis, setGoals, setResult, reset }}
     >
       {children}
     </ScanContext.Provider>
