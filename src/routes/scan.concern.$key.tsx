@@ -1,27 +1,30 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
 import {
-  CONCERN_GROUPS,
+  SCAN_CONCERN_KEYS,
   SCAN_CONCERN_LABEL,
+  bandFor,
   bandTint,
   toConcernRows,
 } from "@/lib/scan-concerns";
-import { treatmentsForConcerns } from "@/lib/concern-treatments";
+import { CONCERN_SUBS } from "@/lib/scan-overlay";
+import { CONCERN_ABOUT } from "@/lib/concern-copy";
+import { treatmentsForOneConcern } from "@/lib/concern-treatments";
 import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
+import { PinchZoom } from "@/components/treatme/PinchZoom";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
-import type { MarkerKey } from "@/lib/skin-analysis";
 
 export const Route = createFileRoute("/scan/concern/$key")({
   head: () => ({
     meta: [
       { title: "one indicator, up close · treatme" },
-      { name: "description", content: "where this shows up on your face, what it means, and what helps." },
+      { name: "description", content: "where this shows up on your face, what it means, and what treats it." },
       { property: "og:title", content: "one indicator, up close · treatme" },
-      { property: "og:description", content: "where this shows up on your face, what it means, and what helps." },
+      { property: "og:description", content: "where this shows up on your face, what it means, and what treats it." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -29,42 +32,21 @@ export const Route = createFileRoute("/scan/concern/$key")({
   component: ConcernDetailPage,
 });
 
-/** which vision marker note best explains each canonical concern */
-const NOTE_SOURCE: Record<string, MarkerKey> = {
-  pores: "pores",
-  breakouts: "texture",
-  texture: "texture",
-  oiliness: "pores",
-  redness: "redness",
-  pigmentation: "pigmentation",
-  uniformness: "darkSpots",
-  radiance: "hydration",
-  lines: "fineLines",
-  firmness: "volumeLoss",
-  volume_loss: "volumeLoss",
-  hydration: "hydration",
-  dark_circles: "darkSpots",
-  under_eye_puffiness: "darkSpots",
-  tear_trough: "volumeLoss",
-  eyelid_heaviness: "wrinkles",
-};
-
-function groupLabelFor(key: string) {
-  return CONCERN_GROUPS.find((g) => (g.concerns as readonly string[]).includes(key))?.label ?? "";
-}
-
 function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
-  const { photoDataUrl, result, analysis, landmarks } = useScan();
+  const { photoDataUrl, result, landmarks } = useScan();
+
+  const [showMask, setShowMask] = useState(true);
+  const [sub, setSub] = useState<string | null>(null);
 
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
   const row = rows.find((r) => r.concern_key === key);
+  const label = SCAN_CONCERN_LABEL[key] ?? key;
 
-  const { data: matches = [] } = useQuery({
-    queryKey: ["concern-treatments-one", key],
-    queryFn: () => (row ? treatmentsForConcerns([row], 4) : Promise.resolve([])),
-    enabled: Boolean(row),
+  const { data: treatments = [], isLoading } = useQuery({
+    queryKey: ["concern-treatments-all", label],
+    queryFn: () => treatmentsForOneConcern(label),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -82,102 +64,194 @@ function ConcernDetailPage() {
     );
   }
 
-  const label = SCAN_CONCERN_LABEL[row.concern_key] ?? row.concern_key;
-  const marker = analysis?.markers[NOTE_SOURCE[row.concern_key] ?? "texture"];
-  const sub = row.sub_scores ? Object.entries(row.sub_scores) : [];
+  const subs = CONCERN_SUBS[key] ?? [];
+  const activeSub = subs.find((s) => s.key === sub) ?? null;
+  const regionFilter = activeSub?.regions ?? null;
+
+  const subScore =
+    activeSub && row.region_scores
+      ? Math.round(
+          activeSub.regions.reduce((sum, r) => sum + (row.region_scores?.[r] ?? row.score), 0) /
+            activeSub.regions.length,
+        )
+      : row.score;
+  const shownScore = activeSub ? subScore : row.score;
+  const shownBand = bandFor(shownScore);
+  const tint = bandTint(shownBand);
 
   return (
-    <div className="pt-5 pb-28">
-      <div className="px-6">
+    <div className="pt-4 pb-28">
+      {/* tabs */}
+      <div className="flex items-center gap-2 pl-4 pr-0">
         <button
           type="button"
+          aria-label="back to your analysis"
           onClick={() => navigate({ to: "/scan/results" })}
-          className="inline-flex items-center gap-1 text-[13px] font-semibold text-ink-mute lowercase"
+          className="shrink-0 size-9 rounded-full border border-ink/20 grid place-items-center bg-white"
         >
-          <ChevronLeft className="size-4" /> your analysis
+          <ChevronLeft className="size-5" />
         </button>
-        <p className="brand-eyebrow mt-4">{groupLabelFor(row.concern_key)}</p>
-        <h1 className="brand-display text-[30px] mt-2 lowercase">
-          {label}<span className="text-hot">.</span>
-        </h1>
-        <div className="mt-2 flex items-center gap-2">
-          <p className="text-[16px] font-semibold">
-            {row.score}
-            <span className="text-ink-mute text-[13px]"> /100</span>
-          </p>
+        <div className="min-w-0 flex-1 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 pr-6">
+            {SCAN_CONCERN_KEYS.map((k) => {
+              const active = k === key;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => {
+                    setSub(null);
+                    navigate({ to: "/scan/concern/$key", params: { key: k } });
+                  }}
+                  className={`shrink-0 h-9 px-4 rounded-full text-[13px] font-semibold lowercase whitespace-nowrap border ${
+                    active ? "bg-ink text-white border-ink" : "bg-white text-ink border-ink/20"
+                  }`}
+                >
+                  {SCAN_CONCERN_LABEL[k] ?? k}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* image */}
+      <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden bg-ink/5 aspect-[4/5]">
+        <PinchZoom className="absolute inset-0">
+          <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+          {showMask && (
+            <ConcernOverlay
+              concernKey={key}
+              tint={tint}
+              landmarks={landmarks}
+              regionScores={row.region_scores}
+              regionFilter={regionFilter}
+            />
+          )}
+        </PinchZoom>
+        <button
+          type="button"
+          onClick={() => setShowMask((v) => !v)}
+          className="absolute left-3 bottom-3 z-10 inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-ink/85 text-white text-[12px] font-semibold lowercase backdrop-blur"
+        >
+          {showMask ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+          show mask
+        </button>
+      </div>
+
+      {/* sub concern pills */}
+      {subs.length > 0 && (
+        <div className="mt-3 overflow-x-auto scrollbar-none">
+          <div className="flex gap-2 px-6">
+            <button
+              type="button"
+              onClick={() => setSub(null)}
+              className={`shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold lowercase border ${
+                sub === null ? "bg-ink text-white border-ink" : "bg-white text-ink border-ink/20"
+              }`}
+            >
+              all
+            </button>
+            {subs.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setSub(s.key)}
+                className={`shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold lowercase whitespace-nowrap border ${
+                  sub === s.key ? "bg-ink text-white border-ink" : "bg-white text-ink border-ink/20"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* your result */}
+      <div className="mt-5 mx-6 rounded-3xl border border-ink/10 bg-white p-5">
+        <div className="flex items-center justify-between gap-3">
+          <p className="brand-eyebrow">your result</p>
           <span
             className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold lowercase"
-            style={{ backgroundColor: bandTint(row.band) }}
+            style={{ backgroundColor: tint }}
           >
-            {row.band}
+            {shownBand}
           </span>
+        </div>
+        <p className="mt-2 font-bold text-[18px] lowercase leading-tight">
+          {activeSub ? activeSub.label : label}
+        </p>
+        <p className="brand-display text-[46px] leading-none mt-2">
+          {shownScore}
+          <span className="text-[16px] text-ink-mute"> /100</span>
+        </p>
+        <div className="mt-4 h-2.5 rounded-full bg-ink/10 overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: `${shownScore}%`, backgroundColor: tint }}
+          />
         </div>
       </div>
 
-      <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden bg-ink/5 aspect-[4/5]">
-        <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
-        {row.score >= 90 ? (
-          <span
-            className="absolute inset-x-4 bottom-4 rounded-full px-3 py-2 text-[13px] font-semibold text-center lowercase"
-            style={{ backgroundColor: "#DFFFF8" }}
-          >
-            nothing to flag
-          </span>
-        ) : (
-          <ConcernOverlay concernKey={row.concern_key} tint={bandTint(row.band)} landmarks={landmarks} />
-        )}
+      {/* about */}
+      <div className="mt-4 mx-6 rounded-3xl border border-ink/10 bg-white p-5">
+        <p className="brand-eyebrow">about {label}</p>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{CONCERN_ABOUT[key]}</p>
       </div>
 
-      {marker?.note && (
-        <div className="mt-5 mx-6 rounded-2xl border border-ink/10 bg-white p-4">
-          <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">what we see</p>
-          <p className="mt-2 text-[14px] leading-relaxed text-ink-soft lowercase">{marker.note.toLowerCase()}</p>
-        </div>
-      )}
-
-      {sub.length > 0 && (
-        <div className="mt-4 mx-6 grid grid-cols-2 gap-3">
-          {sub.map(([name, score]) => (
-            <div key={name} className="rounded-2xl p-4" style={{ backgroundColor: bandTint(row.band) }}>
-              <p className="text-[11px] font-bold tracking-widest uppercase text-ink/70">{name} lines</p>
-              <p className="brand-display text-[26px] mt-1 leading-none">{score}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
+      {/* treatments */}
       <div className="mt-7 px-6">
-        <p className="brand-eyebrow">what helps</p>
-        <h2 className="brand-display text-[22px] mt-2">treatments for {label}<span className="text-hot">.</span></h2>
-        <div className="mt-4 rounded-3xl border border-ink/10 bg-white divide-y divide-ink/10 overflow-hidden">
-          {matches.length === 0 ? (
-            <p className="p-5 text-[14px] text-ink-mute">nothing matched here yet.</p>
-          ) : (
-            matches.map((m) => (
-              <button
-                key={m.slug}
-                type="button"
-                onClick={() => navigate({ to: "/treatment/$slug", params: { slug: m.slug } })}
-                className="w-full text-left px-4 py-4 flex items-center gap-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-[16px] lowercase leading-tight">{m.name}</p>
-                  <p className="text-[12px] text-ink-mute mt-0.5 lowercase">for {m.concernLabel}</p>
-                </div>
-                {m.priceFrom !== null && (
-                  <p className="text-[13px] font-semibold shrink-0">from ${Math.round(m.priceFrom)}</p>
-                )}
-                <ChevronRight className="size-5 text-ink-mute shrink-0" />
-              </button>
-            ))
-          )}
-        </div>
-      </div>
+        <h2 className="brand-display text-[22px] lowercase">
+          treatments for {label}<span className="text-hot">.</span>
+        </h2>
 
-      <div className="mt-6 px-6">
-        <PillButton fullWidth onClick={() => navigate({ to: "/scan/chat" })}>
-          talk it through
-        </PillButton>
+        {isLoading ? (
+          <p className="mt-4 text-[14px] text-ink-mute">pulling matches.</p>
+        ) : treatments.length === 0 ? (
+          <div className="mt-4 rounded-3xl border border-ink/10 bg-white p-5">
+            <p className="text-[14px] leading-relaxed text-ink-soft">
+              nothing we book treats this directly. worth raising at a consult.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/scan/chat" })}
+              className="mt-3 text-[13px] font-semibold lowercase underline underline-offset-4"
+            >
+              talk it through
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {treatments.map((t) => (
+              <article key={t.slug} className="rounded-3xl border border-ink/10 bg-white p-5">
+                <p className="font-bold text-[17px] lowercase leading-tight">{t.name}</p>
+                {t.shortDescription && (
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{t.shortDescription}</p>
+                )}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {t.priceFrom !== null && (
+                    <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold">
+                      from ${Math.round(t.priceFrom)}
+                    </span>
+                  )}
+                  {t.downtime && (
+                    <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold lowercase">
+                      {t.downtime.toLowerCase()} downtime
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/treatment/$slug", params: { slug: t.slug } })}
+                  className="mt-4 h-11 w-full rounded-full bg-ink text-white text-[14px] font-semibold lowercase"
+                >
+                  see providers
+                </button>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
 
       <AnalysisFooter className="mt-6 px-6" />
