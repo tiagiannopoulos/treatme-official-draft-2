@@ -5,7 +5,6 @@ import { ArrowLeft, Check, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { supabase } from "@/integrations/supabase/client";
 import { PillButton } from "@/components/treatme/PillButton";
 import {
   TIMES_OF_DAY,
@@ -16,6 +15,8 @@ import {
   type PreferredSlot,
   type TimeOfDay,
 } from "@/lib/booking";
+import { useAuth } from "@/lib/auth";
+import { myProfileQuery } from "@/lib/profile";
 
 export const Route = createFileRoute("/book/consult")({
   validateSearch: z.object({
@@ -63,32 +64,21 @@ function BookingFlow() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
-  const [userId, setUserId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const { data: options } = useQuery(bookingOptionsQuery(providerId || undefined, storefrontId || undefined));
+  const { user, openAuth } = useAuth();
+  const userId = user?.id ?? null;
 
+  const { data: options } = useQuery(bookingOptionsQuery(providerId || undefined, storefrontId || undefined));
+  const { data: myProfile } = useQuery({ ...myProfileQuery, enabled: Boolean(userId) });
+
+  /** prefill from the account so nobody types their details twice. */
   useEffect(() => {
-    let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      const user = data.session?.user ?? null;
-      setUserId(user?.id ?? null);
-      if (user?.email) setEmail((v) => v || user.email!);
-      const meta = (user?.user_metadata ?? {}) as { full_name?: string; phone?: string };
-      if (meta.full_name) setName((v) => v || meta.full_name!);
-      if (meta.phone) setPhone((v) => v || meta.phone!);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUserId(session?.user.id ?? null);
-      if (session?.user.email) setEmail((v) => v || session.user.email!);
-    });
-    return () => {
-      alive = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+    if (user?.email) setEmail((v) => v || user.email!);
+    if (myProfile?.first_name) setName((v) => v || myProfile.first_name!);
+    if (myProfile?.phone) setPhone((v) => v || myProfile.phone!);
+  }, [user?.email, myProfile?.first_name, myProfile?.phone]);
 
   const provider = options?.providers.find((p) => p.id === providerId) ?? null;
   const clinic = options?.storefronts.find((s) => s.id === storefrontId) ?? null;
@@ -125,7 +115,11 @@ function BookingFlow() {
   const detailsReady = name.trim().length > 1 && phone.trim().length > 5 && /.+@.+\..+/.test(email);
 
   async function send() {
-    if (!selectionReady || !userId) return;
+    if (!selectionReady) return;
+    if (!userId) {
+      openAuth({ reason: "you'll need an account so the clinic can reach you. takes a second.", onDone: () => void send() });
+      return;
+    }
     setSending(true);
     try {
       await submitBookingRequest({
@@ -289,7 +283,7 @@ function BookingFlow() {
       {/* step 3 */}
       {step === 2 && (
         <section className="px-5 mt-6">
-          {!userId && <AuthPrompt />}
+          {!userId && <AuthCallout />}
           <div className="mt-4 flex flex-col gap-3">
             <Field label="your name" value={name} onChange={setName} placeholder="first and last" />
             <Field label="phone" value={phone} onChange={setPhone} placeholder="best number to text" inputMode="tel" />
@@ -328,7 +322,7 @@ function BookingFlow() {
             <SummaryLine label="email" value={email.toLowerCase()} />
             {note.trim() && <SummaryLine label="your note" value={note.trim().toLowerCase()} />}
           </div>
-          {!userId && <div className="mt-4"><AuthPrompt /></div>}
+          {!userId && <div className="mt-4"><AuthCallout /></div>}
         </section>
       )}
 
@@ -343,7 +337,7 @@ function BookingFlow() {
             {step === 0 ? "looks right" : step === 1 ? "continue" : "review request"}
           </PillButton>
         ) : (
-          <PillButton fullWidth disabled={sending || !userId || !selectionReady} onClick={send}>
+          <PillButton fullWidth disabled={sending || !selectionReady} onClick={send}>
             {sending ? "sending" : "request booking"}
           </PillButton>
         )}
@@ -433,68 +427,18 @@ function Field({
 }
 
 /** browsing never needs an account. sending a request does. */
-function AuthPrompt() {
-  const [mode, setMode] = useState<"signup" | "login">("signup");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function go() {
-    setBusy(true);
-    try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
-        toast("check your email to confirm, then come back to send your request.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast("you're in.");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message.toLowerCase() : "that didn't work.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
+function AuthCallout() {
+  const { openAuth } = useAuth();
   return (
     <div className="rounded-[18px] bg-butter p-5">
-      <p className="text-[15px] font-semibold lowercase">
-        {mode === "signup" ? "make an account to send this" : "log in to send this"}
-      </p>
+      <p className="text-[15px] font-semibold lowercase">save your results.</p>
       <p className="mt-1 text-[12px] lowercase leading-relaxed text-ink/65">
         browsing is always free and open. we only need an account so the clinic can reach you.
       </p>
-      <div className="mt-3 flex flex-col gap-2">
-        <input
-          value={email}
-          inputMode="email"
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="email"
-          className="w-full rounded-[14px] border border-ink/10 bg-white px-4 py-3 text-[15px] lowercase outline-none"
-        />
-        <input
-          value={password}
-          type="password"
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="password"
-          className="w-full rounded-[14px] border border-ink/10 bg-white px-4 py-3 text-[15px] outline-none"
-        />
-        <PillButton fullWidth disabled={busy || !email || password.length < 6} onClick={go}>
-          {mode === "signup" ? "sign up" : "log in"}
+      <div className="mt-3">
+        <PillButton fullWidth onClick={() => openAuth()}>
+          log in or sign up
         </PillButton>
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signup" ? "login" : "signup")}
-          className="text-[12px] lowercase text-ink/60"
-        >
-          {mode === "signup" ? "already have an account? log in" : "new here? sign up"}
-        </button>
       </div>
     </div>
   );
