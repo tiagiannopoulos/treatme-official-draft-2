@@ -230,7 +230,9 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
         </div>
       )}
 
-      <AnalysisFooter />
+      <div className="px-4">
+        <AnalysisFooter />
+      </div>
     </div>
   );
 }
