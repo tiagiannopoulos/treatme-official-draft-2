@@ -30,6 +30,7 @@ import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
+import { Route as ApiGenerateScanPdfRouteImport } from './routes/api/generate-scan-pdf'
 import { Route as ApiConsultChatRouteImport } from './routes/api/consult-chat'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
@@ -144,6 +145,11 @@ const BookConsultRoute = BookConsultRouteImport.update({
   path: '/book/consult',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGenerateScanPdfRoute = ApiGenerateScanPdfRouteImport.update({
+  id: '/api/generate-scan-pdf',
+  path: '/api/generate-scan-pdf',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiConsultChatRoute = ApiConsultChatRouteImport.update({
   id: '/api/consult-chat',
   path: '/api/consult-chat',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
+  '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
+  '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
@@ -254,6 +262,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
+  '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/api/chat'
     | '/api/consult-chat'
+    | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
@@ -318,6 +328,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/api/chat'
     | '/api/consult-chat'
+    | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
@@ -349,6 +360,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/api/chat'
     | '/api/consult-chat'
+    | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
@@ -381,6 +393,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiConsultChatRoute: typeof ApiConsultChatRoute
+  ApiGenerateScanPdfRoute: typeof ApiGenerateScanPdfRoute
   BookConsultRoute: typeof BookConsultRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
@@ -556,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookConsultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/generate-scan-pdf': {
+      id: '/api/generate-scan-pdf'
+      path: '/api/generate-scan-pdf'
+      fullPath: '/api/generate-scan-pdf'
+      preLoaderRoute: typeof ApiGenerateScanPdfRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/consult-chat': {
       id: '/api/consult-chat'
       path: '/api/consult-chat'
@@ -621,6 +641,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiChatRoute: ApiChatRoute,
   ApiConsultChatRoute: ApiConsultChatRoute,
+  ApiGenerateScanPdfRoute: ApiGenerateScanPdfRoute,
   BookConsultRoute: BookConsultRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,

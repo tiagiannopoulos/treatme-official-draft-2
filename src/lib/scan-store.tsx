@@ -9,6 +9,7 @@ const STORAGE_KEY = "treatme.scan.v1";
 export type ScanState = {
   photoDataUrl: string | null;
   photoPath: string | null;
+  scanId: string | null;
   analysis: SkinAnalysis | null;
   result: ScanResult | null;
   recommendations: Recommendation[];
@@ -24,6 +25,7 @@ export type ScanState = {
 type ScanContextValue = ScanState & {
   setPhoto: (dataUrl: string) => void;
   setPhotoPath: (path: string | null) => void;
+  setScanId: (id: string | null) => void;
   setStorePhoto: (v: boolean) => void;
   setLandmarks: (landmarks: Landmark[] | null) => void;
   setScanMeta: (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => void;
@@ -42,6 +44,7 @@ const ScanContext = createContext<ScanContextValue | null>(null);
 const EMPTY: ScanState = {
   photoDataUrl: null,
   photoPath: null,
+  scanId: null,
   analysis: null,
   result: null,
   recommendations: [],
@@ -91,6 +94,10 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, photoPath: path }));
   }, []);
 
+  const setScanId = useCallback((id: string | null) => {
+    setState((prev) => ({ ...prev, scanId: id }));
+  }, []);
+
   const setStorePhoto = useCallback((v: boolean) => {
     setState((prev) => ({ ...prev, storePhoto: v }));
   }, []);
@@ -136,7 +143,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, setPhoto, setPhotoPath, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, reset }}
+      value={{ ...state, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, reset }}
     >
       {children}
     </ScanContext.Provider>

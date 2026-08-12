@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
@@ -8,7 +8,7 @@ import { treatmentsForConcerns } from "@/lib/concern-treatments";
 import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
-import { buildResultsText, downloadResults } from "@/lib/scan-download";
+import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
 
 export const Route = createFileRoute("/scan/results")({
   head: () => ({
@@ -26,7 +26,8 @@ export const Route = createFileRoute("/scan/results")({
 
 function ResultsPage() {
   const navigate = useNavigate();
-  const { photoDataUrl, result, analysis, landmarks, medicalFlag } = useScan();
+  const { photoDataUrl, result, analysis, landmarks, medicalFlag, scanId } = useScan();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
   const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
@@ -54,7 +55,6 @@ function ResultsPage() {
   }
 
   const worst = ordered[0];
-  const resultsText = buildResultsText(rows, analysis, overall);
 
   return (
     <div className="pt-4 pb-40">
@@ -202,13 +202,15 @@ function ResultsPage() {
         <div className="text-center mt-2">
           <button
             type="button"
-            onClick={() => downloadResults(resultsText)}
+            onClick={() => setShareOpen(true)}
             className="text-[13px] font-semibold text-ink-mute lowercase underline underline-offset-4"
           >
             download my results
           </button>
         </div>
       </div>
+
+      <SharePdfSheet open={shareOpen} onOpenChange={setShareOpen} scanId={scanId} analysis={analysis} />
     </div>
   );
 }
