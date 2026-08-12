@@ -11,6 +11,7 @@ import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
