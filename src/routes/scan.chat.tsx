@@ -3,9 +3,9 @@ import { lazy, Suspense } from "react";
 import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 
-const ScanChatClient = lazy(() =>
-  import("@/components/treatme/ScanChatClient").then((module) => ({
-    default: module.ScanChatClient,
+const ConsultChatClient = lazy(() =>
+  import("@/components/treatme/ConsultChatClient").then((module) => ({
+    default: module.ConsultChatClient,
   })),
 );
 
@@ -25,7 +25,7 @@ function ChatPage() {
   return (
     <ClientOnly fallback={<ChatFallback />}>
       <Suspense fallback={<ChatFallback />}>
-        <ScanChatClient treatmentSlug={treatment} />
+        <ConsultChatClient treatmentSlug={treatment} />
       </Suspense>
     </ClientOnly>
   );
