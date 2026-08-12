@@ -65,3 +65,55 @@ export async function treatmentsForConcerns(
 
   return [...best.values()].sort((a, b) => b.weight - a.weight || a.name.localeCompare(b.name)).slice(0, limit);
 }
+
+export interface ConcernTreatment {
+  slug: string;
+  name: string;
+  shortDescription: string | null;
+  priceFrom: number | null;
+  downtime: string | null;
+  strength: number;
+}
+
+/** every treatment mapped to one concern, strongest first then cheapest */
+export async function treatmentsForOneConcern(concernLabel: string): Promise<ConcernTreatment[]> {
+  const { data, error } = await supabase
+    .from("concern_treatments")
+    .select("strength, treatments!inner(slug, name, short_description, price_from, downtime)")
+    .eq("concern_key", concernLabel);
+
+  if (error || !data) {
+    console.warn("concern treatment read failed", error?.message);
+    return [];
+  }
+
+  const rows = (data as unknown as {
+    strength: number | null;
+    treatments: {
+      slug: string;
+      name: string;
+      short_description: string | null;
+      price_from: number | null;
+      downtime: string | null;
+    } | null;
+  }[])
+    .flatMap((row) => {
+      const t = row.treatments;
+      if (!t) return [];
+      return [{
+        slug: t.slug,
+        name: displayTreatmentName(t.name, t.slug),
+        shortDescription: t.short_description,
+        priceFrom: t.price_from === null ? null : Number(t.price_from),
+        downtime: t.downtime,
+        strength: row.strength ?? 1,
+      }];
+    });
+
+  return rows.sort(
+    (a, b) =>
+      b.strength - a.strength ||
+      (a.priceFrom ?? Number.MAX_SAFE_INTEGER) - (b.priceFrom ?? Number.MAX_SAFE_INTEGER) ||
+      a.name.localeCompare(b.name),
+  );
+}
