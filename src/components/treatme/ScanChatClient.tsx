@@ -21,20 +21,26 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { CONCERN_LABEL } from "@/lib/skinAnalysis";
 import { useScan } from "@/lib/scan-store";
 
-export function ScanChatClient() {
+export function ScanChatClient({ treatmentSlug }: { treatmentSlug?: string } = {}) {
   const { result, recommendations } = useScan();
   const analysis = result;
 
+  const treatmentLine = treatmentSlug
+    ? `the patient is asking about ${treatmentSlug.replace(/-/g, " ")} specifically.`
+    : "";
+
   const scanContext = useMemo(() => {
-    if (!result) return "";
+    if (!result) return treatmentLine;
 
     const markerLines = [...result.concerns]
       .sort((a, b) => b.score - a.score)
       .map((c) => `- ${CONCERN_LABEL[c.key]}: ${Math.round(c.score)}/100`)
       .join("\n");
 
-    return `scan markers:\n${markerLines}\n\nrecommended treatments: ${recommendations.map((r) => r.name).join(", ")}`;
-  }, [result, recommendations]);
+    return [`scan markers:\n${markerLines}`, `recommended treatments: ${recommendations.map((r) => r.name).join(", ")}`, treatmentLine]
+      .filter(Boolean)
+      .join("\n\n");
+  }, [result, recommendations, treatmentLine]);
 
 
   const { messages, sendMessage, status } = useChat({
