@@ -175,7 +175,7 @@ function ResultsPage() {
               <button
                 key={m.slug}
                 type="button"
-                onClick={() => navigate({ to: "/treatment/$slug", params: { slug: m.slug } })}
+                onClick={() => navigate({ to: "/match/$slug", params: { slug: m.slug } })}
                 className="w-full text-left px-4 py-4 flex items-center gap-3"
               >
                 <div className="min-w-0 flex-1">

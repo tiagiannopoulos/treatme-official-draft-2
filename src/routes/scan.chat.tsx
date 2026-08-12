@@ -1,5 +1,6 @@
 import { ClientOnly, createFileRoute, Link } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+import { z } from "zod";
 import { ArrowLeft } from "lucide-react";
 
 const ScanChatClient = lazy(() =>
@@ -9,6 +10,7 @@ const ScanChatClient = lazy(() =>
 );
 
 export const Route = createFileRoute("/scan/chat")({
+  validateSearch: z.object({ treatment: z.string().optional() }),
   head: () => ({
     meta: [
       { title: "chat with treatme" },
@@ -19,10 +21,11 @@ export const Route = createFileRoute("/scan/chat")({
 });
 
 function ChatPage() {
+  const { treatment } = Route.useSearch();
   return (
     <ClientOnly fallback={<ChatFallback />}>
       <Suspense fallback={<ChatFallback />}>
-        <ScanChatClient />
+        <ScanChatClient treatmentSlug={treatment} />
       </Suspense>
     </ClientOnly>
   );
