@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Info, Search, Sparkles, X } from "lucide-react";
+import { Info, Search, Sparkles, X, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
@@ -9,6 +9,14 @@ import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-
 
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/treatments/")({
   head: () => ({
@@ -185,27 +193,69 @@ function TreatmentsPage() {
         </div>
       </div>
 
-      {/* concern filter chips */}
-      <div className="mt-3 -mx-6 overflow-x-auto scrollbar-none">
-        <div className="flex gap-2 px-6 pb-1">
-          <button
-            type="button"
-            onClick={() => setConcern(null)}
-            className={chipCls(concern === null)}
-          >
-            everything
-          </button>
-          {concerns.map((c) => (
+      {/* concern filter */}
+      <div className="mt-3">
+        <Sheet>
+          <SheetTrigger asChild>
             <button
-              key={c}
               type="button"
-              onClick={() => setConcern(concern === c ? null : c)}
-              className={chipCls(concern === c)}
+              className="w-full flex items-center justify-between rounded-2xl border border-line bg-cream px-4 h-12 text-left"
             >
-              {label(c)}
+              <span className="flex items-center gap-2">
+                <SlidersHorizontal className="size-4 text-ink" strokeWidth={2.2} />
+                <span className="text-[14px] font-semibold lowercase text-ink">
+                  {concern ? label(concern) : "view all concerns"}
+                </span>
+              </span>
+              <ChevronRight className="size-4 text-ink-soft" />
             </button>
-          ))}
-        </div>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-[24px] bg-cream px-6 pb-8 pt-4 h-[85vh]">
+            <SheetHeader className="text-left pb-2">
+              <SheetTitle className="brand-display text-[22px] lowercase">what's your concern?</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 space-y-6 overflow-y-auto max-h-[calc(85vh-120px)] scrollbar-none pr-1">
+              <section>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute mb-3">start here</p>
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    onClick={() => setConcern(null)}
+                    className={cn(
+                      "w-full text-left rounded-2xl border px-4 h-14 text-[14px] font-semibold lowercase transition",
+                      concern === null
+                        ? "bg-ink text-cream border-ink"
+                        : "bg-cream text-ink border-line hover:border-ink/40",
+                    )}
+                  >
+                    everything
+                  </button>
+                </SheetClose>
+              </section>
+              <section>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute mb-3">all concerns</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {concerns.map((c) => (
+                    <SheetClose key={c} asChild>
+                      <button
+                        type="button"
+                        onClick={() => setConcern(c)}
+                        className={cn(
+                          "text-left rounded-2xl border p-4 text-[13px] font-semibold lowercase leading-tight transition min-h-[64px] flex items-center",
+                          concern === c
+                            ? "bg-ink text-cream border-ink"
+                            : "bg-cream text-ink border-line hover:border-ink/40",
+                        )}
+                      >
+                        {label(c)}
+                      </button>
+                    </SheetClose>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {searching && (
