@@ -29,6 +29,7 @@ import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
+import { Route as ApiConsultChatRouteImport } from './routes/api/consult-chat'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
 import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug.index'
@@ -137,6 +138,11 @@ const BookConsultRoute = BookConsultRouteImport.update({
   path: '/book/consult',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiConsultChatRoute = ApiConsultChatRouteImport.update({
+  id: '/api/consult-chat',
+  path: '/api/consult-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
   path: '/api/chat',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/consult-chat': typeof ApiConsultChatRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/consult-chat': typeof ApiConsultChatRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/profile': typeof ProfileRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/consult-chat': typeof ApiConsultChatRoute
   '/book/consult': typeof BookConsultRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profile'
     | '/api/chat'
+    | '/api/consult-chat'
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
@@ -296,6 +306,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profile'
     | '/api/chat'
+    | '/api/consult-chat'
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/'
     | '/profile'
     | '/api/chat'
+    | '/api/consult-chat'
     | '/book/consult'
     | '/dev/recommendations'
     | '/learn/$slug'
@@ -355,6 +367,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ProfileRoute: typeof ProfileRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiConsultChatRoute: typeof ApiConsultChatRoute
   BookConsultRoute: typeof BookConsultRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
@@ -523,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookConsultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/consult-chat': {
+      id: '/api/consult-chat'
+      path: '/api/consult-chat'
+      fullPath: '/api/consult-chat'
+      preLoaderRoute: typeof ApiConsultChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/chat': {
       id: '/api/chat'
       path: '/api/chat'
@@ -579,6 +599,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ProfileRoute: ProfileRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiConsultChatRoute: ApiConsultChatRoute,
   BookConsultRoute: BookConsultRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,
