@@ -95,11 +95,11 @@ function ConsentPage() {
 
         <CheckRow checked={policy} onToggle={() => setPolicy((v) => !v)}>
           i've read the{" "}
-          <Link to="/legal/privacy" onClick={(e) => e.stopPropagation()} className="underline">
+          <Link to="/privacy" onClick={(e) => e.stopPropagation()} className="underline">
             privacy policy
           </Link>{" "}
           and{" "}
-          <Link to="/legal/terms" onClick={(e) => e.stopPropagation()} className="underline">
+          <Link to="/terms" onClick={(e) => e.stopPropagation()} className="underline">
             terms
           </Link>
           .
