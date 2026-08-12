@@ -555,6 +555,48 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          budget_range: string | null
+          city: string | null
+          created_at: string
+          downtime_tolerance: string | null
+          email: string | null
+          first_name: string | null
+          id: string
+          phone: string | null
+          primary_concern: string | null
+          provider_preference: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget_range?: string | null
+          city?: string | null
+          created_at?: string
+          downtime_tolerance?: string | null
+          email?: string | null
+          first_name?: string | null
+          id: string
+          phone?: string | null
+          primary_concern?: string | null
+          provider_preference?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget_range?: string | null
+          city?: string | null
+          created_at?: string
+          downtime_tolerance?: string | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          phone?: string | null
+          primary_concern?: string | null
+          provider_preference?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       provider_media: {
         Row: {
           after_url: string
