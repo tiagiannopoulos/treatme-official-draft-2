@@ -1021,11 +1021,14 @@ export type Database = {
           engine: string
           id: string
           landmarks: Json | null
+          medical_flag: string | null
           overall_score: number | null
           photo_path: string | null
+          photo_quality: string | null
           skin_tone: string | null
           skin_type: string | null
           status: string
+          store_photo: boolean
           user_id: string
         }
         Insert: {
@@ -1033,11 +1036,14 @@ export type Database = {
           engine?: string
           id?: string
           landmarks?: Json | null
+          medical_flag?: string | null
           overall_score?: number | null
           photo_path?: string | null
+          photo_quality?: string | null
           skin_tone?: string | null
           skin_type?: string | null
           status?: string
+          store_photo?: boolean
           user_id: string
         }
         Update: {
@@ -1045,11 +1051,14 @@ export type Database = {
           engine?: string
           id?: string
           landmarks?: Json | null
+          medical_flag?: string | null
           overall_score?: number | null
           photo_path?: string | null
+          photo_quality?: string | null
           skin_tone?: string | null
           skin_type?: string | null
           status?: string
+          store_photo?: boolean
           user_id?: string
         }
         Relationships: []
