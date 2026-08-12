@@ -12,17 +12,19 @@ import { TREATMENTS } from "@/lib/treatments-data";
 
 const TurnSchema = z.object({
   message: z.string(),
-  chips: z.array(z.string()).max(4),
+  chips: z.array(z.string()).optional(),
   stage: z.enum(["intake", "refine", "summary", "escalate"]),
-  extracted: z.object({
-    primary_concern: z.string().nullable(),
-    budget: z.string().nullable(),
-    downtime: z.string().nullable(),
-    provider_preference: z.string().nullable(),
-    timeline: z.string().nullable(),
-    notes: z.string().nullable(),
-  }),
-  treatment_slugs: z.array(z.string()).max(3),
+  extracted: z
+    .object({
+      primary_concern: z.string().optional(),
+      budget: z.string().optional(),
+      downtime: z.string().optional(),
+      provider_preference: z.string().optional(),
+      timeline: z.string().optional(),
+      notes: z.string().optional(),
+    })
+    .optional(),
+  treatment_slugs: z.array(z.string()).optional(),
 });
 
 const CATALOG = TREATMENTS.map((t) => `${t.slug} — ${t.name}, improves ${t.improves.join(", ")}, from $${t.priceFrom}, downtime ${t.downtime}`).join("\n");
@@ -45,7 +47,7 @@ stages:
 budget values must be one of: "under $300", "$300 to $800", "$800 to $1500", "$1500 plus".
 downtime values must be one of: "none", "a day", "a weekend", "a full week".
 provider_preference must be one of: "no preference", "woman", "man".
-carry forward every extracted value you already know, and add new ones. use null where still unknown.
+carry forward every extracted value you already know, and add new ones. omit anything still unknown.
 
 treatment catalog (use these slugs in treatment_slugs, and plain names in message):
 ${CATALOG}`;
@@ -98,10 +100,12 @@ export const Route = createFileRoute("/api/consult-chat")({
 
           const known = new Set(TREATMENTS.map((t) => t.slug));
           const turn = {
-            ...output,
-            chips: output.stage === "summary" || output.stage === "escalate" ? [] : output.chips.slice(0, 4),
+            message: output.message,
+            stage: output.stage,
+            extracted: output.extracted ?? {},
+            chips: output.stage === "summary" || output.stage === "escalate" ? [] : (output.chips ?? []).slice(0, 4),
             treatment_slugs:
-              output.stage === "summary" ? output.treatment_slugs.filter((s) => known.has(s)).slice(0, 3) : [],
+              output.stage === "summary" ? (output.treatment_slugs ?? []).filter((s) => known.has(s)).slice(0, 3) : [],
           };
 
           return new Response(JSON.stringify(turn), {
