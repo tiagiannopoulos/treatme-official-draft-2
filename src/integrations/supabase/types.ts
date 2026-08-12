@@ -196,6 +196,70 @@ export type Database = {
           },
         ]
       }
+      concern_treatments: {
+        Row: {
+          concern_key: string
+          strength: number
+          treatment_slug: string
+        }
+        Insert: {
+          concern_key: string
+          strength?: number
+          treatment_slug: string
+        }
+        Update: {
+          concern_key?: string
+          strength?: number
+          treatment_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "concern_treatments_treatment_slug_fkey"
+            columns: ["treatment_slug"]
+            isOneToOne: false
+            referencedRelation: "treatments"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      consult_chats: {
+        Row: {
+          created_at: string
+          extracted: Json
+          id: string
+          messages: Json
+          scan_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          extracted?: Json
+          id?: string
+          messages?: Json
+          scan_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          extracted?: Json
+          id?: string
+          messages?: Json
+          scan_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consult_chats_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       education_slides: {
         Row: {
           bg: string | null
@@ -879,6 +943,113 @@ export type Database = {
         Update: {
           created_at?: string | null
           treatment_slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_consents: {
+        Row: {
+          granted_at: string
+          id: string
+          policy_version: string
+          revoked_at: string | null
+          store_photo: boolean
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          id?: string
+          policy_version?: string
+          revoked_at?: string | null
+          store_photo?: boolean
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          id?: string
+          policy_version?: string
+          revoked_at?: string | null
+          store_photo?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      scan_results: {
+        Row: {
+          band: string
+          concern_key: string
+          id: string
+          notes: string | null
+          region_scores: Json | null
+          scan_id: string
+          score: number
+          sub_scores: Json | null
+        }
+        Insert: {
+          band: string
+          concern_key: string
+          id?: string
+          notes?: string | null
+          region_scores?: Json | null
+          scan_id: string
+          score: number
+          sub_scores?: Json | null
+        }
+        Update: {
+          band?: string
+          concern_key?: string
+          id?: string
+          notes?: string | null
+          region_scores?: Json | null
+          scan_id?: string
+          score?: number
+          sub_scores?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_results_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scans: {
+        Row: {
+          created_at: string
+          engine: string
+          id: string
+          landmarks: Json | null
+          overall_score: number | null
+          photo_path: string | null
+          skin_tone: string | null
+          skin_type: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          engine?: string
+          id?: string
+          landmarks?: Json | null
+          overall_score?: number | null
+          photo_path?: string | null
+          skin_tone?: string | null
+          skin_type?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          engine?: string
+          id?: string
+          landmarks?: Json | null
+          overall_score?: number | null
+          photo_path?: string | null
+          skin_tone?: string | null
+          skin_type?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: []
