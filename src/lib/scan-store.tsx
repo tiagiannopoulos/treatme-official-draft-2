@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { SkinAnalysis } from "./skin-analysis";
 import type { ScanResult } from "./skinAnalysis";
 import type { Recommendation } from "./recommendations";
+import type { Landmark } from "./facemesh";
 
 const STORAGE_KEY = "treatme.scan.v1";
 
@@ -17,12 +18,14 @@ export type ScanState = {
   storePhoto: boolean;
   medicalFlag: string | null;
   photoQuality: string | null;
+  landmarks: Landmark[] | null;
 };
 
 type ScanContextValue = ScanState & {
   setPhoto: (dataUrl: string) => void;
   setPhotoPath: (path: string | null) => void;
   setStorePhoto: (v: boolean) => void;
+  setLandmarks: (landmarks: Landmark[] | null) => void;
   setScanMeta: (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => void;
   setAnalysis: (analysis: SkinAnalysis) => void;
   setGoals: (goals: string[]) => void;
@@ -48,6 +51,7 @@ const EMPTY: ScanState = {
   storePhoto: true,
   medicalFlag: null,
   photoQuality: null,
+  landmarks: null,
 };
 
 export function ScanProvider({ children }: { children: ReactNode }) {
@@ -91,6 +95,10 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, storePhoto: v }));
   }, []);
 
+  const setLandmarks = useCallback((landmarks: Landmark[] | null) => {
+    setState((prev) => ({ ...prev, landmarks }));
+  }, []);
+
   const setScanMeta = useCallback(
     (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => {
       setState((prev) => ({
@@ -128,7 +136,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, setPhoto, setPhotoPath, setStorePhoto, setScanMeta, setAnalysis, setGoals, setResult, reset }}
+      value={{ ...state, setPhoto, setPhotoPath, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, reset }}
     >
       {children}
     </ScanContext.Provider>

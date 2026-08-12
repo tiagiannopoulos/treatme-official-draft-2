@@ -50,7 +50,7 @@ function useFactRotator(active: boolean) {
 
 function AnalyzingPage() {
   const navigate = useNavigate();
-  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta } = useScan();
+  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta, setLandmarks } = useScan();
 
   const started = useRef(false);
   const [phase, setPhase] = useState<Phase>("working");
@@ -80,13 +80,14 @@ function AnalyzingPage() {
         medicalFlag: analysis.medicalFlag,
       });
 
+      setLandmarks(landmarks);
       setAnalysis(analysis);
       setScanMeta({ medicalFlag: analysis.medicalFlag, photoQuality: analysis.photoQuality });
       setProgress(100);
       setResult(result, scanDriven, goalDriven);
       navigate({ to: "/scan/results" });
     },
-    [goals, navigate, setAnalysis, setResult, setScanMeta, storePhoto],
+    [goals, navigate, setAnalysis, setLandmarks, setResult, setScanMeta, storePhoto],
   );
 
   const run = useCallback(async () => {
