@@ -107,6 +107,16 @@ function ProfilePage() {
       <div className="mt-8 mb-4">
         <SignOutButton />
       </div>
+
+      <div className="mb-6 flex items-center justify-center gap-3 text-[12px] lowercase text-ink/45">
+        <Link to="/privacy" className="underline">
+          privacy policy
+        </Link>
+        <span>·</span>
+        <Link to="/terms" className="underline">
+          terms
+        </Link>
+      </div>
     </div>
   );
 }
