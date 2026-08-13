@@ -6,6 +6,7 @@ import { useScan } from "@/lib/scan-store";
 import { toConcernRows, overallScore, bandFor, bandTint, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { treatmentsForConcerns } from "@/lib/concern-treatments";
 import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
+import { useScanPhoto } from "@/lib/scan-photo";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
 import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
@@ -26,7 +27,8 @@ export const Route = createFileRoute("/scan/results")({
 
 function ResultsPage() {
   const navigate = useNavigate();
-  const { photoDataUrl, result, analysis, landmarks, medicalFlag, scanId } = useScan();
+  const { result, analysis, landmarks, scanId } = useScan();
+  const photoDataUrl = useScanPhoto();
   const [shareOpen, setShareOpen] = useState(false);
 
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
@@ -60,7 +62,7 @@ function ResultsPage() {
     <div className="pt-4 pb-40">
       {/* header */}
       <div className="px-6 flex items-center justify-between gap-3">
-        <h1 className="brand-display text-[30px]">your analysis<span className="text-hot">.</span></h1>
+        <h1 className="brand-display text-[30px]">analysis results<span className="text-hot">.</span></h1>
         <button
           type="button"
           onClick={() => navigate({ to: "/scan/capture" })}
@@ -69,15 +71,6 @@ function ResultsPage() {
           retake
         </button>
       </div>
-
-      {medicalFlag && (
-        <div
-          className="mx-6 mt-4 rounded-2xl px-4 py-4 text-[14px] leading-snug text-ink"
-          style={{ backgroundColor: "#FFEDB4" }}
-        >
-          there's something here worth having a doctor look at rather than an aesthetics provider.
-        </div>
-      )}
 
       {/* overview */}
       <div className="mt-5 px-6 grid grid-cols-2 gap-3">
@@ -104,7 +97,7 @@ function ResultsPage() {
       <div className="mt-8">
         <div className="px-6">
           <p className="brand-eyebrow">every indicator</p>
-          <h2 className="brand-display text-[24px] mt-2">lowest scores first<span className="text-hot">.</span></h2>
+          <h2 className="brand-display text-[24px] mt-2">lowest scores first</h2>
         </div>
         <div className="mt-4 overflow-x-auto scrollbar-none">
           <div className="flex gap-3 px-6 pb-2">
@@ -163,7 +156,7 @@ function ResultsPage() {
       {/* treatments for you */}
       <div className="mt-8 px-6">
         <p className="brand-eyebrow">matched to your scores</p>
-        <h2 className="brand-display text-[24px] mt-2">treatments for you<span className="text-hot">.</span></h2>
+        <h2 className="brand-display text-[24px] mt-2">recommended for you</h2>
 
         <div className="mt-4 rounded-3xl border border-ink/10 bg-white divide-y divide-ink/10 overflow-hidden">
           {matches.length === 0 ? (
@@ -197,7 +190,7 @@ function ResultsPage() {
       {/* sticky actions */}
       <div className="fixed inset-x-0 bottom-[5.5rem] z-30 px-6 pb-3 pt-3 bg-gradient-to-t from-cream via-cream to-transparent">
         <PillButton fullWidth onClick={() => navigate({ to: "/scan/chat" })}>
-          talk it through
+          start my consult
         </PillButton>
         <div className="text-center mt-2">
           <button

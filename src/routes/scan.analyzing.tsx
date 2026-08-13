@@ -171,8 +171,8 @@ function AnalyzingPage() {
 
       {phase === "working" && (
         <div className="mt-7">
-          <p className="brand-eyebrow">analysing</p>
-          <h1 className="brand-display text-[30px] mt-2">reading your skin<span className="text-hot">…</span></h1>
+          <p className="brand-eyebrow">analyzing</p>
+          <h1 className="brand-display text-[30px] mt-2">analyzing your skin<span className="text-hot">…</span></h1>
           <div className="mt-5 h-1.5 rounded-full bg-ink/10 overflow-hidden">
             <div
               className="h-full rounded-full bg-ink transition-[width] duration-300"
