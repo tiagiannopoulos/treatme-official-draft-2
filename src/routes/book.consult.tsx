@@ -17,6 +17,7 @@ import {
 } from "@/lib/booking";
 import { useAuth } from "@/lib/auth";
 import { myProfileQuery } from "@/lib/profile";
+import { formatPhone, formatPhoneInput } from "@/lib/format";
 
 export const Route = createFileRoute("/book/consult")({
   validateSearch: z.object({
@@ -52,10 +53,12 @@ function BookingFlow() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-  const [providerId, setProviderId] = useState(search.providerId ?? "");
+  // only used to bias the clinic and treatment lists when someone arrives from a
+  // provider profile. requests are always sent to the clinic.
+  const providerId = search.providerId ?? "";
   const [storefrontId, setStorefrontId] = useState(search.storefrontId ?? "");
   const [treatmentSlug, setTreatmentSlug] = useState(search.treatmentSlug ?? "");
-  const [picker, setPicker] = useState<null | "provider" | "clinic" | "treatment">(null);
+  const [picker, setPicker] = useState<null | "clinic" | "treatment">(null);
 
   const [slots, setSlots] = useState<PreferredSlot[]>([]);
   const [activeDate, setActiveDate] = useState<string>("");
@@ -77,10 +80,9 @@ function BookingFlow() {
   useEffect(() => {
     if (user?.email) setEmail((v) => v || user.email!);
     if (myProfile?.first_name) setName((v) => v || myProfile.first_name!);
-    if (myProfile?.phone) setPhone((v) => v || myProfile.phone!);
+    if (myProfile?.phone) setPhone((v) => v || formatPhone(myProfile.phone));
   }, [user?.email, myProfile?.first_name, myProfile?.phone]);
 
-  const provider = options?.providers.find((p) => p.id === providerId) ?? null;
   const clinic = options?.storefronts.find((s) => s.id === storefrontId) ?? null;
   const treatment = options?.treatments.find((t) => t.slug === treatmentSlug) ?? null;
 
@@ -111,7 +113,8 @@ function BookingFlow() {
     });
   }
 
-  const selectionReady = Boolean(providerId && storefrontId && treatmentSlug);
+  // requests route to the clinic. an individual provider is never required.
+  const selectionReady = Boolean(storefrontId && treatmentSlug);
   const detailsReady = name.trim().length > 1 && phone.trim().length > 5 && /.+@.+\..+/.test(email);
 
   async function send() {
@@ -123,7 +126,6 @@ function BookingFlow() {
     setSending(true);
     try {
       await submitBookingRequest({
-        providerId,
         storefrontId,
         treatmentSlug,
         slots,
@@ -181,12 +183,6 @@ function BookingFlow() {
               value={treatment ? treatment.name.toLowerCase() : "not picked yet"}
               sub={treatment?.family ? treatment.family.toLowerCase() : null}
               onChange={() => setPicker("treatment")}
-            />
-            <SelectionRow
-              label="provider"
-              value={provider ? provider.name.toLowerCase() : "not picked yet"}
-              sub={provider?.specialty ? provider.specialty.toLowerCase() : provider?.title?.toLowerCase() ?? null}
-              onChange={() => setPicker("provider")}
             />
             <SelectionRow
               label="clinic"
@@ -286,7 +282,13 @@ function BookingFlow() {
           {!userId && <AuthCallout />}
           <div className="mt-4 flex flex-col gap-3">
             <Field label="your name" value={name} onChange={setName} placeholder="first and last" />
-            <Field label="phone" value={phone} onChange={setPhone} placeholder="best number to text" inputMode="tel" />
+            <Field
+              label="phone"
+              value={phone}
+              onChange={(v) => setPhone(formatPhoneInput(v))}
+              placeholder="best number to text"
+              inputMode="tel"
+            />
             <Field label="email" value={email} onChange={setEmail} placeholder="you@email.com" inputMode="email" />
             <label className="block">
               <span className="brand-eyebrow">anything the provider should know?</span>
@@ -308,7 +310,7 @@ function BookingFlow() {
         <section className="px-5 mt-6">
           <div className="rounded-[18px] border border-line bg-white p-5">
             <SummaryLine label="treatment" value={treatment?.name.toLowerCase() ?? "not picked"} />
-            <SummaryLine label="provider" value={provider?.name.toLowerCase() ?? "not picked"} />
+            <SummaryLine label="provider" value="any available provider" />
             <SummaryLine
               label="clinic"
               value={`${clinic?.name.toLowerCase() ?? "not picked"}${clinic?.neighbourhood ? ` · ${clinic.neighbourhood.toLowerCase()}` : ""}`}
@@ -318,7 +320,7 @@ function BookingFlow() {
               value={slots.length ? slots.map((s) => `${slotDateLabel(s.date)} ${s.time_of_day}`).join(", ") : "any time"}
             />
             <SummaryLine label="name" value={name.toLowerCase()} />
-            <SummaryLine label="phone" value={phone} />
+            <SummaryLine label="phone" value={formatPhone(phone)} />
             <SummaryLine label="email" value={email.toLowerCase()} />
             {note.trim() && <SummaryLine label="your note" value={note.trim().toLowerCase()} />}
           </div>
@@ -349,7 +351,6 @@ function BookingFlow() {
           options={options}
           onClose={() => setPicker(null)}
           onPick={(value) => {
-            if (picker === "provider") setProviderId(value);
             if (picker === "clinic") setStorefrontId(value);
             if (picker === "treatment") setTreatmentSlug(value);
             setPicker(null);
@@ -450,17 +451,15 @@ function PickerSheet({
   onPick,
   onClose,
 }: {
-  kind: "provider" | "clinic" | "treatment";
+  kind: "clinic" | "treatment";
   options: BookingOptions;
   onPick: (value: string) => void;
   onClose: () => void;
 }) {
   const rows =
-    kind === "provider"
-      ? options.providers.map((p) => ({ id: p.id, title: p.name, sub: p.specialty ?? p.title ?? "" }))
-      : kind === "clinic"
-        ? options.storefronts.map((s) => ({ id: s.id, title: s.name, sub: s.neighbourhood ?? s.city ?? "" }))
-        : options.treatments.map((t) => ({ id: t.slug, title: t.name, sub: t.family ?? "" }));
+    kind === "clinic"
+      ? options.storefronts.map((s) => ({ id: s.id, title: s.name, sub: s.neighbourhood ?? s.city ?? "" }))
+      : options.treatments.map((t) => ({ id: t.slug, title: t.name, sub: t.family ?? "" }));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-ink/40" onClick={onClose}>

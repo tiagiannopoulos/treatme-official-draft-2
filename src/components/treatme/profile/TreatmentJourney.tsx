@@ -8,11 +8,32 @@ import { usePatient } from "@/lib/patient-store";
 import { INK, MINT, HOT } from "@/lib/treatment-catalog";
 import { PillButton } from "@/components/treatme/PillButton";
 
-async function fetchLogCount(): Promise<number> {
+interface Counts {
+  scans: number;
+  saved: number;
+  requests: number;
+  log: number;
+}
+
+/** the checklist reads real rows, not whatever is in this session. */
+async function fetchCounts(): Promise<Counts> {
   const { data: session } = await supabase.auth.getSession();
-  if (!session.session) return 0;
-  const { count } = await supabase.from("treatment_log").select("id", { count: "exact", head: true });
-  return count ?? 0;
+  if (!session.session) return { scans: 0, saved: 0, requests: 0, log: 0 };
+
+  const head = { count: "exact" as const, head: true };
+  const [scans, saved, requests, log] = await Promise.all([
+    supabase.from("scans").select("id", head),
+    supabase.from("saved_treatments").select("treatment_slug", head),
+    supabase.from("booking_requests").select("id", head),
+    supabase.from("treatment_log").select("id", head),
+  ]);
+
+  return {
+    scans: scans.count ?? 0,
+    saved: saved.count ?? 0,
+    requests: requests.count ?? 0,
+    log: log.count ?? 0,
+  };
 }
 
 interface Step {
@@ -25,31 +46,42 @@ interface Step {
 
 export function TreatmentJourney() {
   const navigate = useNavigate();
-  const { analysis } = useScan();
   const { saved } = usePatient();
-  const { data: logCount = 0 } = useQuery({ queryKey: ["treatment-log-count"], queryFn: fetchLogCount });
+  const { data: counts, isLoading } = useQuery({
+    queryKey: ["getting-started-counts"],
+    queryFn: fetchCounts,
+    staleTime: 30_000,
+  });
+
+  const scanCount = counts?.scans ?? 0;
+  const savedCount = Math.max(counts?.saved ?? 0, saved.length);
+  const requestCount = counts?.requests ?? 0;
+  const logCount = counts?.log ?? 0;
 
   const steps: Step[] = [
     {
       key: "scan",
       label: "scan your skin",
-      detail: analysis ? `skin age ${analysis.skinAge} · fitzpatrick ${analysis.fitzpatrick}` : "one photo, we do the rest",
-      done: Boolean(analysis),
-      cta: analysis ? undefined : { label: "start scan", go: () => navigate({ to: "/scan" }) },
+      detail: scanCount > 0 ? `${scanCount} scan${scanCount === 1 ? "" : "s"} saved` : "one photo, we do the rest",
+      done: scanCount > 0,
+      cta: scanCount > 0 ? undefined : { label: "start scan", go: () => navigate({ to: "/scan" }) },
     },
     {
       key: "saved",
       label: "save what fits you",
-      detail: saved.length > 0 ? `${saved.length} treatment${saved.length === 1 ? "" : "s"} saved` : "keep the treatments you are curious about",
-      done: saved.length > 0,
-      cta: saved.length > 0 ? undefined : { label: "browse treatments", go: () => navigate({ to: "/treatments" }) },
+      detail: savedCount > 0 ? `${savedCount} treatment${savedCount === 1 ? "" : "s"} saved` : "keep the treatments you are curious about",
+      done: savedCount > 0,
+      cta: savedCount > 0 ? undefined : { label: "browse treatments", go: () => navigate({ to: "/treatments" }) },
     },
     {
       key: "book",
-      label: "book with a provider",
-      detail: logCount > 0 ? "you are in the room" : "real people, tagged to the medspa they work at",
-      done: logCount > 0,
-      cta: logCount > 0 ? undefined : { label: "find a provider", go: () => navigate({ to: "/search", search: { q: undefined, scope: undefined } }) },
+      label: "book with a clinic",
+      detail:
+        requestCount > 0
+          ? `${requestCount} request${requestCount === 1 ? "" : "s"} sent`
+          : "pick your times, the clinic confirms one",
+      done: requestCount > 0,
+      cta: requestCount > 0 ? undefined : { label: "find a clinic", go: () => navigate({ to: "/search", search: { q: undefined, scope: undefined } }) },
     },
     {
       key: "record",
@@ -60,6 +92,10 @@ export function TreatmentJourney() {
   ];
 
   const doneCount = steps.filter((s) => s.done).length;
+
+  // once all four are done there is nothing to get started with.
+  if (isLoading || doneCount === steps.length) return null;
+
   const pct = Math.round((doneCount / steps.length) * 100);
 
   return (

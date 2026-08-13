@@ -99,7 +99,7 @@ function MatchScreen() {
       {/* providers */}
       <section className="mt-7 px-6">
         <h2 className="brand-display text-[22px] lowercase">
-          providers<span className="text-hot">.</span>
+          providers
         </h2>
 
         {isLoading ? (
@@ -120,7 +120,7 @@ function MatchScreen() {
       {/* clinics */}
       <section className="mt-8 px-6">
         <h2 className="brand-display text-[22px] lowercase">
-          clinics<span className="text-hot">.</span>
+          clinics
         </h2>
 
         {isLoading ? (
@@ -178,7 +178,7 @@ function ProviderCard({ provider, onBook }: { provider: MatchProvider; onBook: (
           <Link
             to="/provider/$id"
             params={{ id: provider.id }}
-            className="font-bold text-[17px] lowercase leading-tight"
+            className="block font-bold text-[17px] lowercase leading-tight break-words"
           >
             {provider.name}
           </Link>
@@ -223,7 +223,7 @@ function ClinicCard({ clinic, onBook }: { clinic: MatchClinic; onBook: () => voi
         <Link
           to="/storefront/$id"
           params={{ id: clinic.id }}
-          className="font-bold text-[17px] lowercase leading-tight"
+          className="min-w-0 font-bold text-[17px] lowercase leading-tight break-words"
         >
           {clinic.name}
         </Link>

@@ -202,9 +202,7 @@ export function UpcomingAppointments() {
                   style={{ color: "rgba(17,17,17,0.60)" }}
                 >
                   <MapPin className="size-3.5" strokeWidth={1.6} />
-                  <Link to="/provider/$id" params={{ id: b.providerId }} className="underline decoration-transparent">
-                    {b.providerName.toLowerCase()}
-                  </Link>
+                  <span>{b.providerName.toLowerCase()}</span>
                   <span>at</span>
                   <Link to="/storefront/$id" params={{ id: b.storefrontId }} className="underline decoration-transparent">
                     {b.storefrontName.toLowerCase()}

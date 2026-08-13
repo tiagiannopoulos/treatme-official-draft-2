@@ -59,7 +59,7 @@ export function ProviderCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[16px] font-semibold text-ink lowercase leading-tight truncate">{provider.name}</p>
+            <p className="text-[16px] font-semibold text-ink lowercase leading-tight line-clamp-2 break-words">{provider.name}</p>
             <p className="text-[13px] text-ink/60 lowercase truncate">{provider.title}</p>
           </div>
           {Number.isFinite(km) && (
@@ -171,7 +171,7 @@ export function ProviderCardCompact({
         </span>
       )}
 
-      <p className="mt-3 text-[14px] font-semibold lowercase leading-tight truncate">{provider.name}</p>
+      <p className="mt-3 text-[14px] font-semibold lowercase leading-tight line-clamp-2 break-words">{provider.name}</p>
       <p className="text-[12px] text-ink/60 lowercase truncate">{provider.title}</p>
       <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink/70 lowercase">
         {Number.isFinite(km) && <span>{formatDistance(km)}</span>}

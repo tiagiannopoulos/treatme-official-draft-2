@@ -731,7 +731,7 @@ function MedspaCard({
           >
             <Avatar name={p.name} url={p.avatar_url} size="size-9" />
             <span className="min-w-0">
-              <span className="block text-[13px] font-semibold lowercase truncate">{p.name}</span>
+              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">{p.name}</span>
               <span className="block text-[11px] text-ink-mute lowercase truncate">{p.title}</span>
             </span>
           </Link>
@@ -779,7 +779,7 @@ function MedspaCardCompact({
         </div>
       )}
       <div className="p-3">
-        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1 truncate">
+        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1 leading-tight line-clamp-2 break-words">
           {storefront.name}
           {storefront.claimed && <BadgeCheck className="size-3.5 text-hot shrink-0" />}
         </p>

@@ -22,45 +22,13 @@ export const Route = createFileRoute("/scan/")({
   component: ConsentPage,
 });
 
-function CheckRow({
-  checked,
-  onToggle,
-  children,
-}: {
-  checked: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={checked}
-      className="w-full flex items-start gap-3 text-left rounded-2xl border border-ink/10 bg-white px-4 py-4"
-    >
-      <span
-        className={cn(
-          "mt-[1px] size-5 shrink-0 rounded-[7px] border grid place-items-center transition-colors",
-          checked ? "bg-ink border-ink text-cream" : "border-ink/25 bg-transparent",
-        )}
-      >
-        {checked && <Check className="size-[13px]" strokeWidth={3} />}
-      </span>
-      <span className="text-[14px] leading-snug lowercase">{children}</span>
-    </button>
-  );
-}
-
 function ConsentPage() {
   const navigate = useNavigate();
   const { setStorePhoto } = useScan();
   const { requireAuth } = useAuth();
-  const [processing, setProcessing] = useState(false);
-  const [policy, setPolicy] = useState(false);
-  const [keepPhoto, setKeepPhoto] = useState(true);
+  const [consented, setConsented] = useState(false);
+  const [keepPhoto, setKeepPhoto] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const ready = processing && policy;
 
   const start = async () => {
     setBusy(true);
@@ -70,60 +38,85 @@ function ConsentPage() {
     navigate({ to: "/scan/capture" });
   };
 
-  const onContinue = () => {
-    if (!ready || busy) return;
+  const onAccept = () => {
+    if (!consented || busy) return;
     requireAuth(() => {
       void start();
     }, "you'll need an account to scan, so your results save. takes a second.");
   };
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem-5.5rem)] px-6 pt-8 pb-8 flex flex-col">
-      <p className="brand-eyebrow">consent</p>
-      <h1 className="brand-display text-[34px] mt-2">before we scan<span className="text-hot">.</span></h1>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 px-5">
+      <div className="w-full max-w-[360px] rounded-[26px] bg-white p-6 shadow-xl">
+        <h1 className="brand-display text-[26px] lowercase leading-tight">
+          before we scan<span className="text-hot">.</span>
+        </h1>
 
-      <p className="mt-4 text-[14px] leading-relaxed text-ink-mute">
-        treatme analyses a photo of your face to estimate skin concerns. that photo and the map we
-        build from it are biometric information. we store them so you can compare future scans, and
-        you can delete them any time from your profile.
-      </p>
+        <p className="mt-3 text-[13.5px] leading-relaxed lowercase text-ink-mute">
+          treatme analyzes a photo of your face to estimate skin concerns. that photo and the map we
+          build from it are biometric information. you can delete them any time from your profile.
+        </p>
 
-      <div className="mt-6 space-y-3">
-        <CheckRow checked={processing} onToggle={() => setProcessing((v) => !v)}>
-          i consent to treatme processing a photo of my face to produce a skin analysis.
-        </CheckRow>
+        <button
+          type="button"
+          onClick={() => setConsented((v) => !v)}
+          aria-pressed={consented}
+          className="mt-5 flex w-full items-start gap-3 text-left"
+        >
+          <span
+            className={cn(
+              "mt-[1px] grid size-5 shrink-0 place-items-center rounded-[7px] border transition-colors",
+              consented ? "border-ink bg-ink text-cream" : "border-ink/25 bg-transparent",
+            )}
+          >
+            {consented && <Check className="size-[13px]" strokeWidth={3} />}
+          </span>
+          <span className="text-[13.5px] leading-snug lowercase">
+            i consent to treatme processing a photo of my face to produce a skin analysis.
+          </span>
+        </button>
 
-        <CheckRow checked={policy} onToggle={() => setPolicy((v) => !v)}>
-          i've read the{" "}
-          <Link to="/privacy" onClick={(e) => e.stopPropagation()} className="underline">
+        <p className="mt-3 text-[12.5px] lowercase text-ink-mute">
+          <Link to="/privacy" className="underline underline-offset-2">
             privacy policy
-          </Link>{" "}
-          and{" "}
-          <Link to="/terms" onClick={(e) => e.stopPropagation()} className="underline">
+          </Link>
+          <span> · </span>
+          <Link to="/terms" className="underline underline-offset-2">
             terms
           </Link>
-          .
-        </CheckRow>
+        </p>
 
-        <CheckRow checked={keepPhoto} onToggle={() => setKeepPhoto((v) => !v)}>
-          save my photo so i can compare future scans.
-        </CheckRow>
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-ink/10 pt-4">
+          <span className="text-[13px] leading-snug lowercase">
+            save my photo so i can compare future scans
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={keepPhoto}
+            aria-label="save my photo so i can compare future scans"
+            onClick={() => setKeepPhoto((v) => !v)}
+            className={cn(
+              "relative h-6 w-11 shrink-0 rounded-full transition-colors",
+              keepPhoto ? "bg-ink" : "bg-ink/15",
+            )}
+          >
+            <span
+              className={cn(
+                "absolute top-0.5 size-5 rounded-full bg-white transition-all",
+                keepPhoto ? "left-[22px]" : "left-0.5",
+              )}
+            />
+          </button>
+        </div>
 
-        {!keepPhoto && (
-          <p className="text-[12px] text-ink-mute px-1">
-            we'll read this photo in memory and never write it to storage.
-          </p>
-        )}
-      </div>
-
-      <div className="mt-auto pt-8">
-        <PillButton fullWidth disabled={!ready || busy} onClick={onContinue}>
-          continue
-        </PillButton>
-        <div className="text-center mt-4">
-          <Link to="/" className="text-[13px] font-semibold text-ink-mute lowercase">
-            not now
-          </Link>
+        <div className="mt-6 flex gap-3">
+          <PillButton variant="outline" className="flex-1" onClick={() => navigate({ to: "/" })}>
+            reject
+          </PillButton>
+          <PillButton className="flex-1" disabled={!consented || busy} onClick={onAccept}>
+            accept
+          </PillButton>
         </div>
       </div>
     </div>

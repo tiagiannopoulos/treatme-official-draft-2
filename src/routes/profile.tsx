@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useScanPhoto } from "@/lib/scan-photo";
 
 import { useScan } from "@/lib/scan-store";
 import { PillButton } from "@/components/treatme/PillButton";
@@ -57,7 +58,8 @@ function SignedOut() {
 
 function ProfilePage() {
   const { user, ready } = useAuth();
-  const { analysis, photoDataUrl } = useScan();
+  const { analysis } = useScan();
+  const photoDataUrl = useScanPhoto();
 
   if (!ready) return <div className="px-6 pt-10 text-[13px] lowercase text-ink/45">one sec.</div>;
   if (!user) return <SignedOut />;
@@ -89,9 +91,9 @@ function ProfilePage() {
         </Link>
       </div>
 
-      <UpcomingAppointments />
       <MyScans />
       <TreatmentJourney />
+      <UpcomingAppointments />
       <SavedTreatments />
       <TxLog />
       <AboutYourSkin />

@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Eye, EyeOff } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
+import { useScanPhoto } from "@/lib/scan-photo";
 import {
   SCAN_CONCERN_KEYS,
   SCAN_CONCERN_LABEL,
@@ -35,9 +36,9 @@ export const Route = createFileRoute("/scan/concern/$key")({
 function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
-  const { photoDataUrl, result, landmarks } = useScan();
+  const { result, landmarks } = useScan();
+  const photoDataUrl = useScanPhoto();
 
-  const [showMask, setShowMask] = useState(true);
   const [sub, setSub] = useState<string | null>(null);
 
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
@@ -119,24 +120,15 @@ function ConcernDetailPage() {
       <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden bg-ink/5 aspect-[4/5]">
         <PinchZoom className="absolute inset-0">
           <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
-          {showMask && (
-            <ConcernOverlay
-              concernKey={key}
-              tint={tint}
-              landmarks={landmarks}
-              regionScores={row.region_scores}
-              regionFilter={regionFilter}
-            />
-          )}
+          {/* the overlay is the point of this screen, so it is always on. */}
+          <ConcernOverlay
+            concernKey={key}
+            tint={tint}
+            landmarks={landmarks}
+            regionScores={row.region_scores}
+            regionFilter={regionFilter}
+          />
         </PinchZoom>
-        <button
-          type="button"
-          onClick={() => setShowMask((v) => !v)}
-          className="absolute left-3 bottom-3 z-10 inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-ink/85 text-white text-[12px] font-semibold lowercase backdrop-blur"
-        >
-          {showMask ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-          show mask
-        </button>
       </div>
 
       {/* sub concern pills */}
@@ -168,10 +160,8 @@ function ConcernDetailPage() {
         </div>
       )}
 
-      {/* your result */}
       <div className="mt-5 mx-6 rounded-3xl border border-ink/10 bg-white p-5">
-        <div className="flex items-center justify-between gap-3">
-          <p className="brand-eyebrow">your result</p>
+        <div className="flex items-center justify-end gap-3">
           <span
             className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold lowercase"
             style={{ backgroundColor: tint }}

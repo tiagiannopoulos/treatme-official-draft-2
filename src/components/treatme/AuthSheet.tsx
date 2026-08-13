@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatPhoneInput } from "@/lib/format";
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -173,7 +174,7 @@ export function AuthSheet({
           {mode === "setup" && (
             <>
               <Field label="first name" value={firstName} onChange={setFirstName} placeholder="what we call you" />
-              <Field label="phone number" value={phone} onChange={setPhone} inputMode="tel" placeholder="best number to text" />
+              <Field label="phone number" value={phone} onChange={(v: string) => setPhone(formatPhoneInput(v))} inputMode="tel" placeholder="best number to text" />
               <Field label="city" value={city} onChange={setCity} placeholder="toronto" />
             </>
           )}

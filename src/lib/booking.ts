@@ -123,7 +123,8 @@ async function fetchTreatments(providerId?: string): Promise<TreatmentOption[]> 
 }
 
 export interface SubmitBooking {
-  providerId: string;
+  /** optional. booking routes to the clinic, an individual is never required. */
+  providerId?: string | null;
   storefrontId: string;
   treatmentSlug: string;
   slots: PreferredSlot[];
@@ -141,7 +142,7 @@ export async function submitBookingRequest(input: SubmitBooking): Promise<void> 
 
   const { error } = await supabase.from("booking_requests").insert({
     patient_id: uid,
-    provider_id: input.providerId,
+    provider_id: input.providerId ? input.providerId : null,
     storefront_id: input.storefrontId,
     treatment_slug: input.treatmentSlug,
     preferred_slots: input.slots.map((s) => ({ date: s.date, time_of_day: s.time_of_day })),
@@ -160,7 +161,7 @@ export interface MyBooking {
   slots: PreferredSlot[];
   treatmentName: string;
   providerName: string;
-  providerId: string;
+  providerId: string | null;
   storefrontName: string;
   storefrontId: string;
   neighbourhood: string | null;
@@ -181,7 +182,10 @@ export const myBookingsQuery = queryOptions({
     if (!rows.length) return [];
 
     const [{ data: provs }, { data: stores }, { data: treats }] = await Promise.all([
-      supabase.from("providers").select("id, name").in("id", rows.map((r) => r.provider_id)),
+      supabase
+        .from("providers")
+        .select("id, name")
+        .in("id", rows.map((r) => r.provider_id).filter((id): id is string => Boolean(id))),
       supabase
         .from("storefronts")
         .select("id, name, neighbourhood")
@@ -204,8 +208,8 @@ export const myBookingsQuery = queryOptions({
         created_at: r.created_at,
         slots: Array.isArray(r.preferred_slots) ? (r.preferred_slots as unknown as PreferredSlot[]) : [],
         treatmentName: (r.treatment_slug ? treatName.get(r.treatment_slug) : null) ?? "treatment",
-        providerName: provName.get(r.provider_id) ?? "your provider",
-        providerId: r.provider_id,
+        providerName: (r.provider_id ? provName.get(r.provider_id) : null) ?? "any available provider",
+        providerId: r.provider_id ?? null,
         storefrontName: store?.name ?? "clinic",
         storefrontId: r.storefront_id,
         neighbourhood: store?.neighbourhood ?? null,
