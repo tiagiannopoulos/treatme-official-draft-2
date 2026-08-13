@@ -14,9 +14,9 @@ import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
 export const Route = createFileRoute("/scan/results")({
   head: () => ({
     meta: [
-      { title: "your analysis · treatme" },
+      { title: "analysis results · treatme" },
       { name: "description", content: "your skin, read honestly. see every concern on your own face." },
-      { property: "og:title", content: "your analysis · treatme" },
+      { property: "og:title", content: "analysis results · treatme" },
       { property: "og:description", content: "your skin, read honestly. see every concern on your own face." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
