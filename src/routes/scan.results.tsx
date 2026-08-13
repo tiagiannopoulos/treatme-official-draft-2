@@ -61,8 +61,8 @@ function ResultsPage() {
   return (
     <div className="pt-4 pb-40">
       {/* header */}
-      <div className="px-6 flex items-center justify-between gap-3">
-        <h1 className="brand-display text-[30px]">analysis results<span className="text-hot">.</span></h1>
+      <div className="px-6 flex items-center justify-end gap-3">
+        <h1 className="sr-only">analysis results</h1>
         <button
           type="button"
           onClick={() => navigate({ to: "/scan/capture" })}
