@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
+
 import { supabase } from "@/integrations/supabase/client";
+import { useScan } from "@/lib/scan-store";
 
 function dataUrlToBlob(dataUrl: string): Blob {
   const [meta, b64] = dataUrl.split(",");
@@ -29,4 +32,44 @@ export async function uploadScanPhoto(dataUrl: string): Promise<string | null> {
     return null;
   }
   return path;
+}
+
+/**
+ * the bucket is private, so a stored photo is only readable through a short
+ * lived signed url. never build a public url for scan-photos.
+ */
+export async function scanPhotoSignedUrl(path: string, expiresInSeconds = 60 * 60): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("scan-photos")
+    .createSignedUrl(path, expiresInSeconds);
+  if (error) {
+    console.warn("scan photo sign failed", error.message);
+    return null;
+  }
+  return data?.signedUrl ?? null;
+}
+
+/**
+ * the photo to render on analysis screens: the in session capture when we still
+ * have it, otherwise a signed url for the stored file.
+ */
+export function useScanPhoto(): string | null {
+  const { photoDataUrl, photoPath } = useScan();
+  const [signed, setSigned] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (photoDataUrl || !photoPath) {
+      setSigned(null);
+      return;
+    }
+    let alive = true;
+    void scanPhotoSignedUrl(photoPath).then((url) => {
+      if (alive) setSigned(url);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [photoDataUrl, photoPath]);
+
+  return photoDataUrl ?? signed;
 }
