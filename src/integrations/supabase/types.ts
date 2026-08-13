@@ -92,7 +92,7 @@ export type Database = {
           patient_name: string
           patient_phone: string
           preferred_slots: Json
-          provider_id: string
+          provider_id: string | null
           status: string
           storefront_id: string
           treatment_id: string | null
@@ -107,7 +107,7 @@ export type Database = {
           patient_name: string
           patient_phone: string
           preferred_slots: Json
-          provider_id: string
+          provider_id?: string | null
           status?: string
           storefront_id: string
           treatment_id?: string | null
@@ -122,7 +122,7 @@ export type Database = {
           patient_name?: string
           patient_phone?: string
           preferred_slots?: Json
-          provider_id?: string
+          provider_id?: string | null
           status?: string
           storefront_id?: string
           treatment_id?: string | null

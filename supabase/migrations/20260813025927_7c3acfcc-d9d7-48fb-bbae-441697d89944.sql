@@ -1,0 +1,1 @@
+ALTER TABLE public.booking_requests ALTER COLUMN provider_id DROP NOT NULL;
