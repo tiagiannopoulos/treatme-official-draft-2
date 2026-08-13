@@ -53,7 +53,9 @@ function BookingFlow() {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-  const [providerId, setProviderId] = useState(search.providerId ?? "");
+  // only used to bias the clinic and treatment lists when someone arrives from a
+  // provider profile. requests are always sent to the clinic.
+  const providerId = search.providerId ?? "";
   const [storefrontId, setStorefrontId] = useState(search.storefrontId ?? "");
   const [treatmentSlug, setTreatmentSlug] = useState(search.treatmentSlug ?? "");
   const [picker, setPicker] = useState<null | "clinic" | "treatment">(null);
