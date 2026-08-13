@@ -30,10 +30,7 @@ function SignedOut() {
   const { openAuth } = useAuth();
   return (
     <div className="px-6 pt-6">
-      <h1 className="brand-display text-[32px] mt-2 lowercase">
-        profile<span className="text-hot">.</span>
-      </h1>
-      <div className="mt-6 rounded-[18px] p-6" style={{ backgroundColor: "#FFEDB4" }}>
+      <div className="mt-2 rounded-[18px] p-6" style={{ backgroundColor: "#FFEDB4" }}>
         <p className="text-[16px] font-semibold lowercase">save your results.</p>
         <p className="mt-2 text-[13px] lowercase leading-relaxed text-ink/65">
           you'll need an account to scan and to book. takes a second.
@@ -67,10 +64,6 @@ function ProfilePage() {
 
   return (
     <div className="px-6 pt-6">
-      <h1 className="brand-display text-[32px] mt-2 lowercase">
-        profile<span className="text-hot">.</span>
-      </h1>
-
       <AccountCard />
 
       {analysis && photoDataUrl && (
