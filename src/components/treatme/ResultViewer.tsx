@@ -150,7 +150,7 @@ export function ResultViewer({
       <div className="px-4 pb-6 pt-3">
         <Link
           to="/book/consult"
-          search={{ providerId, storefrontId }}
+          search={{ providerId, storefrontId, treatmentSlug: result.treatment_slug }}
           className="flex items-center justify-center rounded-pill bg-hot text-cream py-3.5 text-[14px] font-semibold lowercase"
         >
           book this with {providerFirstName}
