@@ -89,9 +89,9 @@ function ProfilePage() {
         </Link>
       </div>
 
-      <UpcomingAppointments />
       <MyScans />
       <TreatmentJourney />
+      <UpcomingAppointments />
       <SavedTreatments />
       <TxLog />
       <AboutYourSkin />
