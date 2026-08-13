@@ -142,7 +142,7 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem-5.5rem)]" style={{ backgroundColor: "#FCFBF7" }}>
+    <div className="flex flex-col h-[calc(100vh-3.5rem-5.5rem)]" style={{ backgroundColor: "#FFFFFF" }}>
       <div className="px-6 pt-4 pb-2 flex items-center justify-between">
         <Link
           to="/scan/results"
@@ -150,7 +150,7 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
         >
           <ArrowLeft className="size-4" /> back to results
         </Link>
-        <span className="brand-eyebrow">talk it through</span>
+        <span className="brand-eyebrow">consult</span>
       </div>
 
       <Conversation className="flex-1">
@@ -283,7 +283,7 @@ function SummaryCard({
           .filter((t): t is { slug: string; name: string; priceFrom: number | null } => Boolean(t))
           .map((t) => (
             <div key={t.slug} className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-3 py-3">
-              <div>
+              <div className="min-w-0">
                 <p className="text-[14px] font-semibold lowercase text-ink">{t.name}</p>
                 {t.priceFrom !== null && (
                   <p className="text-[12px] lowercase text-ink-mute">from ${t.priceFrom}</p>
@@ -303,8 +303,8 @@ function SummaryCard({
             {providers.map((p) => (
               <div key={p.id} className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-3 py-3">
                 <div className="min-w-0">
-                  <p className="truncate text-[14px] font-semibold lowercase text-ink">{p.name}</p>
-                  <p className="truncate text-[12px] lowercase text-ink-mute">
+                  <p className="text-[14px] font-semibold lowercase leading-snug text-ink break-words">{p.name}</p>
+                  <p className="text-[12px] lowercase leading-snug text-ink-mute break-words">
                     {p.clinicName}, {p.neighbourhood}
                   </p>
                 </div>
