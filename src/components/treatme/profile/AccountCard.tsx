@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { formatPhone, formatPhoneInput } from "@/lib/format";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -21,7 +22,7 @@ export function AccountCard() {
 
   useEffect(() => {
     setFirstName(profile?.first_name ?? "");
-    setPhone(profile?.phone ?? "");
+    setPhone(formatPhone(profile?.phone));
     setCity(profile?.city ?? "toronto");
   }, [profile?.first_name, profile?.phone, profile?.city]);
 
@@ -48,7 +49,7 @@ export function AccountCard() {
       {editing ? (
         <div className="flex flex-col gap-3">
           <Input label="first name" value={firstName} onChange={setFirstName} />
-          <Input label="phone" value={phone} onChange={setPhone} />
+          <Input label="phone" value={phone} onChange={(v: string) => setPhone(formatPhoneInput(v))} />
           <Input label="city" value={city} onChange={setCity} />
           <div className="flex gap-2">
             <PillButton className="h-10 flex-1 text-[13px]" disabled={busy} onClick={save}>
@@ -65,7 +66,7 @@ export function AccountCard() {
             {(profile?.first_name ?? "").toLowerCase() || "your account"}
           </p>
           <p className="mt-1 text-[13px] lowercase text-ink/60">{(user?.email ?? "").toLowerCase()}</p>
-          <p className="text-[13px] lowercase text-ink/60">{profile?.phone || "no phone yet"}</p>
+          <p className="text-[13px] lowercase text-ink/60">{formatPhone(profile?.phone) || "no phone yet"}</p>
           <p className="text-[13px] lowercase text-ink/45">{(profile?.city ?? "toronto").toLowerCase()}</p>
           <button
             type="button"
