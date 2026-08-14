@@ -145,6 +145,7 @@ export function AboutYourSkin() {
       {open === "goals" && (
         <ProfileSheet title="your goals" onClose={() => setOpen(null)}>
           <textarea
+            aria-label="your goals"
             value={p.goals}
             onChange={(e) => updateProfile({ goals: e.target.value.toLowerCase() })}
             rows={3}
@@ -193,6 +194,7 @@ export function AboutYourSkin() {
             {p.travelKm ?? 15} km
           </p>
           <input
+            aria-label="how far you will travel, in kilometres"
             type="range"
             min={2}
             max={100}
@@ -288,6 +290,7 @@ export function AboutYourSkin() {
             onChange={(v) => updateFlags({ bloodThinners: v })}
           />
           <textarea
+            aria-label="allergies"
             value={patient.flags.allergies}
             onChange={(e) => updateFlags({ allergies: e.target.value.toLowerCase() })}
             rows={2}

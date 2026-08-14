@@ -62,9 +62,9 @@ export function AccountCard() {
         </div>
       ) : (
         <>
-          <p className="text-[18px] lowercase" style={{ color: INK }}>
+          <h1 className="text-[18px] lowercase" style={{ color: INK }}>
             {(profile?.first_name ?? "").toLowerCase() || "your account"}
-          </p>
+          </h1>
           <p className="mt-1 text-[13px] lowercase text-ink/60">{(user?.email ?? "").toLowerCase()}</p>
           <p className="text-[13px] lowercase text-ink/60">{formatPhone(profile?.phone) || "no phone yet"}</p>
           <p className="text-[13px] lowercase text-ink/45">{(profile?.city ?? "toronto").toLowerCase()}</p>

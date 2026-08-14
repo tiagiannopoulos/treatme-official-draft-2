@@ -229,6 +229,7 @@ function SearchPage() {
 
   return (
     <div className="pb-28">
+      <h1 className="px-6 pt-4 brand-display text-[26px] lowercase">find providers near you</h1>
       {/* sticky search + scope pills */}
       <div className="sticky top-0 z-30 bg-background pt-1 pb-3">
         <div className="px-6">
@@ -236,6 +237,7 @@ function SearchPage() {
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink-mute" />
             <input
               ref={inputRef}
+              aria-label="search providers, medspas and treatments"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onFocus={() => setFocused(true)}
@@ -312,7 +314,7 @@ function SearchPage() {
                 <section className="mt-6">
                   {scope === "all" && (
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="brand-eyebrow">providers</p>
+                      <h2 className="brand-eyebrow">providers</h2>
                       {providerResults.length > 3 && (
                         <button
                           type="button"
@@ -339,7 +341,7 @@ function SearchPage() {
                 <section className="mt-6">
                   {scope === "all" && (
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="brand-eyebrow">medspas</p>
+                      <h2 className="brand-eyebrow">medspas</h2>
                       {medspaResults.length > 3 && (
                         <button
                           type="button"
@@ -371,7 +373,7 @@ function SearchPage() {
                 <section className="mt-6">
                   {scope === "all" && (
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className="brand-eyebrow">treatments</p>
+                      <h2 className="brand-eyebrow">treatments</h2>
                       {treatmentResults.length > 3 && (
                         <button
                           type="button"
@@ -410,7 +412,7 @@ function SearchPage() {
         <div className="px-6">
           {/* a) map card */}
           <div className="mt-5 flex items-center justify-between gap-2">
-            <p className="brand-eyebrow">near you</p>
+            <h2 className="brand-eyebrow">near you</h2>
             <span className="inline-flex items-center gap-1 rounded-pill border border-[rgba(17,17,17,0.10)] px-2.5 py-1 text-[11px] text-ink-mute lowercase">
               <MapPin className="size-3" />
               toronto, on
@@ -474,7 +476,7 @@ function SearchPage() {
           {featuredStorefronts.length > 0 && (
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="brand-eyebrow">featured storefronts</p>
+                <h2 className="brand-eyebrow">featured storefronts</h2>
                 <button
                   type="button"
                   onClick={() => setScope("medspas")}
@@ -499,7 +501,7 @@ function SearchPage() {
           {nearbyProviders.length > 0 && (
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="brand-eyebrow">providers near you</p>
+                <h2 className="brand-eyebrow">providers near you</h2>
                 <span className="text-[12px] text-ink-mute lowercase">
                   {providerResults.length} within {radius} km
                 </span>
@@ -539,7 +541,7 @@ function SearchPage() {
           {showMedspas && (
             <section className="mt-6">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="brand-eyebrow">medspas near you</p>
+                <h2 className="brand-eyebrow">medspas near you</h2>
                 <span className="text-[12px] text-ink-mute lowercase">
                   {medspaResults.length} within {radius} km
                 </span>
@@ -582,7 +584,7 @@ function SearchPage() {
           {showTreatments && (
             <section className="mt-6">
               <div className="flex items-baseline justify-between gap-3">
-                <p className="brand-eyebrow">popular treatments</p>
+                <h2 className="brand-eyebrow">popular treatments</h2>
                 <Link
                   to="/treatments"
                   className="inline-flex items-center gap-1 text-[12px] font-semibold text-hot lowercase"

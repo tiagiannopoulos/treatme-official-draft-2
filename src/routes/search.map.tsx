@@ -99,6 +99,7 @@ function MapView() {
 
       <button
         type="button"
+        aria-label="go back"
         onClick={() => router.history.back()}
         className="absolute top-4 left-4 z-30 inline-flex items-center gap-1.5 rounded-pill bg-white/95 border border-line px-3.5 py-2 text-[12.5px] font-semibold lowercase shadow-sm"
       >
@@ -108,7 +109,7 @@ function MapView() {
       {/* bottom sheet: everything currently in view */}
       <div className="absolute inset-x-0 bottom-0 z-30 max-h-[52%] overflow-y-auto rounded-t-[24px] border-t border-line bg-background px-5 pb-8 pt-3 shadow-[0_-8px_30px_rgba(17,17,17,0.08)]">
         <span aria-hidden className="mx-auto mb-3 block h-1 w-10 rounded-pill bg-[rgba(17,17,17,0.15)]" />
-        <p className="brand-eyebrow">in this area</p>
+        <h1 className="brand-eyebrow">in this area</h1>
         <p className="text-[12px] text-ink-mute lowercase mt-0.5">
           {inView.length} medspa{inView.length === 1 ? "" : "s"} in {areaLabel} · move the map to search elsewhere
         </p>

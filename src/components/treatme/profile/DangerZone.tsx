@@ -119,6 +119,7 @@ export function DangerZone() {
 
             {pending === "account" && (
               <input
+                aria-label="type delete to confirm"
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
                 placeholder="type delete"

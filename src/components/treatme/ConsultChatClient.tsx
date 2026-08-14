@@ -150,7 +150,7 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
         >
           <ArrowLeft className="size-4" /> back to results
         </Link>
-        <span className="brand-eyebrow">consult</span>
+        <h1 className="brand-eyebrow">consult</h1>
       </div>
 
       <Conversation className="flex-1">

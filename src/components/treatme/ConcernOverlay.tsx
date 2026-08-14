@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Landmark } from "@/lib/facemesh";
+import { SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import {
   CONCERN_OVERLAY,
   CONCERN_REGIONS,
@@ -118,7 +119,8 @@ export function ConcernOverlay({ concernKey, tint, landmarks, regionScores, regi
       viewBox="0 0 100 100"
       preserveAspectRatio="none"
       className="absolute inset-0 w-full h-full pointer-events-none"
-      aria-hidden="true"
+      role="img"
+      aria-label={`${SCAN_CONCERN_LABEL[concernKey] ?? concernKey} overlay on your scan`}
     >
       {groups.map((g) => (
         <g key={g.key} style={filled ? { filter: "blur(0.6px)" } : undefined}>

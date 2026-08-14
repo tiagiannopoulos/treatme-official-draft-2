@@ -32,7 +32,7 @@ function SignedOut() {
   return (
     <div className="px-6 pt-6">
       <div className="mt-2 rounded-[18px] p-6" style={{ backgroundColor: "#FFEDB4" }}>
-        <p className="text-[16px] font-semibold lowercase">save your results.</p>
+        <h1 className="text-[16px] font-semibold lowercase">save your results.</h1>
         <p className="mt-2 text-[13px] lowercase leading-relaxed text-ink/65">
           you'll need an account to scan and to book. takes a second.
         </p>

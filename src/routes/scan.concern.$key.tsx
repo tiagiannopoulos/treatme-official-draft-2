@@ -119,7 +119,7 @@ function ConcernDetailPage() {
       {/* image */}
       <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden bg-ink/5 aspect-[4/5]">
         <PinchZoom className="absolute inset-0">
-          <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={photoDataUrl} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
           {/* the overlay is the point of this screen, so it is always on. */}
           <ConcernOverlay
             concernKey={key}
@@ -169,9 +169,9 @@ function ConcernDetailPage() {
             {shownBand}
           </span>
         </div>
-        <p className="mt-2 font-bold text-[18px] lowercase leading-tight">
+        <h1 className="mt-2 font-bold text-[18px] lowercase leading-tight">
           {activeSub ? activeSub.label : label}
-        </p>
+        </h1>
         <p className="brand-display text-[46px] leading-none mt-2">
           {shownScore}
           <span className="text-[16px] text-ink-mute"> /100</span>
@@ -186,7 +186,7 @@ function ConcernDetailPage() {
 
       {/* about */}
       <div className="mt-4 mx-6 rounded-3xl border border-ink/10 bg-white p-5">
-        <p className="brand-eyebrow">about {label}</p>
+        <h2 className="brand-eyebrow">about {label}</h2>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{CONCERN_ABOUT[key]}</p>
       </div>
 
