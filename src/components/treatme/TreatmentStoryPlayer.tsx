@@ -26,6 +26,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [held, setHeld] = useState(false);
+  const [authPaused, setAuthPaused] = useState(false);
 
   useEffect(() => {
     setIndex(0);
@@ -37,7 +38,8 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
 
   const slide = slides[index];
   const bg = slide?.bg ?? "#FCFBF7";
-  const paused = held || slides.length === 0;
+  const paused = held || authPaused || slides.length === 0;
+
 
   useEffect(() => {
     if (paused) return;
