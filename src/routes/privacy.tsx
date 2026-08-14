@@ -28,9 +28,10 @@ function PrivacyPage() {
       >
         <ChevronLeft className="size-4" /> back
       </button>
-      <h1 className="brand-display text-[32px] mt-4">
-        privacy policy<span className="text-hot">.</span>
-      </h1>
+      <h1 className="brand-display text-[32px] mt-4 lowercase">privacy policy</h1>
+      <p className="mt-1.5 text-[12px] uppercase tracking-[0.12em] text-ink/45">
+        treatme technologies inc. · last updated: 12 august 2026
+      </p>
       <Markdown source={PRIVACY_MD} className="mt-5" />
     </div>
   );
