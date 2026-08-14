@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { SkinAnalysis } from "@/lib/skin-analysis";
 import type { ScanResult } from "@/lib/skinAnalysis";
 import type { Landmark } from "@/lib/facemesh";
 import { overallScore, toConcernRows } from "@/lib/scan-concerns";
@@ -10,6 +11,7 @@ export interface SaveScanInput {
   result: ScanResult;
   photoQuality: string | null;
   medicalFlag: string | null;
+  analysis: SkinAnalysis | null;
 }
 
 /**
@@ -35,6 +37,10 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       status: "complete",
       photo_quality: input.photoQuality,
       medical_flag: input.medicalFlag,
+      skin_type: input.analysis?.skinType ?? null,
+      skin_tone: input.analysis?.fitzpatrick ?? null,
+      result: input.result as unknown as never,
+      analysis: input.analysis ? (input.analysis as unknown as never) : null,
     })
     .select("id")
     .single();

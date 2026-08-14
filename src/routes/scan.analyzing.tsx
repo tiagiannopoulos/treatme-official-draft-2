@@ -78,6 +78,7 @@ function AnalyzingPage() {
         result,
         photoQuality: analysis.photoQuality,
         medicalFlag: analysis.medicalFlag,
+        analysis,
       });
 
       setScanId(scanId);

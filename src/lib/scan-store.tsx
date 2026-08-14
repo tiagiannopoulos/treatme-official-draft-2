@@ -36,6 +36,7 @@ type ScanContextValue = ScanState & {
     recommendations: Recommendation[],
     goalRecommendations?: Recommendation[],
   ) => void;
+  hydrate: (partial: Partial<ScanState>) => void;
   reset: () => void;
 };
 
@@ -136,6 +137,10 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const hydrate = useCallback((partial: Partial<ScanState>) => {
+    setState((prev) => ({ ...prev, ...partial }));
+  }, []);
+
   const reset = useCallback(() => {
     setState(EMPTY);
     if (typeof window !== "undefined") sessionStorage.removeItem(STORAGE_KEY);
@@ -143,7 +148,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, reset }}
+      value={{ ...state, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
     >
       {children}
     </ScanContext.Provider>
