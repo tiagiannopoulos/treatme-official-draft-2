@@ -162,7 +162,9 @@ function ResultsPage() {
                 className="shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
               >
                 <div className="relative aspect-[4/5] bg-ink/5">
-                  <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+                  {photoDataUrl && (
+                    <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
                   {row.score >= 90 ? (
                     <span
                       className="absolute inset-x-3 bottom-3 rounded-full px-3 py-2 text-[12px] font-semibold text-center lowercase"

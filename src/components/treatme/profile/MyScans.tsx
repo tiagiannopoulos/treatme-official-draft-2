@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { PillButton } from "@/components/treatme/PillButton";
@@ -60,19 +60,24 @@ export function MyScans() {
       ) : (
         <div className="mt-3 flex flex-col gap-2">
           {scans.map((s) => (
-            <div
+            <Link
               key={s.id}
-              className="flex items-center justify-between rounded-[16px] border border-line bg-white px-4 py-3"
+              to="/scan/results"
+              search={{ id: s.id }}
+              className="flex items-center justify-between gap-3 rounded-[16px] border border-line bg-white px-4 py-3"
             >
-              <div>
+              <div className="min-w-0">
                 <p className="text-[14px] lowercase">{shortDate(s.created_at)}</p>
                 <p className="text-[12px] lowercase text-ink/55">
                   {bandWord(s.overall_score)}
                   {s.skin_type ? ` · ${s.skin_type.toLowerCase()}` : ""}
                 </p>
               </div>
-              <span className="text-[18px] font-semibold">{s.overall_score ?? "—"}</span>
-            </div>
+              <span className="flex shrink-0 items-center gap-1">
+                <span className="text-[18px] font-semibold">{s.overall_score ?? "—"}</span>
+                <ChevronRight className="size-4 text-ink/40" strokeWidth={2} />
+              </span>
+            </Link>
           ))}
         </div>
       )}
