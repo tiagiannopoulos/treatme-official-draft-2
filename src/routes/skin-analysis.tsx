@@ -1,25 +1,54 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, ArrowRight } from "lucide-react";
 import { PillButton } from "@/components/treatme/PillButton";
-import { SCAN_CONCERN_KEYS, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { CONCERN_GROUPS, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+
+const FAQ = [
+  {
+    q: "what does a skin analysis measure?",
+    a: "a skin analysis scores the visible state of your skin across concerns like pores, texture, pigmentation, fine lines, volume loss, hydration and the eye area. treatme maps 16 indicators onto a single photo.",
+  },
+  {
+    q: "how accurate is skin analysis?",
+    a: "accuracy depends on lighting, camera, angle and skin tone. phone-based scans give a useful estimate, not a clinical measurement. tools with published validation studies are more trustworthy than tools without.",
+  },
+  {
+    q: "do skin analysis machines work?",
+    a: "yes, within limits. in-clinic imaging uses controlled lighting, a fixed distance and multiple light spectra including uv to see below the surface. a phone camera reads the surface only.",
+  },
+  {
+    q: "is treatme as good as visia?",
+    a: "no. visia is the better instrument. it uses controlled lighting and uv imaging to detect sub-surface pigment that a phone cannot. treatme is free, instant and good for deciding what to ask a provider about.",
+  },
+  {
+    q: "how do i do a skin analysis at home?",
+    a: "stand in natural daylight facing a window, remove makeup, tie hair back, hold the phone at eye level, and do not use a filter.",
+  },
+  {
+    q: "can a skin analysis detect skin cancer?",
+    a: "no. a skin analysis cannot detect skin cancer, diagnose a rash or see below the surface. see a physician for anything medical.",
+  },
+];
 
 export const Route = createFileRoute("/skin-analysis")({
   head: () => ({
     meta: [
-      { title: "free ai skin analysis — 16 concerns scored | treatme" },
+      {
+        title: "skin analysis: what it measures and how accurate it is | treatme",
+      },
       {
         name: "description",
         content:
-          "what a skin analysis actually checks, how accurate phone-based ai scans are, and how treatme scores 16 concerns out of 100 from one photo. free, no card needed.",
+          "what a skin analysis actually measures, how accurate face scanning is, how it compares to visia in a clinic, and how to get one free.",
       },
       {
         property: "og:title",
-        content: "free ai skin analysis — 16 concerns scored | treatme",
+        content: "skin analysis: what it measures and how accurate it is | treatme",
       },
       {
         property: "og:description",
         content:
-          "what a skin analysis actually checks, how accurate phone-based ai scans are, and how treatme scores 16 concerns out of 100 from one photo. free, no card needed.",
+          "what a skin analysis actually measures, how accurate face scanning is, how it compares to visia in a clinic, and how to get one free.",
       },
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
@@ -31,56 +60,11 @@ export const Route = createFileRoute("/skin-analysis")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          mainEntity: [
-            {
-              "@type": "Question",
-              name: "What is a skin analysis?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "A skin analysis looks at your face and scores each concern — hydration, pores, fine lines, wrinkles, pigmentation, texture, redness and more — so you can see what is actually going on and which treatments change it. treatme scores 16 concerns out of 100 from one photo.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Are skin analysis accurate?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "treatme's analysis is an estimate, not a diagnosis. it is built to surface the right concerns and match them to the right treatments, not to replace a dermatologist. for anything that looks unusual or changes quickly, see a clinician in person.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "Do skin analysis machines work?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "In-clinic machines like visia use controlled lighting and multi-spectral imaging for high precision. treatme uses your phone camera plus ai vision models, which is fast and free but less controlled. the trade-off is convenience — good enough to point you at the right treatments, not a clinical-grade read.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "What is visia skin analysis?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "visia is an in-clinic imaging system that photographs your skin under uv, polarised and plain light to map wrinkles, pores, uv spots, brown spots, redness and texture. treatme covers the same concern areas from a single phone photo, free and instant, with a visia-style overlay you can tap on your face.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "How to do a skin analysis?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Take one straight-on photo in good, even light with no makeup and hair pulled back. treatme's ai maps your face, scores 16 concerns out of 100 and shows each one on your photo with the treatments that change it.",
-              },
-            },
-            {
-              "@type": "Question",
-              name: "How often should a skin analysis be performed?",
-              acceptedAnswer: {
-                "@type": "Answer",
-                text: "Every 4 to 6 weeks is enough to track changes from a new routine or treatment. seasons change your skin, so re-scan when the weather shifts or after a treatment cycle to see what moved.",
-              },
-            },
-          ],
+          mainEntity: FAQ.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
         }),
       },
     ],
@@ -88,55 +72,50 @@ export const Route = createFileRoute("/skin-analysis")({
   component: SkinAnalysisPage,
 });
 
-const FAQ = [
+const COMPARE_ROWS: {
+  label: string;
+  visia: string;
+  treatme: string;
+}[] = [
   {
-    q: "what is a skin analysis",
-    body: [
-      "a skin analysis looks at your face and scores each concern — hydration, pores, fine lines, wrinkles, pigmentation, texture, redness and more — so you can see what is actually going on and which treatments change it.",
-      "treatme scores 16 concerns out of 100 from one photo, then maps each one onto your face so you know exactly where it lives.",
-    ],
+    label: "lighting",
+    visia: "controlled, calibrated booth",
+    treatme: "your phone in daylight",
   },
   {
-    q: "are skin analysis accurate",
-    body: [
-      "treatme's analysis is an estimate, not a diagnosis. it is built to surface the right concerns and match them to the right treatments, not to replace a dermatologist.",
-      "the scores are useful for direction — which concern to focus on first, which treatments to look at — not for a clinical verdict. if anything looks unusual or changes quickly, see a clinician in person.",
-    ],
+    label: "distance",
+    visia: "fixed chin and forehead rest",
+    treatme: "you hold it at arm's length",
   },
   {
-    q: "do skin analysis machines work",
-    body: [
-      "in-clinic machines like visia use controlled lighting and multi-spectral imaging for high precision. treatme uses your phone camera plus ai vision models, which is fast and free but less controlled.",
-      "the trade-off is convenience: good enough to point you at the right treatments, not a clinical-grade read. think of it as triage before you book, not the appointment itself.",
-    ],
+    label: "what it sees",
+    visia: "surface + sub-surface pigment via uv",
+    treatme: "surface only",
   },
   {
-    q: "what is visia skin analysis",
-    body: [
-      "visia is an in-clinic imaging system that photographs your skin under uv, polarised and plain light to map wrinkles, pores, uv spots, brown spots, redness and texture.",
-      "treatme covers the same concern areas from a single phone photo — free and instant — with an overlay you can tap to see where each marker sits on your face. it is not a visia replacement, but it answers the same question: what is going on with my skin.",
-    ],
+    label: "spectra",
+    visia: "cross-polarized, parallel-polarized, uv",
+    treatme: "one visible-light photo",
   },
   {
-    q: "how to do a skin analysis",
-    body: [
-      "take one straight-on photo in good, even light with no makeup and hair pulled back. treatme's ai maps your face, scores 16 concerns out of 100, and shows each one on your photo with the treatments that change it.",
-      "the whole thing takes about a minute. no card, no upload to a public profile — your photo stays yours and you can delete it anytime.",
-    ],
+    label: "cost",
+    visia: "paid, usually with a consult",
+    treatme: "free",
   },
   {
-    q: "how often should a skin analysis be performed",
-    body: [
-      "every 4 to 6 weeks is enough to track changes from a new routine or treatment. seasons change your skin, so re-scan when the weather shifts or after a treatment cycle to see what moved.",
-      "your past scans stay in your profile, so you can compare side by side instead of guessing whether the retinol is doing anything.",
-    ],
+    label: "how fast",
+    visia: "book an appointment",
+    treatme: "instant, on your phone",
+  },
+  {
+    label: "best for",
+    visia: "clinical baseline and tracking",
+    treatme: "deciding what to ask a provider about",
   },
 ];
 
 function SkinAnalysisPage() {
   const router = useRouter();
-  const concernCount = SCAN_CONCERN_KEYS.length;
-  const sampleConcerns = SCAN_CONCERN_KEYS.slice(0, 8).map((k) => SCAN_CONCERN_LABEL[k]);
 
   return (
     <div className="px-6 pt-6 pb-20">
@@ -149,95 +128,159 @@ function SkinAnalysisPage() {
       </button>
 
       <h1 className="brand-display text-[34px] mt-5 lowercase">
-        free ai skin analysis<span className="text-bubblegum">.</span>
+        skin analysis<span className="text-bubblegum">.</span>
       </h1>
-      <p className="mt-3 text-[15px] leading-relaxed text-ink-soft max-w-[52ch]">
-        a skin analysis is the step most people skip — looking at your own face
-        and scoring what is actually there. treatme maps {concernCount} concerns
-        onto your photo from a single shot, so you stop guessing and start with
-        the right treatments.
-      </p>
 
-      <div className="mt-6">
-        <Link to="/scan">
-          <PillButton icon={<ArrowRight className="size-4" />}>
-            scan my skin
-          </PillButton>
-        </Link>
-      </div>
+      <p className="mt-3 text-[15px] leading-relaxed text-ink-soft max-w-[52ch]">
+        a skin analysis looks at your face and scores what is actually there —
+        pores, lines, pigment, hydration — so you stop guessing and start with
+        the right treatment. treatme reads 16 indicators from one photo and
+        maps each one onto your face.
+      </p>
 
       <section className="mt-10">
         <h2 className="brand-display text-[22px] lowercase">
-          what treatme checks
+          what a skin analysis measures
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
-          one photo, scored across {concernCount} concerns in four groups:
-          texture and clarity (pores, breakouts, texture, oiliness), tone and
-          pigment (redness, pigmentation, uniformness, radiance), aging and
-          structure (lines, firmness, volume loss, hydration), and the eye area
-          (dark circles, puffiness, tear trough, eyelid heaviness). each gets a
-          number out of 100 and a spot on your face.
+          face analysis, face mapping and face scanning all describe the same
+          idea: reading the skin and turning what you see into numbers. treatme
+          scores 16 indicators in four groups.
         </p>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          {sampleConcerns.map((label) => (
-            <span
-              key={label}
-              className="pill bg-bubblegum/30 text-ink text-[12px] font-semibold lowercase px-3 py-2 text-center"
-            >
-              {label.toLowerCase()}
-            </span>
+        <div className="mt-5 space-y-5">
+          {CONCERN_GROUPS.map((group) => (
+            <div key={group.key}>
+              <h3 className="text-[14px] font-bold lowercase text-ink">
+                {group.label}
+              </h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {group.concerns.map((key) => (
+                  <span
+                    key={key}
+                    className="pill bg-bubblegum/30 text-ink text-[12px] font-semibold lowercase px-3 py-1.5"
+                  >
+                    {SCAN_CONCERN_LABEL[key]}
+                  </span>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </section>
 
       <section className="mt-12">
         <h2 className="brand-display text-[22px] lowercase">
-          is it accurate, and is it a diagnosis
+          how accurate is skin analysis
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
-          this is an estimate, not a diagnosis. the scores point you toward the
-          right concerns and treatments — they are not a clinical verdict. for
-          anything that looks unusual or changes fast, see a clinician.
+          be honest with yourself about this. the score is only as good as the
+          photo it came from. lighting changes what pigmentation and redness
+          look like; the camera and its autofocus shift texture readings; the
+          angle you hold the phone at moves where lines and volume sit; and
+          darker skin tones are under-represented in the training data behind
+          most tools, so their scores are less reliable. a tool that publishes
+          validation studies — comparisons against clinician assessment or
+          in-clinic imaging — is more trustworthy than one that does not.
+          treatme does not claim an accuracy percentage. it is an estimate that
+          points you toward the right concerns, not a clinical measurement.
         </p>
       </section>
-
-      {FAQ.map((item) => (
-        <section key={item.q} className="mt-10">
-          <h2 className="brand-display text-[22px] lowercase">{item.q}</h2>
-          <div className="mt-2 space-y-2.5">
-            {item.body.map((p, i) => (
-              <p
-                key={i}
-                className="text-[14px] leading-relaxed text-ink-mute max-w-[52ch]"
-              >
-                {p}
-              </p>
-            ))}
-          </div>
-        </section>
-      ))}
 
       <section className="mt-12">
         <h2 className="brand-display text-[22px] lowercase">
-          ready to see your skin
+          do skin analysis machines work
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
-          one photo, {concernCount} concerns scored, and the treatments that
-          change them — mapped to clinics in toronto. free, no card needed.
+          yes, within limits. an in-clinic imaging device does several things a
+          phone camera cannot. it holds the lighting constant, fixes the
+          distance with a chin and forehead rest, and shoots under multiple
+          light spectra — including uv — so it can see pigment sitting beneath
+          the surface that is invisible in daylight. that controlled setup is
+          why a clinic scan is the gold standard for a baseline. a phone reads
+          the surface only, which is enough to decide what is worth asking a
+          provider about but not enough to measure sub-surface change.
         </p>
-        <div className="mt-5">
-          <Link to="/scan">
-            <PillButton fullWidth icon={<ArrowRight className="size-4" />}>
-              start my skin analysis
-            </PillButton>
-          </Link>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="brand-display text-[22px] lowercase">
+          app vs in-clinic imaging like visia
+        </h2>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
+          visia is the better instrument, and saying so is what makes the rest of
+          this page credible. it uses controlled lighting, uv imaging and
+          cross-polarization to map sub-surface pigment a phone cannot reach.
+          treatme trades that depth for something else: it is instant, free and
+          good enough to figure out what to bring to a provider.
+        </p>
+        <div className="mt-4 overflow-hidden rounded-2xl border border-ink/10">
+          <table className="w-full text-left text-[13px]">
+            <thead>
+              <tr className="bg-ink/5 lowercase">
+                <th className="px-4 py-2.5 font-bold text-ink">visia (clinic)</th>
+                <th className="px-4 py-2.5 font-bold text-ink">treatme (phone)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE_ROWS.map((row, i) => (
+                <tr
+                  key={row.label}
+                  className={i % 2 === 1 ? "bg-ink/[0.03]" : ""}
+                >
+                  <td className="px-4 py-3 align-top">
+                    <span className="block text-[11px] font-bold uppercase tracking-wide text-ink-mute">
+                      {row.label}
+                    </span>
+                    <span className="mt-0.5 block lowercase text-ink">
+                      {row.visia}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 align-top lowercase text-ink">
+                    {row.treatme}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <p className="mt-10 text-[11px] leading-relaxed text-ink/45 max-w-[52ch]">
-        this is an estimate, not a diagnosis. treatme does not provide medical
-        advice. always consult a qualified clinician for concerns about your
-        skin.
+      <section className="mt-12">
+        <h2 className="brand-display text-[22px] lowercase">
+          how to do a skin analysis at home
+        </h2>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
+          the photo is the whole scan, so take it well. stand in natural daylight
+          facing a window — not overhead bulbs, not a lamp to one side. remove
+          makeup, tie hair back off your forehead, and hold the phone at eye
+          level with your face straight on. do not use a filter. a clear,
+          evenly lit photo reads far better than a flattering one.
+        </p>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="brand-display text-[22px] lowercase">
+          what it can't tell you
+        </h2>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
+          a skin analysis cannot detect skin cancer. it cannot diagnose a rash
+          or any skin condition, and it cannot see below the surface. the scores
+          describe visible texture, tone and structure — nothing more. if
+          anything looks unusual, grows, bleeds or changes fast, stop reading
+          this page and see a physician.
+        </p>
+      </section>
+
+      <div className="mt-12">
+        <Link to="/scan">
+          <PillButton icon={<ArrowRight className="size-4" />}>
+            scan your skin free
+          </PillButton>
+        </Link>
+      </div>
+
+      <p className="mt-6 text-[12px] lowercase text-ink-mute max-w-[52ch]">
+        this is an estimate, not a diagnosis.
       </p>
     </div>
   );
