@@ -94,7 +94,7 @@ function ProfilePage() {
       <MyScans />
       <TreatmentJourney />
       <UpcomingAppointments />
-      <SavedTreatments />
+      <SavedTreatments limit={3} />
       <TxLog />
       <AboutYourSkin />
       <DangerZone />
