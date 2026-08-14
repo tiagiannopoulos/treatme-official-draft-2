@@ -12,7 +12,7 @@ import { saveMyProfile } from "@/lib/profile";
 
 type Mode = "signup" | "login" | "forgot" | "confirm" | "setup";
 
-const CREAM = "#FCFBF7";
+
 const INK = "#111111";
 
 function Field({
