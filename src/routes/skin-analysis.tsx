@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ChevronLeft, ArrowRight } from "lucide-react";
 import { PillButton } from "@/components/treatme/PillButton";
-import { CONCERNS } from "@/lib/scan-concerns";
+import { SCAN_CONCERN_KEYS, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 
 export const Route = createFileRoute("/skin-analysis")({
   head: () => ({
@@ -135,7 +135,8 @@ const FAQ = [
 
 function SkinAnalysisPage() {
   const router = useRouter();
-  const concernCount = CONCERNS.length;
+  const concernCount = SCAN_CONCERN_KEYS.length;
+  const sampleConcerns = SCAN_CONCERN_KEYS.slice(0, 8).map((k) => SCAN_CONCERN_LABEL[k]);
 
   return (
     <div className="px-6 pt-6 pb-20">
