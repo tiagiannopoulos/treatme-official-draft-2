@@ -9,7 +9,10 @@ interface OpenOptions {
   reason?: string;
   /** runs once the user is signed in and set up. */
   onDone?: () => void;
+  /** runs when the sheet closes without finishing. */
+  onDismiss?: () => void;
 }
+
 
 interface AuthState {
   user: User | null;
