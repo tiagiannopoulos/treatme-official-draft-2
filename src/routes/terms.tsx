@@ -28,9 +28,10 @@ function TermsPage() {
       >
         <ChevronLeft className="size-4" /> back
       </button>
-      <h1 className="brand-display text-[32px] mt-4">
-        terms<span className="text-hot">.</span>
-      </h1>
+      <h1 className="brand-display text-[32px] mt-4 lowercase">terms of service</h1>
+      <p className="mt-1.5 text-[12px] uppercase tracking-[0.12em] text-ink/45">
+        treatme technologies inc. · last updated: 12 august 2026
+      </p>
       <Markdown source={TERMS_MD} className="mt-5" />
     </div>
   );

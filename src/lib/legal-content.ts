@@ -106,25 +106,82 @@ if we change this policy in a way that affects how we handle your biometric info
 if you are not satisfied with how we handled your information, you can contact us at privacy@treatme.app.
 `;
 
-export const TERMS_MD = `alpha version. plain words, no fine print.
+export const TERMS_MD = `**working draft, not legal advice.** have a canadian lawyer review before launch. the medical disclaimer and liability sections are the ones that matter most for a platform connecting patients to aesthetic providers.
 
-## this isn't medical advice
+## 1. what treatme is
 
-a treatme scan is an estimate from a photo. it doesn't diagnose anything. see a doctor for anything that concerns you.
+treatme is a marketplace. we help you discover aesthetic treatments, understand your skin, find providers and clinics, and request a consultation.
 
-## you must be 18 or older
+**treatme does not provide medical or cosmetic treatment.** we are not a clinic. we do not employ the providers listed on the platform. any treatment you receive is provided by an independent clinic or practitioner, under their own professional judgment, their own licence, and their own insurance.
 
-treatme is for adults. by using it you confirm you're 18 or older.
+## 2. who can use it
 
-## your photo, your call
+you must be 18 or older and able to enter a contract. one account per person. keep your login details to yourself.
 
-you decide whether we save your photo, and you can delete it and the scan built from it whenever you like.
+## 3. the skin analysis
 
-## bookings
+**it is an estimate, not a diagnosis.** the skin analysis uses an artificial intelligence model to estimate visible skin characteristics from a photograph. it has not been clinically validated. it may be wrong. it can be affected by lighting, camera quality, angle, makeup and skin tone.
 
-treatme passes your request to the clinic. the clinic confirms the time and performs the treatment, and their own policies apply.
+**it is not medical advice.** do not use it to decide whether something on your skin is dangerous. if you have a mole that has changed, a lesion that will not heal, pain, a rash, or any concern about your health, see a physician or dermatologist. the analysis will not detect skin cancer and is not designed to.
 
-## alpha
+**treatment recommendations are suggestions.** they indicate what a treatment is commonly used for. they are not a prescription, and they do not mean a treatment is appropriate or safe for you. only a qualified provider who examines you in person can determine that.
 
-treatme is early. things will change, and we'll tell you when something meaningful does.
+## 4. providers, clinics and reviews
+
+**listings.** some clinic and provider profiles are created by treatme from publicly available information before that business has joined the platform. we work to keep them accurate but we do not guarantee that pricing, services, hours or credentials are current. verify with the clinic.
+
+**we do not vet clinical competence.** a listing on treatme is not an endorsement, a certification, or a statement that a provider is qualified for your particular case. check credentials and licensing yourself. in ontario, you can verify a practitioner through their regulatory college.
+
+**reviews.** reviews on treatme are tied to a specific provider and a specific treatment, and are shown once a provider has enough of them. we may remove reviews that are fraudulent, defamatory, or that disclose someone else's personal or health information. we do not remove a review because a provider dislikes it.
+
+**your content.** if you post a review, before-and-after photographs or other content, you keep ownership of it and you grant treatme a licence to display it in the app and website. do not post someone else's photograph or medical information.
+
+## 5. booking requests
+
+when you submit a booking request, you are asking for an appointment. **you are not booked until the clinic confirms.** treatme passes your request and your contact details to the clinic you selected.
+
+the appointment itself, including price, what is performed, cancellation terms, deposits and aftercare, is an agreement between you and that clinic. treatme is not a party to it.
+
+if a clinic cancels, does not respond, or the treatment does not go as you hoped, that is a matter between you and the clinic. we will help where we reasonably can, but we cannot resolve it for you.
+
+## 6. payment
+
+patients do not pay treatme to use the app. where treatme processes a payment or deposit on a clinic's behalf, it is handled by a third-party payment processor and the clinic's own refund and cancellation terms apply.
+
+## 7. what you agree not to do
+
+- upload a photograph of anyone other than yourself
+- create an account for someone else, or impersonate a provider or clinic
+- post false reviews, or reviews for treatments you did not receive
+- scrape, copy or resell treatme's listings, pricing or content
+- attempt to access another user's account, scans or data
+- use treatme to diagnose or treat a medical condition
+
+## 8. our liability
+
+treatme is provided as-is. to the fullest extent permitted by law:
+
+- we are not liable for any injury, adverse outcome, dissatisfaction or cost arising from a treatment performed by a provider or clinic found through treatme
+- we are not liable for decisions you make based on the skin analysis
+- we are not liable for the accuracy of clinic or provider information, pricing, or availability
+- our total liability to you for any claim relating to treatme is limited to the amount you have paid treatme, which for patients is zero
+
+nothing here limits liability that cannot be limited by law, including for fraud or for death or personal injury caused by our negligence.
+
+## 9. your account
+
+you can delete your account any time from your profile. we can suspend or close an account that breaches these terms, posts fraudulent reviews, or puts other users at risk.
+
+## 10. changes
+
+we may update these terms. if a change materially affects your rights we will notify you in the app before it takes effect. continuing to use treatme after that means you accept the change.
+
+## 11. governing law
+
+these terms are governed by the laws of the province of ontario and the federal laws of canada applicable in it. disputes go to the courts of ontario.
+
+## 12. contact
+
+hello@treatme.app
+treatme technologies inc., ontario, canada
 `;
