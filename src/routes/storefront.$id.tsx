@@ -30,7 +30,7 @@ export const Route = createFileRoute("/storefront/$id")({
   }) => {
     const clinic = loaderData?.clinic;
     const where = clinic
-      ? [clinic.neighbourhood, clinic.city].filter(Boolean).join(", ").toLowerCase()
+      ? [...new Set([clinic.neighbourhood, clinic.city].filter(Boolean).map((v) => v!.toLowerCase()))].join(", ")
       : "";
     const title = clinic ? `${clinic.name.toLowerCase()}${where ? ` · ${where}` : ""} · treatme` : "clinic · treatme";
     const description = clinic
