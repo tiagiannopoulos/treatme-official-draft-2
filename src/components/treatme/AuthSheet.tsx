@@ -148,7 +148,6 @@ export function AuthSheet({
                   : mode === "confirm"
                     ? "check your email"
                     : "save your results"}
-              <span className="text-hot">.</span>
             </h2>
             <p className="mt-2 text-[13px] lowercase leading-relaxed text-ink/60">
               {mode === "setup"
