@@ -1059,6 +1059,7 @@ export type Database = {
       }
       scans: {
         Row: {
+          analysis: Json | null
           created_at: string
           engine: string
           id: string
@@ -1067,6 +1068,7 @@ export type Database = {
           overall_score: number | null
           photo_path: string | null
           photo_quality: string | null
+          result: Json | null
           skin_tone: string | null
           skin_type: string | null
           status: string
@@ -1074,6 +1076,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          analysis?: Json | null
           created_at?: string
           engine?: string
           id?: string
@@ -1082,6 +1085,7 @@ export type Database = {
           overall_score?: number | null
           photo_path?: string | null
           photo_quality?: string | null
+          result?: Json | null
           skin_tone?: string | null
           skin_type?: string | null
           status?: string
@@ -1089,6 +1093,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          analysis?: Json | null
           created_at?: string
           engine?: string
           id?: string
@@ -1097,6 +1102,7 @@ export type Database = {
           overall_score?: number | null
           photo_path?: string | null
           photo_quality?: string | null
+          result?: Json | null
           skin_tone?: string | null
           skin_type?: string | null
           status?: string
