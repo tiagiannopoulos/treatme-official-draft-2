@@ -11,10 +11,10 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/scan/")({
   head: () => ({
     meta: [
-      { title: "before we scan · treatme" },
-      { name: "description", content: "what we do with your photo, in plain words, before the camera opens." },
-      { property: "og:title", content: "before we scan · treatme" },
-      { property: "og:description", content: "what we do with your photo, in plain words, before the camera opens." },
+      { title: "free ai skin & face analysis — 16 concerns scored | treatme" },
+      { name: "description", content: "upload one photo and get 16 skin concerns scored out of 100, plus the treatments that change them and where to book in toronto. free, no card needed." },
+      { property: "og:title", content: "free ai skin & face analysis — 16 concerns scored | treatme" },
+      { property: "og:description", content: "upload one photo and get 16 skin concerns scored out of 100, plus the treatments that change them and where to book in toronto. free, no card needed." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
