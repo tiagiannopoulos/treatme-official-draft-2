@@ -167,6 +167,15 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           ))}
         </div>
 
+        <SaveTreatmentButton
+          slug={slug}
+          name={source?.name}
+          className="absolute left-4 z-40 size-10"
+          bg={darker(bg, 12)}
+          onPause={() => setAuthPaused(true)}
+          onResume={() => setAuthPaused(false)}
+        />
+
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
@@ -182,6 +191,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
         >
           <X className="size-5" strokeWidth={2} />
         </button>
+
 
         {isLoading && <span className="sr-only">loading story</span>}
         {!isLoading && !source && (
