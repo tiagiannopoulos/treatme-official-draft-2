@@ -35,7 +35,14 @@ const savedPricesQuery = queryOptions({
   staleTime: 5 * 60_000,
 });
 
-export function SavedTreatments() {
+export function SavedTreatments({
+  limit,
+  hideHeading = false,
+}: {
+  /** cap the rows shown, with a link out to the full list */
+  limit?: number;
+  hideHeading?: boolean;
+} = {}) {
   const navigate = useNavigate();
   const { saved } = usePatient();
   const { data: all = [] } = useQuery(savedPricesQuery);
@@ -52,14 +59,19 @@ export function SavedTreatments() {
     });
   }
 
+  const visible = limit ? rows.slice(0, limit) : rows;
+  const hidden = rows.length - visible.length;
+
   return (
-    <section className="mt-8">
-      <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
-        saved
-      </h2>
+    <section className={hideHeading ? "" : "mt-8"}>
+      {!hideHeading && (
+        <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
+          saved
+        </h2>
+      )}
 
       <div
-        className="mt-3 overflow-hidden rounded-[18px] border"
+        className={`overflow-hidden rounded-[18px] border ${hideHeading ? "" : "mt-3"}`}
         style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
       >
         {rows.length === 0 ? (
@@ -80,7 +92,7 @@ export function SavedTreatments() {
           </div>
         ) : (
           <ul>
-            {rows.map(({ saved: entry, treatment }) => (
+            {visible.map(({ saved: entry, treatment }) => (
               <SavedRowItem
                 key={entry.slug}
                 name={treatment.name}
@@ -92,6 +104,25 @@ export function SavedTreatments() {
           </ul>
         )}
       </div>
+
+      {hidden > 0 && (
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/saved" })}
+          className="mt-3 flex w-full items-center justify-between rounded-[18px] border px-4 py-3.5 text-left"
+          style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
+        >
+          <span className="text-[14px] font-semibold lowercase" style={{ color: INK }}>
+            view all saved treatments
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.55)" }}>
+              {rows.length}
+            </span>
+            <ChevronRight className="size-5" style={{ color: "rgba(17,17,17,0.4)" }} />
+          </span>
+        </button>
+      )}
     </section>
   );
 }
