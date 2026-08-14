@@ -172,19 +172,19 @@ function SkinAnalysisPage() {
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-mute max-w-[52ch]">
           one photo, scored across {concernCount} concerns in four groups:
-          texture (pores, fine lines, wrinkles, texture), tone (pigmentation,
-          dark spots, redness, evenness), volume (volume loss, under-eye,
-          nasolabial folds, marionette lines), and moisture (hydration, oil
-          balance, barrier, skin age). each gets a number out of 100 and a spot
-          on your face.
+          texture and clarity (pores, breakouts, texture, oiliness), tone and
+          pigment (redness, pigmentation, uniformness, radiance), aging and
+          structure (lines, firmness, volume loss, hydration), and the eye area
+          (dark circles, puffiness, tear trough, eyelid heaviness). each gets a
+          number out of 100 and a spot on your face.
         </p>
         <div className="mt-4 grid grid-cols-2 gap-2">
-          {CONCERNS.slice(0, 8).map((c) => (
+          {sampleConcerns.map((label) => (
             <span
-              key={c.key}
+              key={label}
               className="pill bg-bubblegum/30 text-ink text-[12px] font-semibold lowercase px-3 py-2 text-center"
             >
-              {c.label.toLowerCase()}
+              {label.toLowerCase()}
             </span>
           ))}
         </div>
