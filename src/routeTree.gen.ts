@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SkinAnalysisRouteImport } from './routes/skin-analysis'
+import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -51,6 +52,11 @@ const TermsRoute = TermsRouteImport.update({
 const SkinAnalysisRoute = SkinAnalysisRouteImport.update({
   id: '/skin-analysis',
   path: '/skin-analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -214,6 +220,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saved': typeof SavedRoute
   '/skin-analysis': typeof SkinAnalysisRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saved': typeof SavedRoute
   '/skin-analysis': typeof SkinAnalysisRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/saved': typeof SavedRoute
   '/skin-analysis': typeof SkinAnalysisRoute
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
@@ -322,6 +331,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/reset-password'
+    | '/saved'
     | '/skin-analysis'
     | '/terms'
     | '/api/chat'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/reset-password'
+    | '/saved'
     | '/skin-analysis'
     | '/terms'
     | '/api/chat'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/profile'
     | '/reset-password'
+    | '/saved'
     | '/skin-analysis'
     | '/terms'
     | '/api/chat'
@@ -428,6 +440,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SavedRoute: typeof SavedRoute
   SkinAnalysisRoute: typeof SkinAnalysisRoute
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       path: '/skin-analysis'
       fullPath: '/skin-analysis'
       preLoaderRoute: typeof SkinAnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -700,6 +720,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SavedRoute: SavedRoute,
   SkinAnalysisRoute: SkinAnalysisRoute,
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
