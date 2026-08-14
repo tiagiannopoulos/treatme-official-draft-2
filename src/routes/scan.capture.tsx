@@ -180,6 +180,7 @@ function CapturePage() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-3.5rem-5.5rem)] px-4 py-4">
+      <h1 className="px-2 pb-3 brand-display text-[22px] lowercase">line up your face</h1>
       <div className="relative flex-1 rounded-3xl overflow-hidden bg-ink">
         {still ? (
           <img src={still} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />

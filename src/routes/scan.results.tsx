@@ -115,8 +115,8 @@ function ResultsPage() {
   return (
     <div className="pt-4 pb-40">
       {/* header */}
-      <div className="px-6 flex items-center justify-end gap-3">
-        <h1 className="sr-only">analysis results</h1>
+      <div className="px-6 flex items-center justify-between gap-3">
+        <h1 className="brand-display text-[26px] lowercase">analysis results</h1>
         <button
           type="button"
           onClick={() => navigate({ to: "/scan/capture" })}
@@ -162,7 +162,7 @@ function ResultsPage() {
               >
                 <div className="relative aspect-[4/5] bg-ink/5">
                   {photoDataUrl && (
-                    <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={photoDataUrl} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
                   )}
                   {row.score >= 90 ? (
                     <span

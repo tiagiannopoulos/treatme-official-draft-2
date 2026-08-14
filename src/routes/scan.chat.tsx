@@ -38,7 +38,7 @@ function ChatFallback() {
         <Link to="/scan/results" className="inline-flex items-center gap-1 text-[13px] font-semibold lowercase text-ink-mute">
           <ArrowLeft className="size-4" /> back to results
         </Link>
-        <span className="brand-eyebrow">chat with treatme</span>
+        <h1 className="brand-eyebrow">consult</h1>
       </div>
 
       <div className="flex-1 px-6 py-8">

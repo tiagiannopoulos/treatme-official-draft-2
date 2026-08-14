@@ -67,7 +67,7 @@ export function ScanChatClient({ treatmentSlug }: { treatmentSlug?: string } = {
         <Link to="/scan/results" className="inline-flex items-center gap-1 text-[13px] font-semibold lowercase text-ink-mute">
           <ArrowLeft className="size-4" /> back to results
         </Link>
-        <span className="brand-eyebrow">chat with treatme</span>
+        <h1 className="brand-eyebrow">chat with treatme</h1>
       </div>
 
       <Conversation className="flex-1">

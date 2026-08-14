@@ -19,13 +19,14 @@ const tabs: Tab[] = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-line/70 pb-[env(safe-area-inset-bottom)]">
+    <nav aria-label="main" className="fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-line/70 pb-[env(safe-area-inset-bottom)]">
       <ul className="grid grid-cols-5 px-2 pt-2 pb-2">
         {tabs.map((tab) => (
           <li key={tab.to} className="flex justify-center">
             <Link
               to={tab.to}
-              className="group flex flex-col items-center gap-1 px-3 py-1 rounded-xl"
+              aria-label={tab.label}
+              className="group flex flex-col items-center gap-1 px-3 py-1 rounded-xl min-h-11"
               activeOptions={{ exact: tab.to === "/" }}
             >
               {({ isActive }) => (
