@@ -77,7 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <AuthSheet
         open={open}
         reason={options.reason}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          const dismissed = options.onDismiss;
+          setOptions({});
+          dismissed?.();
+        }}
+
         onDone={() => {
           setOpen(false);
           const done = options.onDone;
