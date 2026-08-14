@@ -10,6 +10,8 @@ import { useScanPhoto } from "@/lib/scan-photo";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
 import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
+import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+
 
 export const Route = createFileRoute("/scan/results")({
   head: () => ({
