@@ -9,7 +9,10 @@ interface OpenOptions {
   reason?: string;
   /** runs once the user is signed in and set up. */
   onDone?: () => void;
+  /** runs when the sheet closes without finishing. */
+  onDismiss?: () => void;
 }
+
 
 interface AuthState {
   user: User | null;
@@ -74,7 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       <AuthSheet
         open={open}
         reason={options.reason}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+          const dismissed = options.onDismiss;
+          setOptions({});
+          dismissed?.();
+        }}
+
         onDone={() => {
           setOpen(false);
           const done = options.onDone;

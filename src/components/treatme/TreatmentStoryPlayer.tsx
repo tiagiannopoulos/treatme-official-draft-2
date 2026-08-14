@@ -5,6 +5,8 @@ import { Check, Clock, Lock, MessageCircle, Sparkles, User, X } from "lucide-rea
 
 import { realResultsQuery, treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { buildSlides, storySourceQuery, INK, type StorySlide } from "@/lib/treatment-story";
+import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+
 
 const SLIDE_MS = 6000;
 
@@ -24,6 +26,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
   const [index, setIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [held, setHeld] = useState(false);
+  const [authPaused, setAuthPaused] = useState(false);
 
   useEffect(() => {
     setIndex(0);
@@ -35,7 +38,8 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
 
   const slide = slides[index];
   const bg = slide?.bg ?? "#FCFBF7";
-  const paused = held || slides.length === 0;
+  const paused = held || authPaused || slides.length === 0;
+
 
   useEffect(() => {
     if (paused) return;
@@ -167,6 +171,21 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           ))}
         </div>
 
+        <span
+          className="absolute left-4 z-40"
+          style={{ top: "max(26px, calc(env(safe-area-inset-top) + 18px))" }}
+        >
+          <SaveTreatmentButton
+            slug={slug}
+            name={source?.name}
+            className="size-10"
+            bg={darker(bg, 12)}
+            onPause={() => setAuthPaused(true)}
+            onResume={() => setAuthPaused(false)}
+          />
+        </span>
+
+
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
@@ -182,6 +201,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
         >
           <X className="size-5" strokeWidth={2} />
         </button>
+
 
         {isLoading && <span className="sr-only">loading story</span>}
         {!isLoading && !source && (

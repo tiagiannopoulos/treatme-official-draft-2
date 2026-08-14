@@ -10,6 +10,8 @@ import { useScanPhoto } from "@/lib/scan-photo";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
 import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
+import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+
 
 export const Route = createFileRoute("/scan/results")({
   head: () => ({
@@ -165,23 +167,26 @@ function ResultsPage() {
             </p>
           ) : (
             matches.map((m) => (
-              <button
-                key={m.slug}
-                type="button"
-                onClick={() => navigate({ to: "/match/$slug", params: { slug: m.slug } })}
-                className="w-full text-left px-4 py-4 flex items-center gap-3"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-[16px] lowercase leading-tight">{m.name}</p>
-                  <p className="text-[12px] text-ink-mute mt-0.5 lowercase">for {m.concernLabel}</p>
-                </div>
-                {m.priceFrom !== null && (
-                  <p className="text-[13px] font-semibold shrink-0">from ${Math.round(m.priceFrom)}</p>
-                )}
-                <ChevronRight className="size-5 text-ink-mute shrink-0" />
-              </button>
+              <div key={m.slug} className="flex items-center gap-2 pr-3">
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: "/match/$slug", params: { slug: m.slug } })}
+                  className="min-w-0 flex-1 text-left px-4 py-4 flex items-center gap-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-[16px] lowercase leading-tight">{m.name}</p>
+                    <p className="text-[12px] text-ink-mute mt-0.5 lowercase">for {m.concernLabel}</p>
+                  </div>
+                  {m.priceFrom !== null && (
+                    <p className="text-[13px] font-semibold shrink-0">from ${Math.round(m.priceFrom)}</p>
+                  )}
+                  <ChevronRight className="size-5 text-ink-mute shrink-0" />
+                </button>
+                <SaveTreatmentButton slug={m.slug} name={m.name} size={18} className="size-9 shrink-0" />
+              </div>
             ))
           )}
+
         </div>
       </div>
 

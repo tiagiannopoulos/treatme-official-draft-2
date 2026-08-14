@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+
 
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
@@ -350,6 +352,14 @@ function CompactCard({
   const price = t.price_from ?? catalog?.avg_price_low ?? null;
   return (
     <div className="relative flex flex-col rounded-2xl border border-line bg-cream overflow-hidden">
+      <SaveTreatmentButton
+        slug={t.slug}
+        name={t.name}
+        size={16}
+        className="absolute right-2 top-2 z-10 size-8"
+        bg="rgba(252,251,247,0.92)"
+      />
+
       <button
         type="button"
         onClick={() => navigate({ to: "/treatment/$slug/story", params: { slug: t.slug } })}
