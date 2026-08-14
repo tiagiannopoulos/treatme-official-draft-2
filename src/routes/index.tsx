@@ -9,8 +9,8 @@ import { eduStoriesQuery } from "@/lib/education-story";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "treatme — scan your skin, match your treatment" },
-      { name: "description", content: "scan your skin, see every concern on your face, then match with verified aesthetics providers and treatments near you." },
+      { title: "treatme | ai skin analysis & med spa booking in toronto" },
+      { name: "description", content: "scan your skin free, see what's actually going on, and book the treatment for it at a verified toronto clinic. botox, filler, lasers and more, mapped to your skin." },
     ],
   }),
   loader: ({ context }) => {
