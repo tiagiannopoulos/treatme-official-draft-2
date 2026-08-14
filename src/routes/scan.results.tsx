@@ -17,9 +17,8 @@ import { topConcerns } from "@/lib/skinAnalysis";
 
 
 export const Route = createFileRoute("/scan/results")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    id: typeof search.id === "string" ? search.id : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { id?: string } =>
+    typeof search.id === "string" ? { id: search.id } : {},
   head: () => ({
     meta: [
       { title: "analysis results · treatme" },
