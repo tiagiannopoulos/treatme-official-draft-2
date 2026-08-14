@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
@@ -11,9 +11,14 @@ import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
 import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
 import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+import { fetchSavedScan } from "@/lib/scan-history";
+import { getRecommendations } from "@/lib/recommendations";
+import { topConcerns } from "@/lib/skinAnalysis";
 
 
 export const Route = createFileRoute("/scan/results")({
+  validateSearch: (search: Record<string, unknown>): { id?: string } =>
+    typeof search.id === "string" ? { id: search.id } : {},
   head: () => ({
     meta: [
       { title: "analysis results · treatme" },
@@ -29,9 +34,48 @@ export const Route = createFileRoute("/scan/results")({
 
 function ResultsPage() {
   const navigate = useNavigate();
-  const { result, analysis, landmarks, scanId } = useScan();
+  const { id: requestedId } = Route.useSearch();
+  const { result, analysis, landmarks, scanId, hydrate, setResult } = useScan();
   const photoDataUrl = useScanPhoto();
   const [shareOpen, setShareOpen] = useState(false);
+  const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
+  const loadedFor = useRef<string | null>(null);
+
+  // reopening a saved scan from the profile tab: pull the stored read back in.
+  useEffect(() => {
+    if (!requestedId || requestedId === scanId || loadedFor.current === requestedId) return;
+    loadedFor.current = requestedId;
+    let alive = true;
+    setLoading(true);
+    void (async () => {
+      const saved = await fetchSavedScan(requestedId);
+      if (!alive) return;
+      if (!saved) {
+        setLoading(false);
+        return;
+      }
+      hydrate({
+        scanId: saved.scanId,
+        photoDataUrl: null,
+        photoPath: saved.photoPath,
+        landmarks: saved.landmarks,
+        result: saved.result,
+        analysis: saved.analysis,
+        medicalFlag: saved.medicalFlag,
+        photoQuality: saved.photoQuality,
+        recommendations: [],
+        goalRecommendations: [],
+      });
+      if (saved.result) {
+        const { scanDriven, goalDriven } = await getRecommendations(topConcerns(saved.result), []);
+        if (alive) setResult(saved.result, scanDriven, goalDriven);
+      }
+      if (alive) setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [requestedId, scanId, hydrate, setResult]);
 
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
   const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
@@ -44,7 +88,15 @@ function ResultsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (!photoDataUrl || !result) {
+  if (loading) {
+    return (
+      <div className="px-6 pt-16 text-center">
+        <p className="text-[15px] lowercase text-ink-mute">loading your saved scan...</p>
+      </div>
+    );
+  }
+
+  if (!result) {
     return (
       <div className="px-6 pt-12 text-center">
         <p className="brand-eyebrow">no scan yet</p>
@@ -109,7 +161,9 @@ function ResultsPage() {
                 className="shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
               >
                 <div className="relative aspect-[4/5] bg-ink/5">
-                  <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+                  {photoDataUrl && (
+                    <img src={photoDataUrl} alt="your scan" className="absolute inset-0 w-full h-full object-cover" />
+                  )}
                   {row.score >= 90 ? (
                     <span
                       className="absolute inset-x-3 bottom-3 rounded-full px-3 py-2 text-[12px] font-semibold text-center lowercase"
