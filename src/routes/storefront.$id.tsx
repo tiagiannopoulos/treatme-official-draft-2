@@ -4,8 +4,30 @@ import { StorefrontView } from "@/components/treatme/StorefrontView";
 import { directoryQuery } from "@/lib/search-data";
 
 /** canonical storefront page by id. /medspas/$slug redirects here. */
+interface ClinicSeo {
+  name: string;
+  address_line: string;
+  city: string;
+  postcode: string;
+  neighbourhood: string | null;
+  phone: string | null;
+  website: string | null;
+  hero_image_url: string | null;
+  lat: number;
+  lng: number;
+  rating: number;
+  review_count: number;
+  treatments: { name: string; price_from: number | null }[];
+}
+
 export const Route = createFileRoute("/storefront/$id")({
-  head: ({ params, loaderData }) => {
+  head: ({
+    params,
+    loaderData,
+  }: {
+    params: { id: string };
+    loaderData?: { clinic: ClinicSeo | null };
+  }) => {
     const clinic = loaderData?.clinic;
     const where = clinic
       ? [clinic.neighbourhood, clinic.city].filter(Boolean).join(", ").toLowerCase()
