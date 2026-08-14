@@ -134,8 +134,7 @@ export function AuthSheet({
   return (
     <div className="fixed inset-0 z-[60] flex items-end bg-ink/45" onClick={onClose}>
       <div
-        className="w-full rounded-t-[24px] px-5 pb-8 pt-5 max-h-[92vh] overflow-y-auto"
-        style={{ backgroundColor: CREAM }}
+        className="w-full rounded-t-[24px] px-5 pb-8 pt-5 max-h-[92vh] overflow-y-auto bg-white"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
