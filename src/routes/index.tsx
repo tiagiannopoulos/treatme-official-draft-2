@@ -58,9 +58,9 @@ function MenuPage() {
               <Lock className="size-[18px] text-ink" strokeWidth={2.2} />
             </div>
             <div className="flex-1">
-              <p className="font-bold text-[16px] tracking-tight leading-tight">
+              <h1 className="font-bold text-[16px] tracking-tight leading-tight">
                 your personalized skin consult is waiting
-              </p>
+              </h1>
               <p className="text-[13px] text-ink-soft mt-1 leading-snug">
                 unlock ai-powered treatment recommendations tailored to you.
               </p>
