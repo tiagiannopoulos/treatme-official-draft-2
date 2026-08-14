@@ -84,6 +84,10 @@ function ConsentPage() {
           <Link to="/terms" className="underline underline-offset-2">
             terms
           </Link>
+          <span> · </span>
+          <Link to="/skin-analysis" className="underline underline-offset-2">
+            what is skin analysis?
+          </Link>
         </p>
 
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-ink/10 pt-4">

@@ -111,6 +111,10 @@ function ProfilePage() {
         <Link to="/terms" className="underline">
           terms
         </Link>
+        <span>·</span>
+        <Link to="/skin-analysis" className="underline">
+          skin analysis
+        </Link>
       </div>
     </div>
   );
