@@ -5,6 +5,8 @@ import { Check, Clock, Lock, MessageCircle, Sparkles, User, X } from "lucide-rea
 
 import { realResultsQuery, treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { buildSlides, storySourceQuery, INK, type StorySlide } from "@/lib/treatment-story";
+import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+
 
 const SLIDE_MS = 6000;
 
