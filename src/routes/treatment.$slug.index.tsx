@@ -38,7 +38,7 @@ const MINT = "#DFFFF8";
 const HOT = "#FF1F87";
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[12px] font-bold lowercase text-ink">{children}</p>;
+  return <h2 className="text-[12px] font-bold lowercase text-ink">{children}</h2>;
 }
 
 function TreatmentDetailPage() {
@@ -149,7 +149,7 @@ function TreatmentDetailPage() {
       {t.what_it_is && (
         <section className="mt-5 px-4">
           <div className="rounded-[18px] bg-bubblegum/25 px-4 py-4">
-            <p className="text-[12px] font-bold lowercase text-ink">what it is</p>
+            <h2 className="text-[12px] font-bold lowercase text-ink">what it is</h2>
             <p className="mt-1.5 text-[14px] leading-[1.5] lowercase text-ink">{t.what_it_is}</p>
           </div>
         </section>
