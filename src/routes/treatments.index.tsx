@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
+
 
 import { CONCERN_LABEL, type ConcernKey } from "@/lib/skinAnalysis";
 import { cn } from "@/lib/utils";
