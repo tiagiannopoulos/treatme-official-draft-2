@@ -167,14 +167,20 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           ))}
         </div>
 
-        <SaveTreatmentButton
-          slug={slug}
-          name={source?.name}
-          className="absolute left-4 z-40 size-10"
-          bg={darker(bg, 12)}
-          onPause={() => setAuthPaused(true)}
-          onResume={() => setAuthPaused(false)}
-        />
+        <span
+          className="absolute left-4 z-40"
+          style={{ top: "max(26px, calc(env(safe-area-inset-top) + 18px))" }}
+        >
+          <SaveTreatmentButton
+            slug={slug}
+            name={source?.name}
+            className="size-10"
+            bg={darker(bg, 12)}
+            onPause={() => setAuthPaused(true)}
+            onResume={() => setAuthPaused(false)}
+          />
+        </span>
+
 
         <button
           type="button"
