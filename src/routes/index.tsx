@@ -9,8 +9,8 @@ import { eduStoriesQuery } from "@/lib/education-story";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "treatme — get treated." },
-      { name: "description", content: "your tx, matched. scan your skin, find verified providers nearby." },
+      { title: "treatme — scan your skin, match your treatment" },
+      { name: "description", content: "scan your skin, see every concern on your face, then match with verified aesthetics providers and treatments near you." },
     ],
   }),
   loader: ({ context }) => {
