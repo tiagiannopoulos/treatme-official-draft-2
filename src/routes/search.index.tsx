@@ -237,6 +237,7 @@ function SearchPage() {
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink-mute" />
             <input
               ref={inputRef}
+              aria-label="search providers, medspas and treatments"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onFocus={() => setFocused(true)}

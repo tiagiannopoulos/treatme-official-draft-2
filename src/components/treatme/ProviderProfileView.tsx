@@ -226,6 +226,7 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
           type="button"
           onClick={() => toggle(provider.id)}
           aria-pressed={isSaved}
+          aria-label={isSaved ? "unsave this provider" : "save this provider"}
           className={cn(
             "flex-1 flex items-center justify-center rounded-pill border py-3",
             isSaved ? "bg-bubblegum/40 border-bubblegum" : "border-line",

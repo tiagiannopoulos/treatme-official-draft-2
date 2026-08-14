@@ -168,6 +168,7 @@ function TreatmentsPage() {
       <div className="mt-5 relative">
         <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-ink-mute" />
         <input
+          aria-label="search treatments"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="search treatments, or the brand name you know"
