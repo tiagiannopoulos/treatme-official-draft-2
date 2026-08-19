@@ -2,16 +2,70 @@
 // med spas from google places text search (new).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
-const QUERIES = [
-  "med spa in Toronto, Ontario",
-  "medical aesthetics clinic in Toronto, Ontario",
-  "botox clinic in Toronto, Ontario",
-  "laser clinic in Toronto, Ontario",
-  "medical spa in North York, Ontario",
-  "medical spa in Etobicoke, Ontario",
-  "medical spa in Scarborough, Ontario",
-  "medical spa in Mississauga, Ontario",
+// google text search returns at most 60 results per query, so coverage comes from
+// slicing the gta by neighbourhood and by treatment type rather than by city alone.
+const AREAS = [
+  "Toronto, Ontario",
+  "downtown Toronto, Ontario",
+  "midtown Toronto, Ontario",
+  "Yorkville, Toronto",
+  "Queen West, Toronto",
+  "King West, Toronto",
+  "Liberty Village, Toronto",
+  "Leslieville, Toronto",
+  "The Beaches, Toronto",
+  "Yonge and Eglinton, Toronto",
+  "Forest Hill, Toronto",
+  "Rosedale, Toronto",
+  "Annex, Toronto",
+  "East York, Ontario",
+  "North York, Ontario",
+  "Willowdale, North York, Ontario",
+  "Yonge and Sheppard, North York, Ontario",
+  "Yonge and Finch, North York, Ontario",
+  "Bayview Village, North York, Ontario",
+  "Don Mills, North York, Ontario",
+  "York Mills, North York, Ontario",
+  "Lawrence Park, Toronto, Ontario",
+  "Downsview, North York, Ontario",
+  "Bathurst and Steeles, North York, Ontario",
+  "Yorkdale, North York, Ontario",
+  "North York Centre, Ontario",
+  "Etobicoke, Ontario",
+  "Mimico, Etobicoke, Ontario",
+  "Islington Village, Etobicoke, Ontario",
+  "Scarborough, Ontario",
+  "Agincourt, Scarborough, Ontario",
+  "Mississauga, Ontario",
+  "Port Credit, Mississauga, Ontario",
+  "Brampton, Ontario",
+  "Vaughan, Ontario",
+  "Woodbridge, Vaughan, Ontario",
+  "Thornhill, Ontario",
+  "Richmond Hill, Ontario",
+  "Markham, Ontario",
+  "Unionville, Markham, Ontario",
+  "Aurora, Ontario",
+  "Newmarket, Ontario",
+  "Oakville, Ontario",
+  "Burlington, Ontario",
+  "Milton, Ontario",
+  "Pickering, Ontario",
+  "Ajax, Ontario",
+  "Whitby, Ontario",
+  "Oshawa, Ontario",
 ];
+
+const KINDS = [
+  "med spa",
+  "medical aesthetics clinic",
+  "botox clinic",
+  "laser hair removal clinic",
+  "skin clinic",
+  "cosmetic injectables clinic",
+];
+
+const QUERIES = AREAS.flatMap((area) => KINDS.map((kind) => `${kind} in ${area}`));
 
 const FIELD_MASK =
   "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.websiteUri,nextPageToken";
@@ -55,7 +109,7 @@ async function searchAll(apiKey: string, textQuery: string): Promise<Place[]> {
   const out: Place[] = [];
   let pageToken: string | undefined;
 
-  for (let page = 0; page < 5; page++) {
+  for (let page = 0; page < 3; page++) {
     const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
       method: "POST",
       headers: {
@@ -100,36 +154,60 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // batching: the caller walks the query list a slice at a time so a run fits in
+    // the function timeout. { from, to } are indexes into QUERIES.
+    let from = 0;
+    let to = QUERIES.length;
+    if (req.method === "POST") {
+      const body = (await req.json().catch(() => ({}))) as { from?: number; to?: number };
+      if (typeof body.from === "number") from = Math.max(0, body.from);
+      if (typeof body.to === "number") to = Math.min(QUERIES.length, body.to);
+    }
+    const slice = QUERIES.slice(from, to);
+
     // collect + dedupe by google place id
     const byId = new Map<string, Place>();
-    const perQuery: Record<string, number> = {};
-    for (const q of QUERIES) {
-      const places = await searchAll(apiKey, q);
-      perQuery[q] = places.length;
-      for (const p of places) {
-        if (p.id && p.location?.latitude && p.location?.longitude) byId.set(p.id, p);
+    const failed: string[] = [];
+    for (const q of slice) {
+      try {
+        const places = await searchAll(apiKey, q);
+        for (const p of places) {
+          if (p.id && p.location?.latitude && p.location?.longitude) byId.set(p.id, p);
+        }
+      } catch (e) {
+        failed.push(`${q}: ${e instanceof Error ? e.message : "failed"}`);
       }
     }
 
-    // fabricated data must go, along with the provider links pointing at it
-    const { error: linkErr } = await supabase
-      .from("provider_storefronts")
-      .delete()
-      .not("id", "is", null);
-    if (linkErr) throw new Error(`clearing provider_storefronts: ${linkErr.message}`);
-
-    const { error: delErr } = await supabase
-      .from("storefronts")
-      .delete()
-      .not("id", "is", null);
-    if (delErr) throw new Error(`clearing storefronts: ${delErr.message}`);
-
+    // additive only. existing listings, claims and provider links are never deleted.
+    // paged read: postgrest caps a plain select at 1000 rows and a partial slug list
+    // would collide on insert.
+    const slugByPlace = new Map<string, string>();
     const usedSlugs = new Set<string>();
-    const rows = [...byId.values()].map((p) => {
+    for (let page = 0; page < 50; page++) {
+      const start = page * 1000;
+      const { data: existing, error: exErr } = await supabase
+        .from("storefronts")
+        .select("slug, google_place_id")
+        .range(start, start + 999);
+      if (exErr) throw new Error(`reading storefronts: ${exErr.message}`);
+      for (const row of existing ?? []) {
+        if (row.slug) usedSlugs.add(row.slug);
+        if (row.google_place_id && row.slug) slugByPlace.set(row.google_place_id, row.slug);
+      }
+      if (!existing || existing.length < 1000) break;
+    }
+
+    // a place we already hold keeps whatever the clinic or an editor has since put on it
+    const rows = [...byId.values()].filter((p) => !slugByPlace.has(p.id)).map((p) => {
       const name = p.displayName?.text ?? "unnamed clinic";
-      let slug = slugify(name);
-      let n = 2;
-      while (usedSlugs.has(slug)) slug = `${slugify(name)}-${n++}`;
+      // an already seeded place keeps its slug so links out in the app stay valid
+      let slug = slugByPlace.get(p.id);
+      if (!slug) {
+        slug = slugify(name);
+        let n = 2;
+        while (usedSlugs.has(slug)) slug = `${slugify(name)}-${n++}`;
+      }
       usedSlugs.add(slug);
 
       return {
@@ -142,13 +220,12 @@ Deno.serve(async (req) => {
         postcode: postcodeFrom(p.formattedAddress),
         lat: p.location!.latitude!,
         lng: p.location!.longitude!,
-        hero_image_url: null,
         featured: false,
         claimed: false,
       };
     });
 
-    let inserted = 0;
+    let upserted = 0;
     for (let i = 0; i < rows.length; i += 100) {
       const chunk = rows.slice(i, i + 100);
       const { data, error } = await supabase
@@ -156,14 +233,21 @@ Deno.serve(async (req) => {
         .upsert(chunk, { onConflict: "google_place_id" })
         .select("id");
       if (error) throw new Error(`upsert: ${error.message}`);
-      inserted += data?.length ?? 0;
+      upserted += data?.length ?? 0;
     }
+
+    const { count } = await supabase
+      .from("storefronts")
+      .select("id", { count: "exact", head: true });
 
     return Response.json({
       ok: true,
+      queries_run: slice.length,
+      query_range: { from, to, total: QUERIES.length },
       unique_places: byId.size,
-      inserted,
-      per_query: perQuery,
+      upserted,
+      total_storefronts: count ?? null,
+      failed,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
