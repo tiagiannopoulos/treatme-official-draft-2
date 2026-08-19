@@ -154,36 +154,53 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // batching: the caller walks the query list a slice at a time so a run fits in
+    // the function timeout. { from, to } are indexes into QUERIES.
+    let from = 0;
+    let to = QUERIES.length;
+    if (req.method === "POST") {
+      const body = (await req.json().catch(() => ({}))) as { from?: number; to?: number };
+      if (typeof body.from === "number") from = Math.max(0, body.from);
+      if (typeof body.to === "number") to = Math.min(QUERIES.length, body.to);
+    }
+    const slice = QUERIES.slice(from, to);
+
     // collect + dedupe by google place id
     const byId = new Map<string, Place>();
-    const perQuery: Record<string, number> = {};
-    for (const q of QUERIES) {
-      const places = await searchAll(apiKey, q);
-      perQuery[q] = places.length;
-      for (const p of places) {
-        if (p.id && p.location?.latitude && p.location?.longitude) byId.set(p.id, p);
+    const failed: string[] = [];
+    for (const q of slice) {
+      try {
+        const places = await searchAll(apiKey, q);
+        for (const p of places) {
+          if (p.id && p.location?.latitude && p.location?.longitude) byId.set(p.id, p);
+        }
+      } catch (e) {
+        failed.push(`${q}: ${e instanceof Error ? e.message : "failed"}`);
       }
     }
 
-    // fabricated data must go, along with the provider links pointing at it
-    const { error: linkErr } = await supabase
-      .from("provider_storefronts")
-      .delete()
-      .not("id", "is", null);
-    if (linkErr) throw new Error(`clearing provider_storefronts: ${linkErr.message}`);
-
-    const { error: delErr } = await supabase
+    // additive only. existing listings, claims and provider links are never deleted.
+    const { data: existing, error: exErr } = await supabase
       .from("storefronts")
-      .delete()
-      .not("id", "is", null);
-    if (delErr) throw new Error(`clearing storefronts: ${delErr.message}`);
+      .select("slug, google_place_id");
+    if (exErr) throw new Error(`reading storefronts: ${exErr.message}`);
 
+    const slugByPlace = new Map<string, string>();
     const usedSlugs = new Set<string>();
+    for (const row of existing ?? []) {
+      if (row.slug) usedSlugs.add(row.slug);
+      if (row.google_place_id && row.slug) slugByPlace.set(row.google_place_id, row.slug);
+    }
+
     const rows = [...byId.values()].map((p) => {
       const name = p.displayName?.text ?? "unnamed clinic";
-      let slug = slugify(name);
-      let n = 2;
-      while (usedSlugs.has(slug)) slug = `${slugify(name)}-${n++}`;
+      // an already seeded place keeps its slug so links out in the app stay valid
+      let slug = slugByPlace.get(p.id);
+      if (!slug) {
+        slug = slugify(name);
+        let n = 2;
+        while (usedSlugs.has(slug)) slug = `${slugify(name)}-${n++}`;
+      }
       usedSlugs.add(slug);
 
       return {
@@ -196,13 +213,12 @@ Deno.serve(async (req) => {
         postcode: postcodeFrom(p.formattedAddress),
         lat: p.location!.latitude!,
         lng: p.location!.longitude!,
-        hero_image_url: null,
         featured: false,
         claimed: false,
       };
     });
 
-    let inserted = 0;
+    let upserted = 0;
     for (let i = 0; i < rows.length; i += 100) {
       const chunk = rows.slice(i, i + 100);
       const { data, error } = await supabase
@@ -210,14 +226,21 @@ Deno.serve(async (req) => {
         .upsert(chunk, { onConflict: "google_place_id" })
         .select("id");
       if (error) throw new Error(`upsert: ${error.message}`);
-      inserted += data?.length ?? 0;
+      upserted += data?.length ?? 0;
     }
+
+    const { count } = await supabase
+      .from("storefronts")
+      .select("id", { count: "exact", head: true });
 
     return Response.json({
       ok: true,
+      queries_run: slice.length,
+      query_range: { from, to, total: QUERIES.length },
       unique_places: byId.size,
-      inserted,
-      per_query: perQuery,
+      upserted,
+      total_storefronts: count ?? null,
+      failed,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
