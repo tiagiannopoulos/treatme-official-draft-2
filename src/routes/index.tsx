@@ -132,6 +132,7 @@ function TreatmentRail({
   items,
   tone,
   icon,
+  headingLevel = "h2",
 }: {
   eyebrow: string;
   title: string;
@@ -139,8 +140,10 @@ function TreatmentRail({
   items: SearchTreatment[];
   tone: "butter" | "mint" | "bubblegum";
   icon?: React.ReactNode;
+  headingLevel?: "h1" | "h2";
 }) {
   const bg = { butter: "bg-butter", mint: "bg-mint", bubblegum: "bg-bubblegum/60" }[tone];
+  const Heading = headingLevel;
   return (
     <section>
       <div className="px-6 flex items-end justify-between">
@@ -149,9 +152,10 @@ function TreatmentRail({
             {icon}
             <p className="brand-eyebrow">{eyebrow}</p>
           </div>
-          <h2 className="brand-display text-[24px] mt-1">{title}</h2>
+          <Heading className="brand-display text-[24px] mt-1">{title}</Heading>
           {sub && <p className="text-[12px] text-ink-mute">{sub}</p>}
         </div>
+
         <Link to="/treatments" className="text-[12px] font-semibold lowercase text-ink-soft inline-flex items-center gap-0.5">
           see all <ArrowRight className="size-3" />
         </Link>
