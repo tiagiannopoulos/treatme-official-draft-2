@@ -37,15 +37,8 @@ function MenuPage() {
   const { data: directory } = useSuspenseQuery(directoryQuery);
   const forYou = treatments.slice(0, 4);
 
-  const inCity = directory.providers.filter((p) =>
-    p.storefronts.some((s) => s.city.toLowerCase().includes(DEFAULT_CITY)),
-  );
-  const pool = inCity.length ? inCity : directory.providers;
-  const topProviders = [...pool]
-    .sort((a, b) => b.rating - a.rating || b.review_count - a.review_count)
-    .slice(0, 10);
-
   const clinicsInCity = directory.storefronts.filter((s) =>
+
     s.city.toLowerCase().includes(DEFAULT_CITY),
   );
   const clinicPool = clinicsInCity.length ? clinicsInCity : directory.storefronts;
