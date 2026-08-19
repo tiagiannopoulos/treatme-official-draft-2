@@ -109,7 +109,7 @@ async function searchAll(apiKey: string, textQuery: string): Promise<Place[]> {
   const out: Place[] = [];
   let pageToken: string | undefined;
 
-  for (let page = 0; page < 5; page++) {
+  for (let page = 0; page < 3; page++) {
     const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
       method: "POST",
       headers: {
