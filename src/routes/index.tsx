@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles, Lock, BookOpen, ArrowRight, Star, BadgeCheck } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { directoryQuery, neighbourhood, type Storefront } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
+import { useAuth } from "@/lib/auth";
+import { scanPicksQuery } from "@/lib/home-recommendations";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
