@@ -45,6 +45,15 @@ function MenuPage() {
     .sort((a, b) => b.rating - a.rating || b.review_count - a.review_count)
     .slice(0, 10);
 
+  const clinicsInCity = directory.storefronts.filter((s) =>
+    s.city.toLowerCase().includes(DEFAULT_CITY),
+  );
+  const clinicPool = clinicsInCity.length ? clinicsInCity : directory.storefronts;
+  const topClinics = [...clinicPool]
+    .sort((a, b) => b.rating - a.rating || b.review_count - a.review_count)
+    .slice(0, 10);
+
+
 
 
   return (
