@@ -192,7 +192,8 @@ Deno.serve(async (req) => {
       if (row.google_place_id && row.slug) slugByPlace.set(row.google_place_id, row.slug);
     }
 
-    const rows = [...byId.values()].map((p) => {
+    // a place we already hold keeps whatever the clinic or an editor has since put on it
+    const rows = [...byId.values()].filter((p) => !slugByPlace.has(p.id)).map((p) => {
       const name = p.displayName?.text ?? "unnamed clinic";
       // an already seeded place keeps its slug so links out in the app stay valid
       let slug = slugByPlace.get(p.id);
