@@ -83,9 +83,9 @@ function MenuPage() {
         items={forYou}
         tone="butter"
       />
+      {/* 3. Clinics near you */}
+      <ClinicRail clinics={topClinics} />
 
-      {/* 3. Top providers near you */}
-      <ProviderRail providers={topProviders} />
 
 
       {/* 4. Education */}
