@@ -2,16 +2,70 @@
 // med spas from google places text search (new).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
-const QUERIES = [
-  "med spa in Toronto, Ontario",
-  "medical aesthetics clinic in Toronto, Ontario",
-  "botox clinic in Toronto, Ontario",
-  "laser clinic in Toronto, Ontario",
-  "medical spa in North York, Ontario",
-  "medical spa in Etobicoke, Ontario",
-  "medical spa in Scarborough, Ontario",
-  "medical spa in Mississauga, Ontario",
+// google text search returns at most 60 results per query, so coverage comes from
+// slicing the gta by neighbourhood and by treatment type rather than by city alone.
+const AREAS = [
+  "Toronto, Ontario",
+  "downtown Toronto, Ontario",
+  "midtown Toronto, Ontario",
+  "Yorkville, Toronto",
+  "Queen West, Toronto",
+  "King West, Toronto",
+  "Liberty Village, Toronto",
+  "Leslieville, Toronto",
+  "The Beaches, Toronto",
+  "Yonge and Eglinton, Toronto",
+  "Forest Hill, Toronto",
+  "Rosedale, Toronto",
+  "Annex, Toronto",
+  "East York, Ontario",
+  "North York, Ontario",
+  "Willowdale, North York, Ontario",
+  "Yonge and Sheppard, North York, Ontario",
+  "Yonge and Finch, North York, Ontario",
+  "Bayview Village, North York, Ontario",
+  "Don Mills, North York, Ontario",
+  "York Mills, North York, Ontario",
+  "Lawrence Park, Toronto, Ontario",
+  "Downsview, North York, Ontario",
+  "Bathurst and Steeles, North York, Ontario",
+  "Yorkdale, North York, Ontario",
+  "North York Centre, Ontario",
+  "Etobicoke, Ontario",
+  "Mimico, Etobicoke, Ontario",
+  "Islington Village, Etobicoke, Ontario",
+  "Scarborough, Ontario",
+  "Agincourt, Scarborough, Ontario",
+  "Mississauga, Ontario",
+  "Port Credit, Mississauga, Ontario",
+  "Brampton, Ontario",
+  "Vaughan, Ontario",
+  "Woodbridge, Vaughan, Ontario",
+  "Thornhill, Ontario",
+  "Richmond Hill, Ontario",
+  "Markham, Ontario",
+  "Unionville, Markham, Ontario",
+  "Aurora, Ontario",
+  "Newmarket, Ontario",
+  "Oakville, Ontario",
+  "Burlington, Ontario",
+  "Milton, Ontario",
+  "Pickering, Ontario",
+  "Ajax, Ontario",
+  "Whitby, Ontario",
+  "Oshawa, Ontario",
 ];
+
+const KINDS = [
+  "med spa",
+  "medical aesthetics clinic",
+  "botox clinic",
+  "laser hair removal clinic",
+  "skin clinic",
+  "cosmetic injectables clinic",
+];
+
+const QUERIES = AREAS.flatMap((area) => KINDS.map((kind) => `${kind} in ${area}`));
 
 const FIELD_MASK =
   "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.websiteUri,nextPageToken";
