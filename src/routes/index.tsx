@@ -152,18 +152,18 @@ function TreatmentRail({
   );
 }
 
-function ProviderRail({ providers }: { providers: Provider[] }) {
-  if (!providers.length) return null;
+function ClinicRail({ clinics }: { clinics: Storefront[] }) {
+  if (!clinics.length) return null;
   return (
     <section>
       <div className="px-6 flex items-end justify-between">
         <div>
           <p className="brand-eyebrow">near you</p>
-          <h2 className="brand-display text-[24px] mt-1">top providers in your area</h2>
+          <h2 className="brand-display text-[24px] mt-1">clinics near you</h2>
         </div>
         <Link
           to="/search"
-          search={{ q: undefined, scope: undefined }}
+          search={{ q: undefined, scope: "medspas" }}
           className="text-[12px] font-semibold lowercase text-ink-soft inline-flex items-center gap-0.5"
         >
           see all <ArrowRight className="size-3" />
@@ -171,8 +171,8 @@ function ProviderRail({ providers }: { providers: Provider[] }) {
       </div>
 
       <div className="mt-4 flex gap-3 overflow-x-auto scrollbar-none px-6 snap-x snap-mandatory">
-        {providers.map((p) => (
-          <ProviderRailCard key={p.id} p={p} />
+        {clinics.map((s) => (
+          <ClinicRailCard key={s.id} s={s} />
         ))}
       </div>
     </section>
@@ -188,30 +188,28 @@ function initials(name: string) {
     .toLowerCase();
 }
 
-function ProviderRailCard({ p }: { p: Provider }) {
-  const shop = p.storefronts[0];
-  const specialty = (p.specialties[0] ?? p.treats[0] ?? p.title).toLowerCase();
-  const hasNative = p.review_count >= 3;
+function ClinicRailCard({ s }: { s: Storefront }) {
+  const hasNative = s.review_count >= 3;
   return (
     <Link
-      to="/providers/$slug"
-      params={{ slug: p.slug }}
+      to="/storefront/$id"
+      params={{ id: s.id }}
       className="snap-start shrink-0 w-[200px] rounded-2xl border border-line bg-cream overflow-hidden text-left p-3"
     >
       <div className="flex items-center gap-2">
-        {p.avatar_url ? (
+        {s.logo_url ? (
           <img
-            src={p.avatar_url}
+            src={s.logo_url}
             alt=""
             loading="lazy"
             className="size-12 rounded-full object-cover shrink-0"
           />
         ) : (
-          <div className="size-12 rounded-full bg-bubblegum grid place-items-center shrink-0">
-            <span className="font-bold text-[14px] text-ink">{initials(p.name)}</span>
+          <div className="size-12 rounded-full bg-mint grid place-items-center shrink-0">
+            <span className="font-bold text-[14px] text-ink">{initials(s.name)}</span>
           </div>
         )}
-        {shop?.claimed && (
+        {s.claimed && (
           <span className="inline-flex items-center gap-1 text-[10px] font-semibold lowercase text-ink-soft">
             <BadgeCheck className="size-3.5 text-hot" strokeWidth={2.4} />
             verified
@@ -219,22 +217,19 @@ function ProviderRailCard({ p }: { p: Provider }) {
         )}
       </div>
 
-      <p className="font-bold text-[14px] tracking-tight leading-tight lowercase mt-3">
-        {p.name.toLowerCase()}
+      <p className="font-bold text-[14px] tracking-tight leading-tight lowercase mt-3 line-clamp-2">
+        {s.name.toLowerCase()}
       </p>
-      <p className="text-[11px] text-ink-mute mt-0.5 leading-snug lowercase">{specialty}</p>
-      {shop && (
-        <p className="text-[11px] text-ink-soft mt-1 leading-snug lowercase line-clamp-2">
-          {shop.name.toLowerCase()} · {neighbourhood(shop)}
-        </p>
-      )}
+      <p className="text-[11px] text-ink-mute mt-0.5 leading-snug lowercase line-clamp-2">
+        {neighbourhood(s)} · {s.city.toLowerCase()}
+      </p>
 
       <div className="mt-2">
         {hasNative ? (
           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-ink">
             <Star className="size-3 fill-ink text-ink" />
-            {p.rating.toFixed(1)}
-            <span className="text-ink-mute font-normal">({p.review_count})</span>
+            {s.rating.toFixed(1)}
+            <span className="text-ink-mute font-normal">({s.review_count})</span>
           </span>
         ) : (
           <span className="inline-flex items-center rounded-full bg-bubblegum/50 px-2 py-0.5 text-[10px] font-semibold lowercase text-ink">
@@ -245,6 +240,7 @@ function ProviderRailCard({ p }: { p: Provider }) {
     </Link>
   );
 }
+
 
 /** menu cards go to the treatment one pager, never the story player. */
 function StoryCard({ t, bg }: { t: SearchTreatment; bg: string }) {
