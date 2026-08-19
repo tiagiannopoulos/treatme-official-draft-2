@@ -3,7 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles, Lock, BookOpen, ArrowRight, Star, BadgeCheck } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
-import { directoryQuery, neighbourhood, type Provider } from "@/lib/search-data";
+import { directoryQuery, neighbourhood, type Storefront } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
 
 export const Route = createFileRoute("/")({
