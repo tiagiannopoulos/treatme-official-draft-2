@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Sparkles, Lock, BookOpen, ArrowRight, Star, BadgeCheck } from "lucide-react";
 import { searchTreatmentsQuery, type SearchTreatment } from "@/lib/search-data";
 import { directoryQuery, neighbourhood, type Storefront } from "@/lib/search-data";
 import { eduStoriesQuery } from "@/lib/education-story";
+import { useAuth } from "@/lib/auth";
+import { scanPicksQuery } from "@/lib/home-recommendations";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,7 +38,20 @@ function MenuPage() {
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const { data: eduStories } = useSuspenseQuery(eduStoriesQuery);
   const { data: directory } = useSuspenseQuery(directoryQuery);
-  const forYou = treatments.slice(0, 4);
+  const { user } = useAuth();
+  const { data: scanPicks } = useQuery(scanPicksQuery(user?.id ?? null));
+
+  const scanned = Boolean(scanPicks?.treatments.length);
+  const forYou: SearchTreatment[] = scanned
+    ? scanPicks!.treatments.map((r) => ({
+        slug: r.slug,
+        name: r.name,
+        category: r.category,
+        family: r.matchedConcerns[0] ?? "",
+        price_from: r.price_from,
+        hero_image_url: r.hero_image_url,
+      }) as unknown as SearchTreatment)
+    : treatments.slice(0, 4);
 
   const clinicsInCity = directory.storefronts.filter((s) =>
 
@@ -51,42 +67,47 @@ function MenuPage() {
 
   return (
     <div className="pt-5 pb-4 space-y-10">
-      {/* 1. CTA / unlock banner */}
-      <section className="px-6">
+      {/* 1. CTA / unlock banner, only until the patient has a scan */}
+      {!scanned && (
+        <section className="px-6">
 
-        <div className="mt-6 rounded-3xl bg-bubblegum/45 p-5">
-          <div className="flex items-start gap-3">
-            <div className="size-11 rounded-full bg-cream grid place-items-center shrink-0">
-              <Lock className="size-[18px] text-ink" strokeWidth={2.2} />
+          <div className="mt-6 rounded-3xl bg-bubblegum/45 p-5">
+            <div className="flex items-start gap-3">
+              <div className="size-11 rounded-full bg-cream grid place-items-center shrink-0">
+                <Lock className="size-[18px] text-ink" strokeWidth={2.2} />
+              </div>
+              <div className="flex-1">
+                <h1 className="font-bold text-[16px] tracking-tight leading-tight">
+                  your personalized skin consult is waiting
+                </h1>
+                <p className="text-[13px] text-ink-soft mt-1 leading-snug">
+                  unlock ai-powered treatment recommendations tailored to you.
+                </p>
+              </div>
             </div>
-            <div className="flex-1">
-              <h1 className="font-bold text-[16px] tracking-tight leading-tight">
-                your personalized skin consult is waiting
-              </h1>
-              <p className="text-[13px] text-ink-soft mt-1 leading-snug">
-                unlock ai-powered treatment recommendations tailored to you.
-              </p>
-            </div>
+            <Link
+              to="/scan"
+              className="mt-4 flex items-center justify-center gap-2 rounded-full bg-cream h-12 font-semibold text-[15px] tracking-tight lowercase shadow-[0_1px_0_rgba(0,0,0,0.04)]"
+            >
+              <Sparkles className="size-[18px] text-hot" />
+              unlock with free scan
+            </Link>
           </div>
-          <Link
-            to="/scan"
-            className="mt-4 flex items-center justify-center gap-2 rounded-full bg-cream h-12 font-semibold text-[15px] tracking-tight lowercase shadow-[0_1px_0_rgba(0,0,0,0.04)]"
-          >
-            <Sparkles className="size-[18px] text-hot" />
-            unlock with free scan
-          </Link>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 2. For you */}
       <TreatmentRail
-        eyebrow="For you"
+        eyebrow={scanned ? "from your scan" : "For you"}
         title="picked for your skin"
+        sub={scanned ? "matched to what your scan found" : undefined}
         items={forYou}
         tone="butter"
+        headingLevel={scanned ? "h1" : "h2"}
       />
       {/* 3. Clinics near you */}
       <ClinicRail clinics={topClinics} />
+
 
 
 
@@ -111,6 +132,7 @@ function TreatmentRail({
   items,
   tone,
   icon,
+  headingLevel = "h2",
 }: {
   eyebrow: string;
   title: string;
@@ -118,8 +140,10 @@ function TreatmentRail({
   items: SearchTreatment[];
   tone: "butter" | "mint" | "bubblegum";
   icon?: React.ReactNode;
+  headingLevel?: "h1" | "h2";
 }) {
   const bg = { butter: "bg-butter", mint: "bg-mint", bubblegum: "bg-bubblegum/60" }[tone];
+  const Heading = headingLevel;
   return (
     <section>
       <div className="px-6 flex items-end justify-between">
@@ -128,9 +152,10 @@ function TreatmentRail({
             {icon}
             <p className="brand-eyebrow">{eyebrow}</p>
           </div>
-          <h2 className="brand-display text-[24px] mt-1">{title}</h2>
+          <Heading className="brand-display text-[24px] mt-1">{title}</Heading>
           {sub && <p className="text-[12px] text-ink-mute">{sub}</p>}
         </div>
+
         <Link to="/treatments" className="text-[12px] font-semibold lowercase text-ink-soft inline-flex items-center gap-0.5">
           see all <ArrowRight className="size-3" />
         </Link>
