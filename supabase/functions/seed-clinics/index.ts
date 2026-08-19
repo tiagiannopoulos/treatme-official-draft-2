@@ -180,16 +180,22 @@ Deno.serve(async (req) => {
     }
 
     // additive only. existing listings, claims and provider links are never deleted.
-    const { data: existing, error: exErr } = await supabase
-      .from("storefronts")
-      .select("slug, google_place_id");
-    if (exErr) throw new Error(`reading storefronts: ${exErr.message}`);
-
+    // paged read: postgrest caps a plain select at 1000 rows and a partial slug list
+    // would collide on insert.
     const slugByPlace = new Map<string, string>();
     const usedSlugs = new Set<string>();
-    for (const row of existing ?? []) {
-      if (row.slug) usedSlugs.add(row.slug);
-      if (row.google_place_id && row.slug) slugByPlace.set(row.google_place_id, row.slug);
+    for (let page = 0; page < 50; page++) {
+      const start = page * 1000;
+      const { data: existing, error: exErr } = await supabase
+        .from("storefronts")
+        .select("slug, google_place_id")
+        .range(start, start + 999);
+      if (exErr) throw new Error(`reading storefronts: ${exErr.message}`);
+      for (const row of existing ?? []) {
+        if (row.slug) usedSlugs.add(row.slug);
+        if (row.google_place_id && row.slug) slugByPlace.set(row.google_place_id, row.slug);
+      }
+      if (!existing || existing.length < 1000) break;
     }
 
     // a place we already hold keeps whatever the clinic or an editor has since put on it
