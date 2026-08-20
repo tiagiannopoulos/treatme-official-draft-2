@@ -138,7 +138,12 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
         </div>
 
         <div className="mt-3">
-          <h1 className="text-[20px] font-medium leading-[1.05] lowercase">{provider.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[20px] font-medium leading-[1.05] lowercase">{provider.name}</h1>
+            <span className="text-[10px] tracking-wide text-ink-mute border border-ink/15 rounded-full px-2 py-0.5 lowercase">
+              placeholder
+            </span>
+          </div>
           <p className="text-[14px] text-ink-mute lowercase mt-0.5">
             {provider.credential_line || provider.credentials || provider.title}
           </p>
