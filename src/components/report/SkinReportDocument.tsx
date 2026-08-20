@@ -1,4 +1,4 @@
-import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Image, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import {
   BAND_BAR,
   BAND_COLOR,
@@ -30,7 +30,7 @@ const s = StyleSheet.create({
     fontFamily: "Helvetica",
     color: INK,
   },
-  row: { flexDirection: "row" },
+  row: { flexDirection: "row", alignItems: "flex-end" },
   between: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   wordmark: { fontFamily: "Helvetica-Bold", fontSize: 22, letterSpacing: -0.6 },
   wordmarkDot: { fontFamily: "Helvetica-Bold", fontSize: 22, color: "#FF1F87" },
@@ -119,7 +119,7 @@ const s = StyleSheet.create({
   ctaBlock: { backgroundColor: PINK, paddingHorizontal: 26, paddingVertical: 30, marginTop: 24 },
   ctaEyebrow: { fontFamily: "Helvetica-Bold", fontSize: 9.5, marginBottom: 10 },
   ctaBig: { fontFamily: "Helvetica-Bold", fontSize: 30, letterSpacing: -1.2 },
-  ctaLink: { fontSize: 7.5, marginTop: 8, textDecoration: "underline" },
+  ctaLink: { fontSize: 7.5, marginTop: 8, color: INK, textDecoration: "underline" },
   footer: { position: "absolute", left: 48, right: 48, bottom: 30 },
   footerText: { fontSize: 6.5, color: MUTE, lineHeight: 1.5 },
 });
@@ -393,7 +393,9 @@ export function SkinReportDocument({
         <View style={s.ctaBlock}>
           <Text style={s.ctaEyebrow}>get scanned</Text>
           <Text style={s.ctaBig}>treatmeapp.com/scan</Text>
-          <Text style={s.ctaLink}>{data.scanUrl}</Text>
+          <Link src={data.scanUrl} style={s.ctaLink}>
+            {data.scanUrl}
+          </Link>
         </View>
 
         <Footer />
