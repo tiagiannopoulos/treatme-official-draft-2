@@ -43,6 +43,7 @@ import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug
 import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
 import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$slug.reviews'
 import { Route as ScanConcernKeyRouteImport } from './routes/scan.concern.$key'
+import { Route as ReportScanIdPreviewRouteImport } from './routes/report.$scanId.preview'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
 const TermsRoute = TermsRouteImport.update({
@@ -215,6 +216,11 @@ const ScanConcernKeyRoute = ScanConcernKeyRouteImport.update({
   path: '/scan/concern/$key',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportScanIdPreviewRoute = ReportScanIdPreviewRouteImport.update({
+  id: '/report/$scanId/preview',
+  path: '/report/$scanId/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
   id: '/api/public/analyze',
   path: '/api/public/analyze',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
@@ -327,6 +335,7 @@ export interface FileRoutesById {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
@@ -366,6 +375,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/report/$scanId/preview'
     | '/scan/concern/$key'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/treatments'
     | '/api/public/analyze'
+    | '/report/$scanId/preview'
     | '/scan/concern/$key'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
@@ -440,6 +451,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/report/$scanId/preview'
     | '/scan/concern/$key'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
@@ -478,6 +490,7 @@ export interface RootRouteChildren {
   SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
+  ReportScanIdPreviewRoute: typeof ReportScanIdPreviewRoute
   ScanConcernKeyRoute: typeof ScanConcernKeyRoute
   TreatmentSlugReviewsRoute: typeof TreatmentSlugReviewsRoute
   TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
@@ -725,6 +738,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ScanConcernKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/report/$scanId/preview': {
+      id: '/report/$scanId/preview'
+      path: '/report/$scanId/preview'
+      fullPath: '/report/$scanId/preview'
+      preLoaderRoute: typeof ReportScanIdPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/analyze': {
       id: '/api/public/analyze'
       path: '/api/public/analyze'
@@ -766,6 +786,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
+  ReportScanIdPreviewRoute: ReportScanIdPreviewRoute,
   ScanConcernKeyRoute: ScanConcernKeyRoute,
   TreatmentSlugReviewsRoute: TreatmentSlugReviewsRoute,
   TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
