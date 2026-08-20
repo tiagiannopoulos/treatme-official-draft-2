@@ -140,7 +140,7 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
         <div className="mt-3">
           <div className="flex items-center gap-2">
             <h1 className="text-[20px] font-medium leading-[1.05] lowercase">{provider.name}</h1>
-            <span className="text-[10px] uppercase tracking-wide text-ink-mute border border-ink/15 rounded-full px-2 py-0.5">
+            <span className="text-[10px] tracking-wide text-ink-mute border border-ink/15 rounded-full px-2 py-0.5 lowercase">
               placeholder
             </span>
           </div>
