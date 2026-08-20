@@ -102,10 +102,16 @@ export function formatReportDate(iso: string): string {
 const ROMAN = ["", "i", "ii", "iii", "iv", "v", "vi"];
 
 export function skinToneLabel(fitzpatrick: string | number | null | undefined): string {
-  if (fitzpatrick === null || fitzpatrick === undefined) return "not recorded";
-  const n = typeof fitzpatrick === "number" ? fitzpatrick : parseInt(String(fitzpatrick), 10);
-  if (!Number.isFinite(n) || n < 1 || n > 6) return String(fitzpatrick).toLowerCase();
-  return `fitzpatrick ${ROMAN[n]}`;
+  if (fitzpatrick === null || fitzpatrick === undefined || fitzpatrick === "") return "not recorded";
+  if (typeof fitzpatrick === "number") {
+    return fitzpatrick >= 1 && fitzpatrick <= 6 ? `fitzpatrick ${ROMAN[fitzpatrick]}` : "not recorded";
+  }
+  const raw = fitzpatrick.trim().toLowerCase();
+  const roman = ROMAN.indexOf(raw);
+  if (roman > 0) return `fitzpatrick ${raw}`;
+  const n = parseInt(raw, 10);
+  if (Number.isFinite(n) && n >= 1 && n <= 6) return `fitzpatrick ${ROMAN[n]}`;
+  return raw.startsWith("fitzpatrick") ? raw : `fitzpatrick ${raw}`;
 }
 
 function downtimeLabel(raw: string | null, days: number | null): string {
