@@ -21,10 +21,14 @@ export interface ConsultMessage {
 
 export interface ConsultExtracted {
   primary_concern: string | null;
+  area: string | null;
+  goal: string | null;
+  prior_treatments: string | null;
+  sensitivities: string | null;
   budget: string | null;
   downtime: string | null;
-  provider_preference: string | null;
   timeline: string | null;
+  provider_preference: string | null;
   notes: string | null;
 }
 
@@ -38,12 +42,55 @@ export interface ConsultTurn {
 
 export const EMPTY_EXTRACTED: ConsultExtracted = {
   primary_concern: null,
+  area: null,
+  goal: null,
+  prior_treatments: null,
+  sensitivities: null,
   budget: null,
   downtime: null,
-  provider_preference: null,
   timeline: null,
+  provider_preference: null,
   notes: null,
 };
+
+/**
+ * the key questions a real consult covers, in order. the guide works down this
+ * list while still talking like a person, and the ui shows how far along we are.
+ */
+export const CONSULT_KEY_FIELDS = [
+  "primary_concern",
+  "area",
+  "goal",
+  "prior_treatments",
+  "sensitivities",
+  "budget",
+  "downtime",
+  "timeline",
+  "provider_preference",
+] as const satisfies readonly (keyof ConsultExtracted)[];
+
+export const CONSULT_KEY_LABEL: Record<(typeof CONSULT_KEY_FIELDS)[number], string> = {
+  primary_concern: "main concern",
+  area: "area",
+  goal: "goal",
+  prior_treatments: "past treatments",
+  sensitivities: "skin history",
+  budget: "budget",
+  downtime: "downtime",
+  timeline: "timing",
+  provider_preference: "who treats you",
+};
+
+/** how many of the key questions we already have answers to */
+export function consultProgress(extracted: Partial<ConsultExtracted>): {
+  answered: number;
+  total: number;
+  next: (typeof CONSULT_KEY_FIELDS)[number] | null;
+} {
+  const answered = CONSULT_KEY_FIELDS.filter((k) => Boolean(extracted[k])).length;
+  const next = CONSULT_KEY_FIELDS.find((k) => !extracted[k]) ?? null;
+  return { answered, total: CONSULT_KEY_FIELDS.length, next };
+}
 
 /** plain language summary of a scan, for the guide's opening turn */
 export function scanSummary(rows: ScanConcernRow[], skinType?: string | null, skinTone?: string | null): string {
