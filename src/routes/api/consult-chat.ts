@@ -98,7 +98,7 @@ export const Route = createFileRoute("/api/consult-chat")({
           return new Response("invalid body", { status: 400 });
         }
 
-        const history = Array.isArray(body.messages) ? body.messages.slice(-20) : [];
+        const history = Array.isArray(body.messages) ? body.messages.slice(-30) : [];
         const gateway = createLovableAiGatewayProvider(key);
 
         const context = [
@@ -106,7 +106,7 @@ export const Route = createFileRoute("/api/consult-chat")({
           `known so far: ${JSON.stringify(body.known ?? {})}`,
           body.treatmentSlug ? `they opened this chat from the ${body.treatmentSlug.replace(/-/g, " ")} page, so start there.` : "",
           history.length === 0
-            ? "this is the first turn. open warmly, name what stood out in the scan in one clause, then ask the single most useful question."
+            ? "this is the first turn. open warmly, say in one clause that you'll ask a few quick things to figure out what's actually worth doing, name what stood out in the scan if there is one, then ask the first unanswered consult question."
             : "",
         ]
           .filter(Boolean)
