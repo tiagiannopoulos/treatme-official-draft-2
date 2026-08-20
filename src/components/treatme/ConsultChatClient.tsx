@@ -20,8 +20,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 import { DEFAULT_MATCH_CENTER, treatmentMatchQuery } from "@/lib/treatment-match";
 import {
+  CONSULT_KEY_LABEL,
   EMPTY_EXTRACTED,
   callConsultTurn,
+  consultProgress,
   createConsultChat,
   mergeExtracted,
   persistConsultTurn,
@@ -58,6 +60,8 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
     () => scanSummary(rows, analysis?.skinType ?? null, analysis?.fitzpatrick ?? null),
     [rows, analysis],
   );
+
+  const progress = useMemo(() => consultProgress(extracted), [extracted]);
 
   const known = useMemo<Partial<ConsultExtracted>>(
     () => ({
@@ -153,6 +157,32 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
         <h1 className="brand-eyebrow">consult</h1>
       </div>
 
+      {stage !== "escalate" && (
+        <div className="px-6 pb-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold lowercase tracking-[0.08em] text-ink-mute">
+              {stage === "intake" && progress.next
+                ? `up next: ${CONSULT_KEY_LABEL[progress.next]}`
+                : stage === "refine"
+                  ? "narrowing it down"
+                  : "your consult"}
+            </p>
+            <p className="text-[11px] font-semibold lowercase text-ink-mute">
+              {progress.answered} of {progress.total}
+            </p>
+          </div>
+          <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-ink/10">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${Math.round((progress.answered / progress.total) * 100)}%`,
+                backgroundColor: "#F8A1C6",
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       <Conversation className="flex-1">
         <ConversationContent className="px-4 pb-4 space-y-3">
           {messages.map((message, index) =>
@@ -186,6 +216,21 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
                   >
                     end chat
                   </button>
+                )}
+
+                {message.stage === "summary" && index === messages.length - 1 && (
+                  <div className="flex flex-wrap gap-2">
+                    {["why those?", "what's the downside?", "cheaper option?", "how many sessions?"].map((q) => (
+                      <button
+                        key={q}
+                        type="button"
+                        onClick={() => send(q)}
+                        className="rounded-full border border-ink/25 bg-white px-4 h-9 text-[13px] font-semibold lowercase text-ink"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
             ),
@@ -222,7 +267,7 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
           )}
 
           <PromptInput onSubmit={onSubmit}>
-            <PromptInputTextarea ref={inputRef} placeholder="or type it out" autoFocus />
+            <PromptInputTextarea ref={inputRef} placeholder="or just tell me" autoFocus />
             <PromptInputFooter className="justify-end">
               <PromptInputSubmit status={busy ? "submitted" : undefined} disabled={busy} />
             </PromptInputFooter>
