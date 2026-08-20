@@ -577,8 +577,8 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
               claim this storefront to add your team, your devices, and your booking
             </p>
             <Link
-              to="/book/consult"
-              search={{ storefrontId: storefront.id }}
+              to="/claim/$id"
+              params={{ id: storefront.id }}
               className="mt-3 inline-block rounded-pill px-4 py-2 text-[13px] font-semibold lowercase"
               style={{ backgroundColor: accent, color: onAccent }}
             >

@@ -33,6 +33,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
+import { Route as ClaimIdRouteImport } from './routes/claim.$id'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
 import { Route as ApiGenerateScanPdfRouteImport } from './routes/api/generate-scan-pdf'
 import { Route as ApiConsultChatRouteImport } from './routes/api/consult-chat'
@@ -164,6 +165,11 @@ const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
   path: '/dev/recommendations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClaimIdRoute = ClaimIdRouteImport.update({
+  id: '/claim/$id',
+  path: '/claim/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookConsultRoute = BookConsultRouteImport.update({
   id: '/book/consult',
   path: '/book/consult',
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/api/consult-chat': typeof ApiConsultChatRoute
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
+  '/claim/$id': typeof ClaimIdRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -263,6 +270,7 @@ export interface FileRoutesByTo {
   '/api/consult-chat': typeof ApiConsultChatRoute
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
+  '/claim/$id': typeof ClaimIdRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -300,6 +308,7 @@ export interface FileRoutesById {
   '/api/consult-chat': typeof ApiConsultChatRoute
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
+  '/claim/$id': typeof ClaimIdRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -338,6 +347,7 @@ export interface FileRouteTypes {
     | '/api/consult-chat'
     | '/api/generate-scan-pdf'
     | '/book/consult'
+    | '/claim/$id'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -374,6 +384,7 @@ export interface FileRouteTypes {
     | '/api/consult-chat'
     | '/api/generate-scan-pdf'
     | '/book/consult'
+    | '/claim/$id'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/api/consult-chat'
     | '/api/generate-scan-pdf'
     | '/book/consult'
+    | '/claim/$id'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -447,6 +459,7 @@ export interface RootRouteChildren {
   ApiConsultChatRoute: typeof ApiConsultChatRoute
   ApiGenerateScanPdfRoute: typeof ApiGenerateScanPdfRoute
   BookConsultRoute: typeof BookConsultRoute
+  ClaimIdRoute: typeof ClaimIdRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
@@ -642,6 +655,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevRecommendationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/claim/$id': {
+      id: '/claim/$id'
+      path: '/claim/$id'
+      fullPath: '/claim/$id'
+      preLoaderRoute: typeof ClaimIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/consult': {
       id: '/book/consult'
       path: '/book/consult'
@@ -727,6 +747,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiConsultChatRoute: ApiConsultChatRoute,
   ApiGenerateScanPdfRoute: ApiGenerateScanPdfRoute,
   BookConsultRoute: BookConsultRoute,
+  ClaimIdRoute: ClaimIdRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
