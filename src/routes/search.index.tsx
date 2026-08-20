@@ -780,7 +780,7 @@ function MedspaCardCompact({
         </div>
       )}
       <div className="p-3">
-        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1 leading-tight line-clamp-2 break-words">
+        <p className="text-[14px] font-semibold inline-flex items-center gap-1 leading-tight line-clamp-2 break-words">
           {storefront.name}
           {storefront.claimed && <BadgeCheck className="size-3.5 text-hot shrink-0" />}
         </p>
@@ -829,7 +829,7 @@ function FeaturedStorefrontCard({
         </div>
       )}
       <div className="p-3">
-        <p className="text-[14px] font-semibold lowercase inline-flex items-center gap-1">
+        <p className="text-[14px] font-semibold inline-flex items-center gap-1">
           {storefront.name}
           {storefront.claimed && <BadgeCheck className="size-3.5 text-hot" />}
         </p>
