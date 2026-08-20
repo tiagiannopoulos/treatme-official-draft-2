@@ -1016,6 +1016,56 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_reports: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          include_photos: boolean
+          pdf_generated_at: string | null
+          pdf_path: string | null
+          revoked: boolean
+          scan_id: string
+          share_token: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          include_photos?: boolean
+          pdf_generated_at?: string | null
+          pdf_path?: string | null
+          revoked?: boolean
+          scan_id: string
+          share_token?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          include_photos?: boolean
+          pdf_generated_at?: string | null
+          pdf_path?: string | null
+          revoked?: boolean
+          scan_id?: string
+          share_token?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_reports_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scan_results: {
         Row: {
           band: string
@@ -1768,6 +1818,8 @@ export type Database = {
       }
     }
     Functions: {
+      generate_share_token: { Args: never; Returns: string }
+      get_shared_report: { Args: { token: string }; Returns: Json }
       owns_provider: { Args: { _provider_id: string }; Returns: boolean }
     }
     Enums: {
