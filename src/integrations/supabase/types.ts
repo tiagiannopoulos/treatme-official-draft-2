@@ -1111,6 +1111,60 @@ export type Database = {
         }
         Relationships: []
       }
+      storefront_claims: {
+        Row: {
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          note: string | null
+          role: string | null
+          status: string
+          storefront_id: string
+          work_email: string
+          work_phone: string
+        }
+        Insert: {
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          role?: string | null
+          status?: string
+          storefront_id: string
+          work_email: string
+          work_phone: string
+        }
+        Update: {
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          note?: string | null
+          role?: string | null
+          status?: string
+          storefront_id?: string
+          work_email?: string
+          work_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storefront_claims_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "storefront_claims_storefront_id_fkey"
+            columns: ["storefront_id"]
+            isOneToOne: false
+            referencedRelation: "storefronts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storefront_media: {
         Row: {
           caption: string | null
