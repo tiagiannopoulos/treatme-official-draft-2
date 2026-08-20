@@ -500,7 +500,7 @@ function SearchPage() {
           {nearbyProviders.length > 0 && (
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
-                <h2 className="brand-eyebrow">providers near you</h2>
+                <h2 className="brand-eyebrow">providers near you - coming soon</h2>
                 <span className="text-[12px] text-ink-mute lowercase">
                   {providerResults.length} within {radius} km
                 </span>
