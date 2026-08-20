@@ -163,7 +163,7 @@ function TreatmentsPage() {
 
   return (
     <div className="px-6 pt-6 pb-8">
-      <h1 className="brand-display text-[26px] lowercase">treatment library</h1>
+      <h1 className="sr-only">treatment library</h1>
       {/* search */}
       <div className="mt-5 relative">
         <Search className="size-4 absolute left-4 top-1/2 -translate-y-1/2 text-ink-mute" />
