@@ -186,7 +186,7 @@ function BookingFlow() {
             />
             <SelectionRow
               label="clinic"
-              value={clinic ? clinic.name.toLowerCase() : "not picked yet"}
+              value={clinic ? clinic.name : "not picked yet"}
               sub={clinic ? (clinic.neighbourhood ?? clinic.city ?? "").toLowerCase() || null : null}
               onChange={() => setPicker("clinic")}
               last
@@ -313,7 +313,7 @@ function BookingFlow() {
             <SummaryLine label="provider" value="any available provider" />
             <SummaryLine
               label="clinic"
-              value={`${clinic?.name.toLowerCase() ?? "not picked"}${clinic?.neighbourhood ? ` · ${clinic.neighbourhood.toLowerCase()}` : ""}`}
+              value={`${clinic?.name ?? "not picked"}${clinic?.neighbourhood ? ` · ${clinic.neighbourhood.toLowerCase()}` : ""}`}
             />
             <SummaryLine
               label="your times"

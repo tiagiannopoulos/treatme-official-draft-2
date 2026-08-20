@@ -196,7 +196,7 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
               className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-[12px] lowercase"
             >
               <MapPin className="size-3.5 text-hot" />
-              {s.name.toLowerCase()}, {neighbourhood(s)}
+              {s.name}, {neighbourhood(s)}
               {away && <span className="text-ink-mute ml-1">{away}</span>}
             </Link>
           ))}

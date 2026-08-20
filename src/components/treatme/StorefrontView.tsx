@@ -263,7 +263,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
 
       <div className="px-5 pt-12">
         <div className="flex items-start gap-1.5">
-          <h1 className="min-w-0 text-[26px] font-medium leading-tight tracking-[-0.02em] lowercase">
+          <h1 className="min-w-0 text-[26px] font-medium leading-tight tracking-[-0.02em]">
             {name}
           </h1>
           {claimed && (

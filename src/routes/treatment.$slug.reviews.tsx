@@ -57,7 +57,7 @@ function TreatmentReviewsPage() {
       const shop = p.storefronts.find((s) => s.is_primary) ?? p.storefronts[0];
       map.set(p.id, {
         name: p.name.toLowerCase(),
-        clinic: shop ? { id: shop.id, name: shop.name.toLowerCase().replace(/&/g, "and") } : undefined,
+        clinic: shop ? { id: shop.id, name: shop.name.replace(/&/g, "and") } : undefined,
       });
     }
     return map;

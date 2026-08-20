@@ -235,8 +235,8 @@ function ClinicRailCard({ s }: { s: Storefront }) {
         )}
       </div>
 
-      <p className="font-bold text-[14px] tracking-tight leading-tight lowercase mt-3 line-clamp-2">
-        {s.name.toLowerCase()}
+      <p className="font-bold text-[14px] tracking-tight leading-tight mt-3 line-clamp-2">
+        {s.name}
       </p>
       <p className="text-[11px] text-ink-mute mt-0.5 leading-snug lowercase line-clamp-2">
         {neighbourhood(s)} · {s.city.toLowerCase()}
