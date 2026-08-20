@@ -167,10 +167,10 @@ export function UpcomingAppointments() {
                         params={{ id: r.storefront_id }}
                         className="underline decoration-transparent"
                       >
-                        {r.storefront_name.toLowerCase()}
+                        {r.storefront_name}
                       </Link>
                     ) : (
-                      <span>{r.storefront_name.toLowerCase()}</span>
+                      <span>{r.storefront_name}</span>
                     )
                   )}
                 </p>

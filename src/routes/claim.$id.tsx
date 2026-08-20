@@ -127,7 +127,7 @@ function ClaimRoute() {
 
       <div className="px-5 pt-4">
         <h1 className="text-[28px] font-medium lowercase leading-tight tracking-[-0.02em]">
-          claim {clinic ? clinic.name.toLowerCase() : "this storefront"}
+          claim {clinic ? clinic.name : "this storefront"}
         </h1>
 
         {sent ? (
