@@ -208,7 +208,7 @@ function CapturePage() {
             <Chip label={CHIP_COPY.still[steady]} state={steady} />
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 p-6 text-center">
+          <div className="absolute inset-x-0 bottom-20 p-6 text-center">
             <button
               type="button"
               onClick={capture}
@@ -226,7 +226,7 @@ function CapturePage() {
       )}
 
       {still && (
-        <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col items-center gap-4">
+        <div className="absolute inset-x-0 bottom-20 p-6 flex flex-col items-center gap-4">
           <PillButton fullWidth onClick={useThis}>
             use this
           </PillButton>
