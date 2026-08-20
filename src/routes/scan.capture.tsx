@@ -179,74 +179,67 @@ function CapturePage() {
   }
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-3.5rem-5.5rem)] px-4 py-4">
-      <div className="relative flex-1 rounded-3xl overflow-hidden bg-ink">
-        {still ? (
-          <img src={still} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            autoPlay
-            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-          />
-        )}
+    <div className="fixed inset-0 bg-ink">
+      {still ? (
+        <img src={still} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          autoPlay
+          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+        />
+      )}
 
-        {!still && (
-          <>
-            <svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
-              <ellipse
-                cx="50" cy="58" rx="29" ry="40"
-                fill="none" stroke="#FCFBF7" strokeWidth="0.8"
-                strokeDasharray="3 3" opacity="0.85"
-              />
-            </svg>
+      {!still && (
+        <>
+          <svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
+            <ellipse
+              cx="50" cy="58" rx="29" ry="40"
+              fill="none" stroke="#FCFBF7" strokeWidth="0.8"
+              strokeDasharray="3 3" opacity="0.85"
+            />
+          </svg>
 
-            <div className="absolute top-3 inset-x-0 flex justify-center gap-2 px-3">
-              <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
-              <Chip label={CHIP_COPY.position[position]} state={position} />
-              <Chip label={CHIP_COPY.still[steady]} state={steady} />
-            </div>
+          <div className="absolute top-3 inset-x-0 flex justify-center gap-2 px-3">
+            <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
+            <Chip label={CHIP_COPY.position[position]} state={position} />
+            <Chip label={CHIP_COPY.still[steady]} state={steady} />
+          </div>
 
-            <div className="absolute inset-x-0 bottom-0 p-6 text-center">
-              <p className="text-cream/85 text-[13px] max-w-[30ch] mx-auto">
-                natural light, no makeup, hair back. we only need one photo.
-              </p>
-              <button
-                type="button"
-                onClick={capture}
-                disabled={!allGood}
-                aria-label="capture photo"
-                className={cn(
-                  "mt-5 mx-auto grid place-items-center size-[74px] rounded-full border-4 border-cream/70 transition-opacity",
-                  allGood ? "bg-ink opacity-100" : "bg-ink opacity-40",
-                )}
-              >
-                <span className="size-[54px] rounded-full bg-ink border border-cream/40" />
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+          <div className="absolute inset-x-0 bottom-0 p-6 text-center">
+            <button
+              type="button"
+              onClick={capture}
+              disabled={!allGood}
+              aria-label="capture photo"
+              className={cn(
+                "mx-auto grid place-items-center size-[74px] rounded-full border-4 border-cream/70 transition-opacity",
+                allGood ? "bg-ink opacity-100" : "bg-ink opacity-40",
+              )}
+            >
+              <span className="size-[54px] rounded-full bg-ink border border-cream/40" />
+            </button>
+          </div>
+        </>
+      )}
 
       {still && (
-        <div className="pt-5">
+        <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col items-center gap-4">
           <PillButton fullWidth onClick={useThis}>
             use this
           </PillButton>
-          <div className="text-center mt-4">
-            <button
-              type="button"
-              onClick={() => {
-                setStill(null);
-                prevPixels.current = null;
-              }}
-              className="text-[13px] font-semibold text-ink-mute lowercase"
-            >
-              retake
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setStill(null);
+              prevPixels.current = null;
+            }}
+            className="text-[13px] font-semibold text-cream/80 lowercase"
+          >
+            retake
+          </button>
         </div>
       )}
     </div>
