@@ -11,8 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { SpeedInsights } from "@vercel/speed-insights/react";
-// import { Analytics } from "@vercel/analytics/next",
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next",
+// import { Analytics } from "@vercel/analytics/react";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { ScanProvider } from "@/lib/scan-store";
