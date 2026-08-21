@@ -263,11 +263,11 @@ function drawOverlay(a: DrawArgs) {
     case "cloud": {
       const n = count(6);
       return (
-        <g opacity={0.4} filter={heavy}>
+        <g opacity={0.55} filter={soft}>
           {Array.from({ length: n }, (_, i) => {
             const p = pick(rand, zones);
             const r = 14 + rand() * 12;
-            return <ellipse key={i} cx={p.x} cy={p.y} rx={r} ry={r * 0.72} fill={accent} />;
+            return <ellipse key={i} cx={p.x} cy={p.y} rx={r} ry={r * 0.72} fill={accent} opacity={0.7} />;
           })}
         </g>
       );
