@@ -49,18 +49,30 @@ required keys:
 
 type Analysis = z.infer<typeof AnalysisSchema>;
 
+const MAX_IMAGE_BYTES = 5_000_000;
+
+/** decoded byte size of a base64 payload, without allocating it */
+function base64Bytes(base64: string) {
+  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  return Math.floor((base64.length * 3) / 4) - padding;
+}
+
 function parseImageDataUrl(dataUrl: string) {
   const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=\s]+)$/);
   if (!match) throw new Error("invalid_image_data_url");
 
   const mediaType = match[1].toLowerCase();
   const base64 = match[2].replace(/\s+/g, "");
+  const bytes = base64Bytes(base64);
 
   if (!SUPPORTED_IMAGE_TYPES.has(mediaType)) {
     throw new Error(`unsupported_media_type:${mediaType}`);
   }
+  if (bytes > MAX_IMAGE_BYTES) {
+    throw new Error(`image_too_large:${bytes}`);
+  }
 
-  return { mediaType, base64 };
+  return { mediaType, base64, bytes };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
