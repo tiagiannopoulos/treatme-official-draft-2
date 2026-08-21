@@ -52,7 +52,6 @@ export function SearchMap({
   className,
 }: Props) {
 
-  const { data } = useQuery(keyQuery);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -69,8 +68,10 @@ export function SearchMap({
 
   const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
-  const browserKey = data?.browserKey ?? null;
-  const trackingId = data?.trackingId ?? null;
+  // resolved client-side: VITE_GOOGLE_MAPS_API_KEY (vercel/self-host) first,
+  // then the lovable connector key. null when neither is set.
+  const browserKey = resolveBrowserKey();
+  const trackingId = resolveTrackingId();
 
   // load google maps once, then init the map instance.
   useEffect(() => {
