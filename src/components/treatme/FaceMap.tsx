@@ -308,17 +308,14 @@ function drawOverlay(a: DrawArgs) {
     case "crescent":
     case "crescent_soft": {
       const softer = overlayKind === "crescent_soft";
-      const depth = 5 + d * 5;
+      const top = 97;
+      const depth = 6 + d * 6;
       return (
-        <g
-          fill={accent}
-          opacity={softer ? 0.5 : 0.6}
-          filter={softer ? heavy : soft}
-        >
+        <g fill={accent} opacity={softer ? 0.5 : 0.6} filter={soft}>
           {[79, 121].map((cx) => (
             <path
               key={cx}
-              d={`M${cx - 15} 99 Q${cx} ${99 + depth * 2.1} ${cx + 15} 99 Q${cx} ${99 + depth} ${cx - 15} 99 Z`}
+              d={`M${cx - 15} ${top} Q${cx} ${top + depth * 2.2} ${cx + 15} ${top} Q${cx} ${top + depth * 0.5} ${cx - 15} ${top} Z`}
             />
           ))}
         </g>
