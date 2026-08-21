@@ -1,10 +1,54 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Image as ImageIcon, RefreshCw } from "lucide-react";
+import { Image as ImageIcon, RefreshCw, CameraOff, RotateCcw } from "lucide-react";
 import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { detectVideoFrame, facemeshReady } from "@/lib/facemesh";
 import { cn } from "@/lib/utils";
+
+type CameraError =
+  | "permission"
+  | "none"
+  | "busy"
+  | "constraints"
+  | "security"
+  | "unknown";
+
+const ERROR_COPY: Record<
+  Exclude<CameraError, "permission">,
+  { title: string; body: string }
+> = {
+  none: {
+    title: "no camera found",
+    body: "we couldn't find a camera on this device. try uploading a photo instead.",
+  },
+  busy: {
+    title: "camera is busy",
+    body: "another app is using your camera. close it and try again, or upload a photo.",
+  },
+  constraints: {
+    title: "this camera won't work",
+    body: "your camera can't meet our framing needs. try flipping it, or upload a photo.",
+  },
+  security: {
+    title: "connection not secure",
+    body: "cameras need a secure (https) connection. upload a photo to continue instead.",
+  },
+  unknown: {
+    title: "camera hit a snag",
+    body: "something went wrong opening the camera. give it another go, or upload a photo.",
+  },
+};
+
+function classifyCameraError(err: unknown): CameraError {
+  const name = (err as { name?: string })?.name ?? "";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError") return "permission";
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") return "none";
+  if (name === "NotReadableError" || name === "TrackStartError") return "busy";
+  if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError") return "constraints";
+  if (name === "SecurityError" || name === "NotSupportedError") return "security";
+  return "unknown";
+}
 
 export const Route = createFileRoute("/scan/capture")({
   head: () => ({
@@ -80,8 +124,8 @@ function CapturePage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [facing, setFacing] = useState<"user" | "environment">("user");
-  const [denied, setDenied] = useState(false);
-  const [unsupported, setUnsupported] = useState(false);
+  const [camError, setCamError] = useState<CameraError | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [still, setStill] = useState<string | null>(null);
   const [lighting, setLighting] = useState<ChipState>("adjust");
   const [position, setPosition] = useState<ChipState>("adjust");
@@ -94,13 +138,14 @@ function CapturePage() {
     if (video) video.srcObject = null;
   }, []);
 
-  // camera. re-opened whenever the facing mode changes, torn down on unmount.
+  // camera. re-opened whenever the facing mode or retry changes, torn down on unmount.
   useEffect(() => {
     if (still) return;
     if (!navigator.mediaDevices?.getUserMedia) {
-      setUnsupported(true);
+      setCamError("security");
       return;
     }
+    setCamError(null);
     let cancelled = false;
     (async () => {
       try {
@@ -113,20 +158,19 @@ function CapturePage() {
           return;
         }
         streamRef.current = stream;
-        setDenied(false);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
         }
-      } catch {
-        if (!cancelled) setDenied(true);
+      } catch (err) {
+        if (!cancelled) setCamError(classifyCameraError(err));
       }
     })();
     return () => {
       cancelled = true;
       stopStream();
     };
-  }, [facing, still, stopStream]);
+  }, [facing, still, stopStream, retryKey]);
 
   // stop the camera when the tab is backgrounded or the page is left
   useEffect(() => {
@@ -144,7 +188,7 @@ function CapturePage() {
 
   // live coaching loop
   useEffect(() => {
-    if (still || denied || unsupported) return;
+    if (still || camError) return;
     let alive = true;
     let meshAvailable = true;
     void facemeshReady().then((ok) => {
@@ -192,7 +236,7 @@ function CapturePage() {
       alive = false;
       clearInterval(id);
     };
-  }, [still, denied, unsupported]);
+  }, [still, camError]);
 
   const allGood = lighting === "good" && position === "good" && steady === "good";
 
@@ -232,18 +276,36 @@ function CapturePage() {
     />
   );
 
-  if ((denied || unsupported) && !still) {
+  if (camError && !still) {
+    const isPermission = camError === "permission";
+    const copy = isPermission
+      ? { title: "we need camera access", body: "allow camera in your browser settings, or upload a photo instead." }
+      : ERROR_COPY[camError];
     return (
       <div className="min-h-[70vh] bg-cream px-6 pt-16">
         {picker}
         <div className="mx-auto max-w-[360px] rounded-[26px] bg-white p-6 shadow-xl">
+          <div className="mb-4 grid size-11 place-items-center rounded-full bg-butter">
+            <CameraOff className="size-5 text-ink" aria-hidden="true" />
+          </div>
           <h1 className="brand-display text-[26px] lowercase leading-tight">
-            we need camera access<span className="text-hot">.</span>
+            {copy.title}
+            <span className="text-hot">.</span>
           </h1>
           <p className="mt-3 text-[13.5px] leading-relaxed lowercase text-ink-mute">
-            allow camera in your browser settings, or upload a photo instead.
+            {copy.body}
           </p>
           <div className="mt-6 flex flex-col gap-3">
+            {!isPermission && (
+              <button
+                type="button"
+                onClick={() => setRetryKey((k) => k + 1)}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3.5 text-[14px] font-semibold lowercase text-cream"
+              >
+                <RotateCcw className="size-4" aria-hidden="true" />
+                try again
+              </button>
+            )}
             <PillButton fullWidth onClick={() => fileRef.current?.click()}>
               upload a photo
             </PillButton>

@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Check } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { toConcernRows, overallScore, bandFor, bandTint, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
-import { treatmentsForConcerns } from "@/lib/concern-treatments";
+import { toConcernRows, overallScore, bandTint, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { treatmentsForConcerns, bestTreatmentByImproves } from "@/lib/concern-treatments";
 import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
 import { useScanPhoto } from "@/lib/scan-photo";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
-import { PillButton } from "@/components/treatme/PillButton";
 import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
 import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
 import { fetchSavedScan } from "@/lib/scan-history";
@@ -81,10 +80,20 @@ function ResultsPage() {
   const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
 
+  const worst = ordered[0];
+
   const { data: matches = [] } = useQuery({
     queryKey: ["concern-treatments", ordered.map((r) => `${r.concern_key}:${r.score}`).join(",")],
     queryFn: () => treatmentsForConcerns(ordered, 5),
     enabled: ordered.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // best treatment for the top concern, matched against the improves array.
+  const { data: topSlug } = useQuery({
+    queryKey: ["best-treatment-improves", worst?.concern_key],
+    queryFn: () => bestTreatmentByImproves(SCAN_CONCERN_LABEL[worst!.concern_key] ?? worst!.concern_key),
+    enabled: !!worst,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -103,19 +112,32 @@ function ResultsPage() {
         <h1 className="brand-display text-3xl mt-2">let's read your skin first.</h1>
         <div className="mt-6">
           <Link to="/scan">
-            <PillButton>scan me</PillButton>
+            <span className="inline-flex items-center justify-center rounded-full bg-ink text-cream h-12 px-6 font-semibold lowercase">
+              scan me
+            </span>
           </Link>
         </div>
       </div>
     );
   }
 
-  const worst = ordered[0];
+  const openTopConcern = () => {
+    if (!worst) return;
+    const label = SCAN_CONCERN_LABEL[worst.concern_key] ?? worst.concern_key;
+    if (topSlug) {
+      navigate({ to: "/match/$slug", params: { slug: topSlug } });
+    } else {
+      navigate({ to: "/search", search: { q: label, scope: undefined } });
+    }
+  };
 
   return (
-    <div className="pt-4 pb-40">
+    <div className="pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
       {/* header */}
-      <div className="px-6 flex items-center justify-between gap-3">
+      <header
+        className="px-6 flex items-center justify-between gap-3"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
+      >
         <h1 className="brand-display text-[26px] lowercase">analysis results</h1>
         <button
           type="button"
@@ -124,45 +146,84 @@ function ResultsPage() {
         >
           retake
         </button>
-      </div>
+      </header>
 
-      {/* overview */}
-      <div className="mt-5 px-6 grid grid-cols-2 gap-3">
-        <OverviewCard label="skin type" value={analysis?.skinType ?? "unknown"} />
-        <OverviewCard label="skin tone" value={analysis ? `fitzpatrick ${analysis.fitzpatrick}` : "unknown"} />
+      {/* stat cards */}
+      <div className="mt-4 px-6 grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-ink/10 bg-white p-4">
-          <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">overall score</p>
-          <p className="brand-display text-[38px] leading-none mt-2">
+          <p className="text-[12px] lowercase text-ink">skin type</p>
+          <p className="font-bold text-[19px] mt-2 lowercase leading-tight">
+            {analysis?.skinType ?? "unknown"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-ink/10 bg-white p-4">
+          <p className="text-[12px] lowercase text-ink">skin tone</p>
+          <p className="font-bold text-[19px] mt-2 lowercase leading-tight">
+            {analysis ? `fitzpatrick ${analysis.fitzpatrick.toLowerCase()}` : "unknown"}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-ink/10 bg-white p-4">
+          <p className="text-[12px] lowercase text-ink">overall score</p>
+          <p className="brand-display text-[34px] leading-none mt-2">
             {overall}
-            <span className="text-[15px] text-ink-mute"> /100</span>
+            <span className="text-[15px] text-ink-mute">/100</span>
           </p>
-          <p className="text-[13px] font-semibold mt-1 lowercase">{bandFor(overall)}</p>
         </div>
-        <div className="rounded-2xl p-4" style={{ backgroundColor: bandTint(worst.band) }}>
-          <p className="text-[11px] font-bold tracking-widest uppercase text-ink/70">top concern</p>
-          <p className="font-bold text-[18px] mt-2 lowercase leading-tight">
-            {SCAN_CONCERN_LABEL[worst.concern_key]}
-          </p>
-          <p className="text-[13px] text-ink/70 mt-1">{worst.score}/100 · {worst.band}</p>
-        </div>
+        {worst && (
+          <button
+            type="button"
+            onClick={openTopConcern}
+            className="text-left rounded-2xl p-4"
+            style={{ backgroundColor: "#FFEDB4" }}
+          >
+            <p className="text-[12px] lowercase text-ink">top concern</p>
+            <p className="font-bold text-[18px] mt-2 lowercase leading-tight">
+              {SCAN_CONCERN_LABEL[worst.concern_key]}
+            </p>
+            <p className="text-[13px] text-ink/70 mt-1">{worst.score}/100</p>
+          </button>
+        )}
       </div>
 
-      {/* concern carousel */}
+      {/* mint setup card */}
+      {analysis && (
+        <div className="mx-6 mt-3 rounded-2xl p-4" style={{ backgroundColor: "#DFFFF8" }}>
+          <p className="font-bold text-[15px] lowercase">treatme is now set up for your skin</p>
+          <p className="text-[13px] text-ink/80 mt-1 leading-relaxed">
+            because you are a fitzpatrick {analysis.fitzpatrick.toLowerCase()}, treatme will show you
+            treatments and providers suited to your skin and hide the ones that are not.
+          </p>
+          <Link
+            to="/profile"
+            className="inline-block mt-2 text-[13px] font-semibold lowercase underline underline-offset-4"
+          >
+            change this in your profile
+          </Link>
+        </div>
+      )}
+
+      {/* the detail */}
       <div className="mt-8">
         <div className="px-6">
-          <p className="brand-eyebrow">every indicator</p>
-          <h2 className="brand-display text-[24px] mt-2">lowest scores first</h2>
+          <h2 className="brand-display text-[24px] lowercase">the detail</h2>
+          <p className="text-[13px] text-ink/55 mt-1 lowercase">indicator by indicator, lowest first</p>
         </div>
         <div className="mt-4 overflow-x-auto scrollbar-none">
           <div className="flex gap-3 px-6 pb-2">
             {ordered.map((row) => (
-              <article
+              <button
                 key={row.concern_key}
-                className="shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
+                type="button"
+                onClick={() => navigate({ to: "/scan/concern/$key", params: { key: row.concern_key } })}
+                className="text-left shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
               >
                 <div className="relative aspect-[4/5] bg-ink/5">
                   {photoDataUrl && (
-                    <img src={photoDataUrl} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
+                    <img
+                      src={photoDataUrl}
+                      alt="your scan photo"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                   )}
                   {row.score >= 90 ? (
                     <span
@@ -195,24 +256,17 @@ function ResultsPage() {
                       {row.band}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate({ to: "/scan/concern/$key", params: { key: row.concern_key } })}
-                    className="mt-3 w-full h-10 rounded-full bg-ink text-cream text-[13px] font-semibold lowercase"
-                  >
-                    show more
-                  </button>
                 </div>
-              </article>
+              </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* treatments for you */}
+      {/* recommended for you */}
       <div className="mt-8 px-6">
         <p className="brand-eyebrow">matched to your scores</p>
-        <h2 className="brand-display text-[24px] mt-2">recommended for you</h2>
+        <h2 className="brand-display text-[24px] mt-2 lowercase">recommended for you</h2>
 
         <div className="mt-4 rounded-3xl border border-ink/10 bg-white divide-y divide-ink/10 overflow-hidden">
           {matches.length === 0 ? (
@@ -240,38 +294,45 @@ function ResultsPage() {
               </div>
             ))
           )}
-
         </div>
       </div>
 
       <AnalysisFooter className="mt-6 px-6" />
 
-      {/* sticky actions */}
-      <div className="fixed inset-x-0 bottom-[5.5rem] z-30 px-6 pb-3 pt-3 bg-gradient-to-t from-cream via-cream to-transparent">
-        <PillButton fullWidth onClick={() => navigate({ to: "/scan/chat" })}>
+      {/* saved + download links */}
+      <div className="px-6 mt-4 flex items-center justify-center gap-5">
+        <Link
+          to="/profile"
+          className="inline-flex items-center gap-1 text-[13px] text-ink/55 lowercase"
+        >
+          <Check className="size-3.5" aria-hidden="true" />
+          saved to your profile
+        </Link>
+        <button
+          type="button"
+          onClick={() => setShareOpen(true)}
+          className="text-[13px] text-ink/55 lowercase underline underline-offset-4"
+        >
+          download
+        </button>
+      </div>
+
+      {/* sticky consult bar */}
+      <div
+        className="fixed inset-x-0 z-30 px-6 pt-4 pb-3 bg-gradient-to-t from-cream via-cream to-transparent"
+        style={{ bottom: "calc(5rem + env(safe-area-inset-bottom))" }}
+      >
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/scan/chat" })}
+          className="w-full h-12 rounded-full text-[15px] font-semibold lowercase text-cream"
+          style={{ backgroundColor: "#FF1F87" }}
+        >
           start my consult
-        </PillButton>
-        <div className="text-center mt-2">
-          <button
-            type="button"
-            onClick={() => setShareOpen(true)}
-            className="text-[13px] font-semibold text-ink-mute lowercase underline underline-offset-4"
-          >
-            download my results
-          </button>
-        </div>
+        </button>
       </div>
 
       <SharePdfSheet open={shareOpen} onOpenChange={setShareOpen} scanId={scanId} analysis={analysis} />
-    </div>
-  );
-}
-
-function OverviewCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-ink/10 bg-white p-4">
-      <p className="text-[11px] font-bold tracking-widest uppercase text-ink-mute">{label}</p>
-      <p className="font-bold text-[18px] mt-2 lowercase leading-tight">{value}</p>
     </div>
   );
 }

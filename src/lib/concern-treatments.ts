@@ -201,3 +201,16 @@ export async function treatmentsForOneConcern(
 
   return out.slice(0, max);
 }
+
+/**
+ * the single best treatment whose `improves` array overlaps this concern.
+ * used to route the top concern card on the results screen. returns null
+ * when nothing matches, so the caller can fall back to a prefilled search.
+ */
+export async function bestTreatmentByImproves(concernLabel: string): Promise<string | null> {
+  const catalogue = await allTreatments();
+  const matched = catalogue
+    .filter((t) => matchesConcern(t.improves, concernLabel))
+    .sort((a, b) => (b.sort_order ?? 0) - (a.sort_order ?? 0));
+  return matched[0]?.slug ?? null;
+}

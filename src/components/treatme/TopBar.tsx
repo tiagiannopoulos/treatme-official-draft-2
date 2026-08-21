@@ -13,6 +13,9 @@ function titleFor(pathname: string) {
 
 export function TopBar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  // the results screen renders its own header; the global bar would duplicate
+  // the "analysis results" title and the profile button.
+  if (pathname.startsWith("/scan/results")) return null;
   const title = titleFor(pathname);
 
   return (
