@@ -36,18 +36,38 @@ const FACTS = [
   "your skin barrier repairs itself fastest while you sleep.",
 ];
 
-const TIMEOUT_MS = 30_000;
+/** the stage line changes so a slow read never feels stuck */
+const STAGES = [
+  "reading your photo",
+  "looking at texture and tone",
+  "checking hydration and pores",
+  "almost there",
+];
+
+const TIMEOUT_MS = 60_000;
+const RETRY_DELAYS = [2000, 5000];
 
 type Phase = "working" | "quality" | "timeout" | "failed";
+type Failure = "face" | "image" | "service";
 
-function useFactRotator(active: boolean) {
+const FAILURE_COPY: Record<Failure, string> = {
+  face: "we could not find a face in that one. try again in better light, facing the camera.",
+  image: "that photo did not upload properly. try taking a new one.",
+  service: "our end had a problem. try again in a moment.",
+};
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function useRotator(items: string[], active: boolean, everyMs: number) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (!active) return;
-    const id = setInterval(() => setI((n) => (n + 1) % FACTS.length), 2000);
+    const id = setInterval(() => setI((n) => (n + 1) % items.length), everyMs);
     return () => clearInterval(id);
-  }, [active]);
-  return FACTS[i];
+  }, [active, everyMs, items.length]);
+  return items[Math.min(i, items.length - 1)]!;
 }
 
 function AnalyzingPage() {
@@ -57,8 +77,10 @@ function AnalyzingPage() {
   const started = useRef(false);
   const [phase, setPhase] = useState<Phase>("working");
   const [progress, setProgress] = useState(6);
+  const [failure, setFailure] = useState<Failure>("service");
   const pending = useRef<{ analysis: SkinAnalysis } | null>(null);
-  const fact = useFactRotator(phase === "working");
+  const fact = useRotator(FACTS, phase === "working", 4000);
+  const stage = useRotator(STAGES, phase === "working", 5000);
 
   // progress creeps toward 92 and completes when we navigate
   useEffect(() => {
@@ -106,8 +128,35 @@ function AnalyzingPage() {
       return;
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    setPhase("working");
+    setProgress(6);
+
+    /** one attempt. throws { retryable, failure } shaped errors. */
+    const attempt = async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const res = await fetch("/api/public/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageDataUrl: photoDataUrl }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { code?: string; detail?: string };
+          console.error("scan analysis rejected", res.status, body.code, body.detail);
+          const retryable = res.status === 429 || res.status >= 500;
+          const failure: Failure = body.code === "image" ? "image" : "service";
+          throw Object.assign(new Error(body.detail ?? `status_${res.status}`), { retryable, failure });
+        }
+
+        const json = (await res.json()) as { analysis?: unknown };
+        return AnalysisSchema.parse(json.analysis);
+      } finally {
+        clearTimeout(timer);
+      }
+    };
 
     try {
       const [landmarks, photoPath] = await Promise.all([
@@ -116,17 +165,24 @@ function AnalyzingPage() {
       ]);
       setPhotoPath(photoPath);
 
-      const res = await fetch("/api/public/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl: photoDataUrl }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error("analysis_failed");
+      let analysis: SkinAnalysis | null = null;
+      let lastError: unknown = null;
 
-      const json = (await res.json()) as { analysis?: unknown };
-      const analysis = AnalysisSchema.parse(json.analysis);
+      for (let i = 0; i <= RETRY_DELAYS.length; i += 1) {
+        try {
+          analysis = await attempt();
+          break;
+        } catch (err) {
+          lastError = err;
+          const meta = err as { retryable?: boolean };
+          const aborted = err instanceof DOMException && err.name === "AbortError";
+          const canRetry = (meta.retryable || aborted) && i < RETRY_DELAYS.length;
+          if (!canRetry) throw err;
+          await sleep(RETRY_DELAYS[i]!);
+        }
+      }
+
+      if (!analysis) throw lastError ?? new Error("analysis_failed");
 
       if (analysis.photoQuality === "poor") {
         pending.current = { analysis };
@@ -137,9 +193,13 @@ function AnalyzingPage() {
 
       await finish(analysis, photoPath, landmarks);
     } catch (err) {
-      clearTimeout(timer);
-      const aborted = err instanceof DOMException && err.name === "AbortError";
       console.error("scan analysis failed", err);
+      const aborted = err instanceof DOMException && err.name === "AbortError";
+      const meta = err as { failure?: Failure };
+      const message = err instanceof Error ? err.message.toLowerCase() : "";
+      setFailure(
+        aborted ? "service" : message.includes("face") ? "face" : (meta.failure ?? "service"),
+      );
       setPhase(aborted ? "timeout" : "failed");
     }
   }, [finish, navigate, photoDataUrl, setPhotoPath, storePhoto]);
@@ -188,7 +248,8 @@ function AnalyzingPage() {
               style={{ width: `${Math.round(progress)}%` }}
             />
           </div>
-          <p className="mt-4 text-[13px] text-ink-mute">{fact}</p>
+          <p className="mt-3 text-[13px] text-ink">{stage}</p>
+          <p className="mt-1 text-[13px] text-ink-mute">{fact}</p>
         </div>
       )}
 
@@ -208,10 +269,15 @@ function AnalyzingPage() {
 
       {(phase === "timeout" || phase === "failed") && (
         <div className="mt-7">
-          <h1 className="brand-display text-[28px]">that didn't go through. try again?</h1>
-          <div className="mt-6">
-            <PillButton fullWidth onClick={retake}>
+          <h1 className="brand-display text-[26px]">
+            {phase === "timeout" ? FAILURE_COPY.service : FAILURE_COPY[failure]}
+          </h1>
+          <div className="mt-6 space-y-3">
+            <PillButton fullWidth onClick={() => void run()}>
               try again
+            </PillButton>
+            <PillButton fullWidth variant="outline" onClick={retake}>
+              retake
             </PillButton>
           </div>
         </div>

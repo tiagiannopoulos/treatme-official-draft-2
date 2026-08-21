@@ -49,18 +49,30 @@ required keys:
 
 type Analysis = z.infer<typeof AnalysisSchema>;
 
+const MAX_IMAGE_BYTES = 5_000_000;
+
+/** decoded byte size of a base64 payload, without allocating it */
+function base64Bytes(base64: string) {
+  const padding = base64.endsWith("==") ? 2 : base64.endsWith("=") ? 1 : 0;
+  return Math.floor((base64.length * 3) / 4) - padding;
+}
+
 function parseImageDataUrl(dataUrl: string) {
   const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([a-zA-Z0-9+/=\s]+)$/);
   if (!match) throw new Error("invalid_image_data_url");
 
   const mediaType = match[1].toLowerCase();
   const base64 = match[2].replace(/\s+/g, "");
+  const bytes = base64Bytes(base64);
 
   if (!SUPPORTED_IMAGE_TYPES.has(mediaType)) {
     throw new Error(`unsupported_media_type:${mediaType}`);
   }
+  if (bytes > MAX_IMAGE_BYTES) {
+    throw new Error(`image_too_large:${bytes}`);
+  }
 
-  return { mediaType, base64 };
+  return { mediaType, base64, bytes };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -220,51 +232,94 @@ async function runAnalysis(model: ReturnType<ReturnType<typeof createLovableAiGa
   }
 }
 
+/** every failure lands in scan_errors so the real cause is visible later */
+async function logScanError(input: {
+  request: Request;
+  status: number;
+  message: string;
+  bytes: number | null;
+  mediaType: string | null;
+}) {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const token = input.request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+    let userId: string | null = null;
+    if (token) {
+      const { data } = await supabaseAdmin.auth.getUser(token);
+      userId = data.user?.id ?? null;
+    }
+    await supabaseAdmin.from("scan_errors").insert({
+      user_id: userId,
+      status_code: input.status,
+      error_message: input.message.slice(0, 900),
+      image_bytes: input.bytes,
+      media_type: input.mediaType,
+    });
+  } catch (logError) {
+    console.error("scan error log failed:", logError);
+  }
+}
+
 export const Route = createFileRoute("/api/public/analyze")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const key = process.env.LOVABLE_API_KEY;
         if (!key) {
-          return Response.json({ error: "Missing LOVABLE_API_KEY" }, { status: 500 });
+          return Response.json({ error: "Missing LOVABLE_API_KEY", code: "service" }, { status: 500 });
         }
 
         let body: z.infer<typeof RequestBody>;
         try {
           body = RequestBody.parse(await request.json());
         } catch {
-          return Response.json({ error: "Invalid request body" }, { status: 400 });
+          return Response.json({ error: "invalid request body", code: "image" }, { status: 400 });
         }
+
+        let bytes: number | null = null;
+        let mediaType: string | null = null;
 
         const gateway = createLovableAiGatewayProvider(key);
         const model = gateway("google/gemini-3-flash-preview");
 
         try {
+          const image = parseImageDataUrl(body.imageDataUrl);
+          bytes = image.bytes;
+          mediaType = image.mediaType;
+
           const analysis = await runAnalysis(model, body.imageDataUrl);
           return Response.json({ analysis });
         } catch (err) {
           const msg = err instanceof Error ? err.message : "unknown error";
-          const status =
-            msg.startsWith("invalid_image_data_url") || msg.startsWith("unsupported_media_type")
-              ? 400
-              : /\b429\b/.test(msg)
-                ? 429
-                : /\b402\b/.test(msg)
-                  ? 402
-                  : 500;
+          const badImage =
+            msg.startsWith("invalid_image_data_url") ||
+            msg.startsWith("unsupported_media_type") ||
+            msg.startsWith("image_too_large");
+          const status = badImage
+            ? 400
+            : /\b429\b/.test(msg)
+              ? 429
+              : /\b402\b/.test(msg)
+                ? 402
+                : 500;
 
-          console.error("analyze error:", msg);
+          console.error("analyze error:", { status, msg, bytes, mediaType });
+          void logScanError({ request, status, message: msg, bytes, mediaType });
+
+          const code = badImage ? "image" : status === 402 ? "credits" : "service";
 
           return Response.json(
             {
+              code,
+              detail: msg,
               error:
                 status === 400
-                  ? "that photo format isn't supported. use a jpg, png, or webp."
+                  ? "that photo did not upload properly. try taking a new one."
                   : status === 429
-                    ? "we're a little busy — try again in a moment"
+                    ? "our end had a problem. try again in a moment."
                     : status === 402
-                      ? "ai credits exhausted — add credits in workspace settings"
-                      : "couldn't get a clear read. try again.",
+                      ? "ai credits exhausted. add credits in workspace settings."
+                      : "our end had a problem. try again in a moment.",
             },
             { status },
           );
