@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 
-import { getGoogleMapsKey } from "@/lib/map.functions";
-import { loadGoogleMaps, MAP_STYLE } from "@/lib/google-maps-loader";
+import { loadGoogleMaps, MAP_STYLE, resolveBrowserKey, resolveTrackingId } from "@/lib/google-maps-loader";
 import { accentTint, textOnAccent } from "@/lib/storefront-brand";
 
-const keyQuery = {
-  queryKey: ["google-maps-key"],
-  queryFn: () => getGoogleMapsKey(),
-  staleTime: Infinity,
-  retry: false,
-} as const;
 
 function pinIcon(accent: string): google.maps.Symbol {
   return {
@@ -44,13 +36,14 @@ export function StorefrontMapStrip({
   mapsHref: string;
   name: string;
 }) {
-  const { data } = useQuery(keyQuery);
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [failed, setFailed] = useState(false);
 
-  const browserKey = data?.browserKey ?? null;
-  const trackingId = data?.trackingId ?? null;
+  // resolved client-side: VITE_GOOGLE_MAPS_API_KEY (vercel/self-host) first,
+  // then the lovable connector key. null when neither is set.
+  const browserKey = resolveBrowserKey();
+  const trackingId = resolveTrackingId();
 
   useEffect(() => {
     if (!browserKey || !divRef.current || mapRef.current) return;
@@ -87,6 +80,8 @@ export function StorefrontMapStrip({
   }, [accent, browserKey, lat, lng, name, trackingId]);
 
   const live = Boolean(browserKey) && !failed;
+  // no key at all: mint "map loading" placeholder instead of a broken map.
+  const noKey = !browserKey;
 
   return (
     <a
@@ -95,10 +90,17 @@ export function StorefrontMapStrip({
       rel="noreferrer"
       aria-label={`open ${name} in maps`}
       className="relative block h-[160px] w-full overflow-hidden rounded-[18px] border border-line"
-      style={{ backgroundColor: accentTint(accent, 0.18) }}
+      style={{ backgroundColor: noKey ? "#DFFFF8" : accentTint(accent, 0.18) }}
     >
       {live ? (
         <div ref={divRef} className="h-full w-full" />
+      ) : noKey ? (
+        <span className="grid h-full w-full place-items-center bg-mint">
+          <span className="flex flex-col items-center gap-2 text-ink">
+            <MapPin className="size-5 opacity-50" />
+            <span className="text-[11px] font-medium lowercase">map loading</span>
+          </span>
+        </span>
       ) : (
         <span className="grid h-full w-full place-items-center">
           <span

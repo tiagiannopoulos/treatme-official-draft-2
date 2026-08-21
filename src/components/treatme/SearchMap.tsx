@@ -1,24 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { Maximize2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getGoogleMapsKey } from "@/lib/map.functions";
 import type { LatLng, Storefront } from "@/lib/search-data";
-import { loadGoogleMaps } from "@/lib/google-maps-loader";
+import { loadGoogleMaps, resolveBrowserKey, resolveTrackingId } from "@/lib/google-maps-loader";
 
 
 const HOT = "#FF1F87";
 const INK = "#111111";
 const CREAM = "#FCFBF7";
-
-const keyQuery = {
-  queryKey: ["google-maps-key"],
-  queryFn: () => getGoogleMapsKey(),
-  staleTime: Infinity,
-  retry: false,
-} as const;
 
 /** suppress poi and transit labels for a clean, editorial look. */
 const LOCAL_MAP_STYLE: google.maps.MapTypeStyle[] = [
@@ -61,7 +52,6 @@ export function SearchMap({
   className,
 }: Props) {
 
-  const { data } = useQuery(keyQuery);
   const [failed, setFailed] = useState(false);
   const [ready, setReady] = useState(false);
   const divRef = useRef<HTMLDivElement>(null);
@@ -78,8 +68,10 @@ export function SearchMap({
 
   const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
-  const browserKey = data?.browserKey ?? null;
-  const trackingId = data?.trackingId ?? null;
+  // resolved client-side: VITE_GOOGLE_MAPS_API_KEY (vercel/self-host) first,
+  // then the lovable connector key. null when neither is set.
+  const browserKey = resolveBrowserKey();
+  const trackingId = resolveTrackingId();
 
   // load google maps once, then init the map instance.
   useEffect(() => {
