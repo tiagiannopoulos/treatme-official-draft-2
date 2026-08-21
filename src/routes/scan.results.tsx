@@ -6,7 +6,8 @@ import { useScan } from "@/lib/scan-store";
 import { toConcernRows, overallScore, bandTint, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { treatmentsForConcerns, bestTreatmentByImproves } from "@/lib/concern-treatments";
 import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
-import { useScanPhoto } from "@/lib/scan-photo";
+import { useScanPhotoSource } from "@/lib/scan-photo";
+import { ScanPhoto } from "@/components/treatme/ScanPhoto";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { SharePdfSheet } from "@/components/treatme/SharePdfSheet";
 import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
@@ -35,7 +36,7 @@ function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
   const { result, analysis, landmarks, scanId, hydrate, setResult } = useScan();
-  const photoDataUrl = useScanPhoto();
+  const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
   const loadedFor = useRef<string | null>(null);
@@ -203,14 +204,7 @@ function ResultsPage() {
                 onClick={() => navigate({ to: "/scan/concern/$key", params: { key: row.concern_key } })}
                 className="text-left shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
               >
-                <div className="relative aspect-[4/5] bg-ink/5">
-                  {photoDataUrl && (
-                    <img
-                      src={photoDataUrl}
-                      alt="your scan photo"
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  )}
+                <ScanPhoto source={photoSource} className="relative aspect-[4/5]">
                   {row.score >= 90 ? (
                     <span
                       className="absolute inset-x-3 bottom-3 rounded-full px-3 py-2 text-[12px] font-semibold text-center lowercase"
@@ -225,7 +219,7 @@ function ResultsPage() {
                       landmarks={landmarks}
                     />
                   )}
-                </div>
+                </ScanPhoto>
                 <div className="p-4">
                   <p className="font-bold text-[16px] lowercase leading-tight">
                     {SCAN_CONCERN_LABEL[row.concern_key]}

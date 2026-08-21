@@ -23,6 +23,8 @@ export type ScanState = {
 };
 
 type ScanContextValue = ScanState & {
+  /** true once the session snapshot has been read back on the client */
+  sessionReady: boolean;
   setPhoto: (dataUrl: string) => void;
   setPhotoPath: (path: string | null) => void;
   setScanId: (id: string | null) => void;
@@ -60,6 +62,7 @@ const EMPTY: ScanState = {
 
 export function ScanProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<ScanState>(EMPTY);
+  const [sessionReady, setSessionReady] = useState(false);
 
   // hydrate from sessionStorage on mount (client only)
   useEffect(() => {
@@ -70,6 +73,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
+    setSessionReady(true);
   }, []);
 
   useEffect(() => {
@@ -148,7 +152,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
+      value={{ ...state, sessionReady, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
     >
       {children}
     </ScanContext.Provider>

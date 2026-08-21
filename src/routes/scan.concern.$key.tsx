@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { useScanPhoto } from "@/lib/scan-photo";
+import { useScanPhotoSource } from "@/lib/scan-photo";
+import { ScanPhoto } from "@/components/treatme/ScanPhoto";
 import {
   SCAN_CONCERN_KEYS,
   SCAN_CONCERN_LABEL,
@@ -37,7 +38,7 @@ function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
   const { result, landmarks } = useScan();
-  const photoDataUrl = useScanPhoto();
+  const photoSource = useScanPhotoSource();
 
   const [sub, setSub] = useState<string | null>(null);
 
@@ -51,7 +52,7 @@ function ConcernDetailPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (!row || !photoDataUrl) {
+  if (!row) {
     return (
       <div className="px-6 pt-12 text-center">
         <p className="brand-eyebrow">nothing to show</p>
@@ -117,17 +118,21 @@ function ConcernDetailPage() {
       </div>
 
       {/* image */}
-      <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden bg-ink/5 aspect-[4/5]">
-        <PinchZoom className="absolute inset-0">
-          <img src={photoDataUrl} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
-          {/* the overlay is the point of this screen, so it is always on. */}
-          <ConcernOverlay
-            concernKey={key}
-            tint={tint}
-            landmarks={landmarks}
-            regionScores={row.region_scores}
-            regionFilter={regionFilter}
-          />
+      <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden aspect-[4/5]">
+        <PinchZoom className="h-full w-full">
+          <div className="absolute inset-0">
+            <ScanPhoto source={photoSource} className="h-full w-full">
+            {/* the overlay is the point of this screen, so it is always on when
+                there is region data for this indicator. no data, clean photo. */}
+            <ConcernOverlay
+              concernKey={key}
+              tint={tint}
+              landmarks={landmarks}
+              regionScores={row.region_scores}
+              regionFilter={regionFilter}
+            />
+            </ScanPhoto>
+          </div>
         </PinchZoom>
       </div>
 
