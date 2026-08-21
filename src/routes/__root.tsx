@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/next",
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { ScanProvider } from "@/lib/scan-store";
@@ -91,6 +92,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <body className="bg-white text-ink">
         {children}
         <SpeedInsights />
+        <Analytics />
         <Scripts />
       </body>
     </html>
