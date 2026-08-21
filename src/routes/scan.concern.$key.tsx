@@ -119,7 +119,7 @@ function ConcernDetailPage() {
 
       {/* image */}
       <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden aspect-[4/5]">
-        <PinchZoom className="absolute inset-0">
+        <PinchZoom className="h-full w-full">
           <div className="absolute inset-0">
             <ScanPhoto source={photoSource} className="h-full w-full">
             {/* the overlay is the point of this screen, so it is always on when
