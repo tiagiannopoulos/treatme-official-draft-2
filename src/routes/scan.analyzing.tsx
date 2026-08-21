@@ -269,10 +269,15 @@ function AnalyzingPage() {
 
       {(phase === "timeout" || phase === "failed") && (
         <div className="mt-7">
-          <h1 className="brand-display text-[28px]">that didn't go through. try again?</h1>
-          <div className="mt-6">
-            <PillButton fullWidth onClick={retake}>
+          <h1 className="brand-display text-[26px]">
+            {phase === "timeout" ? FAILURE_COPY.service : FAILURE_COPY[failure]}
+          </h1>
+          <div className="mt-6 space-y-3">
+            <PillButton fullWidth onClick={() => void run()}>
               try again
+            </PillButton>
+            <PillButton fullWidth variant="outline" onClick={retake}>
+              retake
             </PillButton>
           </div>
         </div>
