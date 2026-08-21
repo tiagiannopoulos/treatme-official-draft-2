@@ -106,10 +106,11 @@ export function useScanPhotoByPath(path: string | null | undefined): ScanPhotoSo
  * results screen, every indicator detail view and the profile tab.
  */
 export function useScanPhotoSource(): ScanPhotoSource {
-  const { photoDataUrl, photoPath, scanId, storePhoto } = useScan();
+  const { photoDataUrl, photoPath, scanId, storePhoto, sessionReady } = useScan();
   const [state, setState] = useState<ScanPhotoSource>({ url: null, reason: null });
 
   useEffect(() => {
+    if (!sessionReady) return;
     if (photoDataUrl) {
       setState({ url: null, reason: null });
       return;
@@ -133,7 +134,7 @@ export function useScanPhotoSource(): ScanPhotoSource {
     return () => {
       alive = false;
     };
-  }, [photoDataUrl, photoPath, scanId, storePhoto]);
+  }, [photoDataUrl, photoPath, scanId, storePhoto, sessionReady]);
 
   if (photoDataUrl) return { url: photoDataUrl, reason: null };
   return state;
