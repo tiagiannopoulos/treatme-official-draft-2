@@ -142,7 +142,9 @@ function CapturePage() {
   useEffect(() => {
     if (still) return;
     if (!navigator.mediaDevices?.getUserMedia) {
+      // no camera api at all: skip straight to the file picker
       setCamError("security");
+      fileRef.current?.click();
       return;
     }
     setCamError(null);
