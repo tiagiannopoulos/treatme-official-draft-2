@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Image as ImageIcon, RefreshCw } from "lucide-react";
 import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { detectVideoFrame, facemeshReady } from "@/lib/facemesh";
@@ -27,18 +28,46 @@ const CHIP_COPY: Record<"lighting" | "position" | "still", Record<ChipState, str
   still: { adjust: "hold still", good: "holding still" },
 };
 
+const MAX_EDGE = 1568;
+
 function Chip({ label, state }: { label: string; state: ChipState }) {
   return (
     <span
-      className={cn(
-        "px-3 py-1.5 rounded-full text-[11px] font-semibold lowercase whitespace-nowrap text-ink",
-        state === "good" ? "bg-mint" : "bg-butter",
-      )}
+      className="px-3 py-1.5 rounded-full text-[11px] font-semibold lowercase whitespace-nowrap text-ink"
       style={{ backgroundColor: state === "good" ? "#DFFFF8" : "#FFEDB4" }}
     >
       {label}
     </span>
   );
+}
+
+/** draws a frame at true orientation, downscaled to the analysis pipeline size */
+function frameToDataUrl(video: HTMLVideoElement): string | null {
+  const w = video.videoWidth;
+  const h = video.videoHeight;
+  if (!w || !h) return null;
+  const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  // the preview is mirrored in css only, so the source frame is already the
+  // true orientation. draw it straight through.
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.88);
+}
+
+async function fileToDataUrl(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.88);
 }
 
 function CapturePage() {
@@ -48,20 +77,35 @@ function CapturePage() {
   const workRef = useRef<HTMLCanvasElement | null>(null);
   const prevPixels = useRef<Uint8ClampedArray | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const [error, setError] = useState<string | null>(null);
+  const [facing, setFacing] = useState<"user" | "environment">("user");
+  const [denied, setDenied] = useState(false);
+  const [unsupported, setUnsupported] = useState(false);
   const [still, setStill] = useState<string | null>(null);
   const [lighting, setLighting] = useState<ChipState>("adjust");
   const [position, setPosition] = useState<ChipState>("adjust");
   const [steady, setSteady] = useState<ChipState>("adjust");
 
-  // camera
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    const video = videoRef.current;
+    if (video) video.srcObject = null;
+  }, []);
+
+  // camera. re-opened whenever the facing mode changes, torn down on unmount.
   useEffect(() => {
+    if (still) return;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setUnsupported(true);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 1600 } },
+          video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1440 } },
           audio: false,
         });
         if (cancelled) {
@@ -69,24 +113,38 @@ function CapturePage() {
           return;
         }
         streamRef.current = stream;
+        setDenied(false);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
         }
       } catch {
-        if (!cancelled) setError("we couldn't open your camera. check permissions and try again.");
+        if (!cancelled) setDenied(true);
       }
     })();
     return () => {
       cancelled = true;
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
+      stopStream();
     };
-  }, []);
+  }, [facing, still, stopStream]);
+
+  // stop the camera when the tab is backgrounded or the page is left
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState === "hidden") stopStream();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", stopStream);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", stopStream);
+      stopStream();
+    };
+  }, [stopStream]);
 
   // live coaching loop
   useEffect(() => {
-    if (still || error) return;
+    if (still || denied || unsupported) return;
     let alive = true;
     let meshAvailable = true;
     void facemeshReady().then((ok) => {
@@ -105,7 +163,6 @@ function CapturePage() {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const frame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
-      // lighting: mean luminance in a comfortable band
       let sum = 0;
       for (let i = 0; i < frame.length; i += 4) {
         sum += 0.299 * frame[i] + 0.587 * frame[i + 1] + 0.114 * frame[i + 2];
@@ -113,7 +170,6 @@ function CapturePage() {
       const mean = sum / (frame.length / 4);
       setLighting(mean > 72 && mean < 215 ? "good" : "adjust");
 
-      // hold still: mean absolute pixel delta between frames
       const prev = prevPixels.current;
       if (prev && prev.length === frame.length) {
         let diff = 0;
@@ -122,7 +178,6 @@ function CapturePage() {
       }
       prevPixels.current = new Uint8ClampedArray(frame);
 
-      // face position: centred in the oval and filling enough of it
       if (meshAvailable) {
         const face = await detectVideoFrame(video, performance.now());
         const centred = Math.abs(face.cx - 0.5) < 0.14 && Math.abs(face.cy - 0.47) < 0.16;
@@ -137,42 +192,65 @@ function CapturePage() {
       alive = false;
       clearInterval(id);
     };
-  }, [still, error]);
+  }, [still, denied, unsupported]);
 
   const allGood = lighting === "good" && position === "good" && steady === "good";
 
   const capture = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (!w || !h) return;
-    const scale = Math.min(1, 1024 / Math.max(w, h));
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(w * scale);
-    canvas.height = Math.round(h * scale);
-    const ctx = canvas.getContext("2d")!;
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1); // un-mirror the selfie view
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    setStill(canvas.toDataURL("image/jpeg", 0.88));
-  }, []);
+    const url = frameToDataUrl(video);
+    if (!url) return;
+    setStill(url); // freeze immediately so the tap feels instant
+    stopStream();
+  }, [stopStream]);
+
+  const onPick = async (file: File | undefined) => {
+    if (!file) return;
+    stopStream();
+    try {
+      setStill(await fileToDataUrl(file));
+    } catch {
+      /* ignore unreadable files */
+    }
+  };
 
   const useThis = () => {
     if (!still) return;
+    stopStream();
     setPhoto(still);
     navigate({ to: "/scan/analyzing" });
   };
 
-  if (error) {
+  const picker = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => void onPick(e.target.files?.[0])}
+    />
+  );
+
+  if ((denied || unsupported) && !still) {
     return (
-      <div className="px-6 pt-16 text-center min-h-[60vh]">
-        <h1 className="brand-display text-[30px]">no camera<span className="text-hot">.</span></h1>
-        <p className="mt-3 text-[14px] text-ink-mute">{error}</p>
-        <div className="mt-6">
-          <Link to="/">
-            <PillButton variant="outline">back home</PillButton>
-          </Link>
+      <div className="min-h-[70vh] bg-cream px-6 pt-16">
+        {picker}
+        <div className="mx-auto max-w-[360px] rounded-[26px] bg-white p-6 shadow-xl">
+          <h1 className="brand-display text-[26px] lowercase leading-tight">
+            we need camera access<span className="text-hot">.</span>
+          </h1>
+          <p className="mt-3 text-[13.5px] leading-relaxed lowercase text-ink-mute">
+            allow camera in your browser settings, or upload a photo instead.
+          </p>
+          <div className="mt-6 flex flex-col gap-3">
+            <PillButton fullWidth onClick={() => fileRef.current?.click()}>
+              upload a photo
+            </PillButton>
+            <Link to="/" className="text-center text-[13px] font-semibold lowercase text-ink-mute">
+              back home
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -180,25 +258,41 @@ function CapturePage() {
 
   return (
     <div className="fixed inset-0 bg-ink">
+      {picker}
       {still ? (
-        <img src={still} alt="your scan photo" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={still} alt="your scan photo" className="absolute inset-0 size-full object-cover" />
       ) : (
         <video
           ref={videoRef}
           playsInline
           muted
           autoPlay
-          className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+          disablePictureInPicture
+          className={cn(
+            "absolute inset-0 size-full object-cover",
+            facing === "user" && "scale-x-[-1]",
+          )}
         />
       )}
 
       {!still && (
         <>
-          <svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full" aria-hidden="true">
+          <svg
+            viewBox="0 0 100 125"
+            preserveAspectRatio="xMidYMid slice"
+            className="absolute inset-0 size-full"
+            aria-hidden="true"
+          >
             <ellipse
-              cx="50" cy="58" rx="29" ry="40"
-              fill="none" stroke="#FCFBF7" strokeWidth="0.8"
-              strokeDasharray="3 3" opacity="0.85"
+              cx="50"
+              cy="56"
+              rx="30"
+              ry="41"
+              fill="none"
+              stroke="#FCFBF7"
+              strokeWidth="0.8"
+              strokeDasharray="3 3"
+              opacity="0.6"
             />
           </svg>
 
@@ -208,25 +302,48 @@ function CapturePage() {
             <Chip label={CHIP_COPY.still[steady]} state={steady} />
           </div>
 
-          <div className="absolute inset-x-0 bottom-20 p-6 text-center">
+          <p className="absolute inset-x-0 bottom-44 text-center text-[13px] font-semibold lowercase text-cream/80">
+            fill the oval, face the light
+          </p>
+
+          <div className="absolute inset-x-0 bottom-20 flex items-center justify-center gap-8 p-6">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              aria-label="upload a photo"
+              className="grid size-11 place-items-center rounded-full bg-cream/15 text-cream"
+            >
+              <ImageIcon className="size-5" aria-hidden="true" />
+            </button>
+
             <button
               type="button"
               onClick={capture}
               disabled={!allGood}
               aria-label="capture photo"
+              style={{ backgroundColor: "#FF1F87" }}
               className={cn(
-                "mx-auto grid place-items-center size-[74px] rounded-full border-4 border-cream/70 transition-opacity",
-                allGood ? "bg-ink opacity-100" : "bg-ink opacity-40",
+                "grid size-[74px] place-items-center rounded-full border-4 border-cream/70 transition-opacity",
+                allGood ? "opacity-100" : "opacity-40",
               )}
             >
-              <span className="size-[54px] rounded-full bg-ink border border-cream/40" />
+              <span className="size-[54px] rounded-full border border-cream/40" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+              aria-label="flip camera"
+              className="grid size-11 place-items-center rounded-full bg-cream/15 text-cream"
+            >
+              <RefreshCw className="size-5" aria-hidden="true" />
             </button>
           </div>
         </>
       )}
 
       {still && (
-        <div className="absolute inset-x-0 bottom-20 p-6 flex flex-col items-center gap-4">
+        <div className="absolute inset-x-0 bottom-20 flex flex-col items-center gap-4 p-6">
           <PillButton fullWidth onClick={useThis}>
             use this
           </PillButton>
