@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useScanPhoto } from "@/lib/scan-photo";
+import { useScanPhotoSource } from "@/lib/scan-photo";
+import { ScanPhoto } from "@/components/treatme/ScanPhoto";
 
 import { useScan } from "@/lib/scan-store";
 import { PillButton } from "@/components/treatme/PillButton";
@@ -59,7 +60,7 @@ function SignedOut() {
 function ProfilePage() {
   const { user, ready } = useAuth();
   const { analysis } = useScan();
-  const photoDataUrl = useScanPhoto();
+  const photoSource = useScanPhotoSource();
 
   if (!ready) return <div className="px-6 pt-10 text-[13px] lowercase text-ink/45">one sec.</div>;
   if (!user) return <SignedOut />;
@@ -68,9 +69,9 @@ function ProfilePage() {
     <div className="px-6 pt-6">
       <AccountCard />
 
-      {analysis && photoDataUrl && (
+      {analysis && (
         <div className="mt-4 flex items-center gap-4 rounded-2xl border border-line bg-card p-4">
-          <img src={photoDataUrl} alt="last scan" className="size-16 rounded-xl object-cover" />
+          <ScanPhoto source={photoSource} alt="last scan" className="size-16 shrink-0 rounded-xl" />
           <div className="flex-1">
             <p className="font-bold lowercase">latest scan</p>
             <p className="text-[12px] lowercase text-ink-mute">
