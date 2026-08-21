@@ -82,6 +82,7 @@ function ResultsPage() {
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
   const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
+  const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
   const worst = ordered[0];
 
