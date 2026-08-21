@@ -127,7 +127,7 @@ function ResultsPage() {
     if (topSlug) {
       navigate({ to: "/match/$slug", params: { slug: topSlug } });
     } else {
-      navigate({ to: "/search", search: { q: label } });
+      navigate({ to: "/search", search: { q: label, scope: undefined } });
     }
   };
 
