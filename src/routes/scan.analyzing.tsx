@@ -248,7 +248,8 @@ function AnalyzingPage() {
               style={{ width: `${Math.round(progress)}%` }}
             />
           </div>
-          <p className="mt-4 text-[13px] text-ink-mute">{fact}</p>
+          <p className="mt-3 text-[13px] text-ink">{stage}</p>
+          <p className="mt-1 text-[13px] text-ink-mute">{fact}</p>
         </div>
       )}
 
