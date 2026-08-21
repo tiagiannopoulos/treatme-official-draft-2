@@ -566,7 +566,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       )}
 
       {/* section 9, unclaimed */}
-      {!claimed && (
+      {(!claimed || roster.length === 0) && (
         <section className="px-5 pt-8">
           <div
             className="rounded-[18px] p-5"
