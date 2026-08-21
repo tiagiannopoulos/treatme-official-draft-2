@@ -80,6 +80,8 @@ export function StorefrontMapStrip({
   }, [accent, browserKey, lat, lng, name, trackingId]);
 
   const live = Boolean(browserKey) && !failed;
+  // no key at all: mint "map loading" placeholder instead of a broken map.
+  const noKey = !browserKey;
 
   return (
     <a
@@ -88,10 +90,17 @@ export function StorefrontMapStrip({
       rel="noreferrer"
       aria-label={`open ${name} in maps`}
       className="relative block h-[160px] w-full overflow-hidden rounded-[18px] border border-line"
-      style={{ backgroundColor: accentTint(accent, 0.18) }}
+      style={{ backgroundColor: noKey ? "#DFFFF8" : accentTint(accent, 0.18) }}
     >
       {live ? (
         <div ref={divRef} className="h-full w-full" />
+      ) : noKey ? (
+        <span className="grid h-full w-full place-items-center bg-mint">
+          <span className="flex flex-col items-center gap-2 text-ink">
+            <MapPin className="size-5 opacity-50" />
+            <span className="text-[11px] font-medium lowercase">map loading</span>
+          </span>
+        </span>
       ) : (
         <span className="grid h-full w-full place-items-center">
           <span
