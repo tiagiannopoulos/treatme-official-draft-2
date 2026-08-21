@@ -166,7 +166,7 @@ function ResultsPage() {
           <p className="text-[12px] lowercase text-ink">overall score</p>
           <p className="brand-display text-[34px] leading-none mt-2">
             {overall}
-            <span className="text-[15px] text-ink-mute"> /100</span>
+            <span className="text-[15px] text-ink-mute">/100</span>
           </p>
         </div>
         {worst && (
