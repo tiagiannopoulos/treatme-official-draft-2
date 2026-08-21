@@ -1245,6 +1245,39 @@ export type Database = {
           },
         ]
       }
+      storefront_crawls: {
+        Row: {
+          error: string | null
+          id: string
+          pages_fetched: number | null
+          ran_at: string | null
+          status: string | null
+          storefront_id: string
+          treatments_found: number | null
+          url: string | null
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          pages_fetched?: number | null
+          ran_at?: string | null
+          status?: string | null
+          storefront_id: string
+          treatments_found?: number | null
+          url?: string | null
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          pages_fetched?: number | null
+          ran_at?: string | null
+          status?: string | null
+          storefront_id?: string
+          treatments_found?: number | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       storefront_media: {
         Row: {
           caption: string | null
@@ -1292,6 +1325,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      storefront_treatments: {
+        Row: {
+          confidence: number | null
+          created_at: string | null
+          evidence_snippet: string | null
+          evidence_url: string | null
+          id: string
+          last_checked_at: string | null
+          price_from: number | null
+          source: string
+          storefront_id: string
+          treatment_slug: string
+          verified_by_clinic: boolean | null
+        }
+        Insert: {
+          confidence?: number | null
+          created_at?: string | null
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          id?: string
+          last_checked_at?: string | null
+          price_from?: number | null
+          source?: string
+          storefront_id: string
+          treatment_slug: string
+          verified_by_clinic?: boolean | null
+        }
+        Update: {
+          confidence?: number | null
+          created_at?: string | null
+          evidence_snippet?: string | null
+          evidence_url?: string | null
+          id?: string
+          last_checked_at?: string | null
+          price_from?: number | null
+          source?: string
+          storefront_id?: string
+          treatment_slug?: string
+          verified_by_clinic?: boolean | null
+        }
+        Relationships: []
       }
       storefronts: {
         Row: {

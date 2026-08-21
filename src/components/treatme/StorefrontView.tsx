@@ -32,6 +32,7 @@ import {
   type Storefront,
 } from "@/lib/search-data";
 import { googleRatingQuery, noDash, storefrontMediaQuery } from "@/lib/storefront-detail";
+import { storefrontTreatmentsQuery, type ListedTreatment } from "@/lib/storefront-treatments";
 import {
   accentOf,
   accentTint,
@@ -92,11 +93,35 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
     [data.providers, storefront],
   );
 
+  // what the clinic's own website lists, plus anything they verified themselves.
+  const { data: listed = [] as ListedTreatment[] } = useQuery({
+    ...storefrontTreatmentsQuery(storefront?.id ?? ""),
+    enabled: Boolean(storefront?.id),
+  });
+
+  interface OfferRow {
+    slug: string;
+    name: string;
+    family: string;
+    from: number | null;
+    /** null when a person here offers it or the clinic verified it, a url when it came from their website. */
+    listedOnSiteUrl: string | null;
+  }
+
   const treatments = useMemo(() => {
-    const bySlug = new Map<
-      string,
-      { slug: string; name: string; family: string; from: number | null }
-    >();
+    const bySlug = new Map<string, OfferRow>();
+
+    // their website is the weaker source, so it goes in first and gets overwritten.
+    for (const t of listed) {
+      bySlug.set(t.slug, {
+        slug: t.slug,
+        name: t.name,
+        family: t.family,
+        from: t.from,
+        listedOnSiteUrl: t.verified ? null : t.evidenceUrl,
+      });
+    }
+
     for (const p of roster) {
       for (const t of p.treatments) {
         const price = typeof t.price_from === "number" ? t.price_from : null;
@@ -107,14 +132,19 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
             name: t.name,
             family: t.category || "treatments",
             from: price,
+            listedOnSiteUrl: null,
           });
-        } else if (price !== null && (at.from === null || price < at.from)) {
-          at.from = price;
+        } else {
+          at.listedOnSiteUrl = null;
+          at.name = t.name;
+          at.family = t.category || at.family;
+          if (price !== null && (at.from === null || price < at.from)) at.from = price;
         }
       }
     }
     return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
-  }, [roster]);
+  }, [roster, listed]);
+
 
   const families = useMemo(() => {
     const groups = new Map<string, typeof treatments>();
@@ -432,6 +462,13 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
             </button>
           )}
 
+          {filterSlug && treatments.find((t) => t.slug === filterSlug)?.listedOnSiteUrl && (
+            <p className="mt-2 text-[12px] lowercase leading-relaxed text-ink/55">
+              this treatment is listed on their website, the clinic has not confirmed it with us yet.
+            </p>
+          )}
+
+
           <div className="mt-3 space-y-3">
             {sortedRoster.map((p) => (
               <RosterEntry
@@ -508,7 +545,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       )}
 
       {/* section 7, treatments and prices */}
-      {claimed && treatments.length > 0 && (
+      {treatments.length > 0 && (
         <section className="px-5 pt-8">
           <h2 className="text-[20px] font-medium lowercase tracking-[-0.02em]">what they offer</h2>
           {families.map(([family, list]) => (
@@ -525,8 +562,13 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
                       }}
                       className="flex w-full items-center gap-3 px-4 py-3 text-left"
                     >
-                      <span className="min-w-0 flex-1 truncate text-[14px] lowercase">
-                        {noDash(t.name)}
+                      <span className="min-w-0 flex-1 text-[14px] lowercase">
+                        <span className="block truncate">{noDash(t.name)}</span>
+                        {t.listedOnSiteUrl && (
+                          <span className="mt-0.5 block text-[11px] lowercase text-ink/50">
+                            listed on their website
+                          </span>
+                        )}
                       </span>
                       {t.from !== null && (
                         <span className="shrink-0 text-[13px] lowercase text-ink/70">
@@ -535,11 +577,22 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
                       )}
                       <ChevronRight className="size-4 shrink-0 text-ink/30" />
                     </button>
+                    {t.listedOnSiteUrl && (
+                      <a
+                        href={t.listedOnSiteUrl}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="block px-4 pb-3 text-[11px] lowercase text-ink/45 underline"
+                      >
+                        see the page it came from
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
             </div>
           ))}
+
           <button
             type="button"
             onClick={() => openTreatment(treatments[0]!.slug)}

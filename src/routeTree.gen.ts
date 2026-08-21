@@ -33,6 +33,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
+import { Route as DevCrawlRouteImport } from './routes/dev.crawl'
 import { Route as ClaimIdRouteImport } from './routes/claim.$id'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
 import { Route as ApiGenerateScanPdfRouteImport } from './routes/api/generate-scan-pdf'
@@ -166,6 +167,11 @@ const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
   path: '/dev/recommendations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevCrawlRoute = DevCrawlRouteImport.update({
+  id: '/dev/crawl',
+  path: '/dev/crawl',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClaimIdRoute = ClaimIdRouteImport.update({
   id: '/claim/$id',
   path: '/claim/$id',
@@ -240,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
+  '/dev/crawl': typeof DevCrawlRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
+  '/dev/crawl': typeof DevCrawlRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
+  '/dev/crawl': typeof DevCrawlRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/claim/$id'
+    | '/dev/crawl'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/claim/$id'
+    | '/dev/crawl'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/claim/$id'
+    | '/dev/crawl'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -472,6 +484,7 @@ export interface RootRouteChildren {
   ApiGenerateScanPdfRoute: typeof ApiGenerateScanPdfRoute
   BookConsultRoute: typeof BookConsultRoute
   ClaimIdRoute: typeof ClaimIdRoute
+  DevCrawlRoute: typeof DevCrawlRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
@@ -668,6 +681,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevRecommendationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/crawl': {
+      id: '/dev/crawl'
+      path: '/dev/crawl'
+      fullPath: '/dev/crawl'
+      preLoaderRoute: typeof DevCrawlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/claim/$id': {
       id: '/claim/$id'
       path: '/claim/$id'
@@ -768,6 +788,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiGenerateScanPdfRoute: ApiGenerateScanPdfRoute,
   BookConsultRoute: BookConsultRoute,
   ClaimIdRoute: ClaimIdRoute,
+  DevCrawlRoute: DevCrawlRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
