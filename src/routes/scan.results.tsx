@@ -14,6 +14,8 @@ import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
 import { fetchSavedScan } from "@/lib/scan-history";
 import { getRecommendations } from "@/lib/recommendations";
 import { topConcerns } from "@/lib/skinAnalysis";
+import { FaceMap } from "@/components/treatme/FaceMap";
+import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
 
 
 export const Route = createFileRoute("/scan/results")({
