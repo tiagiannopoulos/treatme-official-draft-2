@@ -94,6 +94,18 @@ function pick(rand: () => number, zones: Zone[]): { x: number; y: number } {
 }
 
 /** lower score draws more. 90 reads almost clear, 40 reads clearly marked. */
+/** how many passes of the drawing it takes for this accent to read on the face */
+function layersFor(accent: string): number {
+  const hex = accent.replace("#", "");
+  if (hex.length !== 6) return 1;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const [fr, fg, fb] = [241, 240, 237];
+  const dist = Math.abs(r! - fr) + Math.abs(g! - fg) + Math.abs(b! - fb);
+  if (dist < 45) return 3;
+  if (dist < 110) return 2;
+  return 1;
+}
+
 function densityFor(score: number): number {
   const clamped = Math.max(0, Math.min(100, score));
   return Math.max(0.18, Math.min(1.25, (100 - clamped) / 55));
@@ -144,7 +156,11 @@ export function FaceMap({
       {/* the face, then the overlay clipped to it, then the features on top so the
           drawing never buries the face */}
       <ellipse cx="100" cy="100" rx="47" ry="70" fill={FACE} />
-      <g clipPath={`url(#face${uid})`}>{overlay}</g>
+      <g clipPath={`url(#face${uid})`}>
+        {Array.from({ length: layers }, (_, i) => (
+          <g key={i}>{overlay}</g>
+        ))}
+      </g>
 
       <rect x="70" y="88" width="19" height="5" rx="2.5" fill={FEATURE} />
       <rect x="111" y="88" width="19" height="5" rx="2.5" fill={FEATURE} />
