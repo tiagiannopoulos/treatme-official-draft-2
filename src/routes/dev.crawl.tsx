@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 
-import { crawlAllStorefronts, crawlStorefront } from "@/lib/crawl.functions";
+import { backfillStorefrontWebsites, crawlAllStorefronts, crawlStorefront } from "@/lib/crawl.functions";
 
 /** internal tool: run treatment discovery by hand. not linked from the app. */
 export const Route = createFileRoute("/dev/crawl")({
@@ -23,6 +23,11 @@ function DevCrawl() {
   const [id, setId] = useState("");
   const [token, setToken] = useState("");
 
+  const fill = useServerFn(backfillStorefrontWebsites);
+  const websites = useMutation({
+    mutationFn: () => fill({ data: { limit: 100, token: token || undefined } }),
+  });
+
   const all = useMutation({
     mutationFn: () => runAll({ data: { limit: 25, token: token || undefined } }),
   });
@@ -30,9 +35,9 @@ function DevCrawl() {
     mutationFn: () => runOne({ data: { storefrontId: id.trim(), token: token || undefined } }),
   });
 
-  const busy = all.isPending || one.isPending;
-  const result = all.data ?? one.data ?? null;
-  const error = (all.error ?? one.error) as Error | null;
+  const busy = all.isPending || one.isPending || websites.isPending;
+  const result = all.data ?? one.data ?? websites.data ?? null;
+  const error = (all.error ?? one.error ?? websites.error) as Error | null;
 
   return (
     <main className="mx-auto max-w-[640px] px-5 py-10">
@@ -49,6 +54,14 @@ function DevCrawl() {
           placeholder="admin token, if one is set"
           className="w-full rounded-[14px] border border-line bg-transparent px-4 py-3 text-[14px] lowercase"
         />
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => websites.mutate()}
+          className="w-full rounded-pill border border-line px-4 py-3 text-[14px] lowercase disabled:opacity-40"
+        >
+          {websites.isPending ? "finding websites" : "step one, find websites from google"}
+        </button>
         <button
           type="button"
           disabled={busy}
