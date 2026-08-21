@@ -9,6 +9,8 @@ import { uploadScanPhoto } from "@/lib/scan-photo";
 import { landmarksFromDataUrl } from "@/lib/facemesh";
 import { saveScan } from "@/lib/scan-persist";
 import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
+import { updateProfile, type Fitzpatrick } from "@/lib/patient-store";
+import { SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 
 export const Route = createFileRoute("/scan/analyzing")({
   head: () => ({
