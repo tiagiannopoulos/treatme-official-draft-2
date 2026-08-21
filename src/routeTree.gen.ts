@@ -33,6 +33,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
+import { Route as DevFacemapsRouteImport } from './routes/dev.facemaps'
 import { Route as DevCrawlRouteImport } from './routes/dev.crawl'
 import { Route as ClaimIdRouteImport } from './routes/claim.$id'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
@@ -167,6 +168,11 @@ const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
   path: '/dev/recommendations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevFacemapsRoute = DevFacemapsRouteImport.update({
+  id: '/dev/facemaps',
+  path: '/dev/facemaps',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevCrawlRoute = DevCrawlRouteImport.update({
   id: '/dev/crawl',
   path: '/dev/crawl',
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
   '/dev/crawl': typeof DevCrawlRoute
+  '/dev/facemaps': typeof DevFacemapsRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
   '/dev/crawl': typeof DevCrawlRoute
+  '/dev/facemaps': typeof DevFacemapsRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -326,6 +334,7 @@ export interface FileRoutesById {
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
   '/dev/crawl': typeof DevCrawlRoute
+  '/dev/facemaps': typeof DevFacemapsRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/claim/$id'
     | '/dev/crawl'
+    | '/dev/facemaps'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/claim/$id'
     | '/dev/crawl'
+    | '/dev/facemaps'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/book/consult'
     | '/claim/$id'
     | '/dev/crawl'
+    | '/dev/facemaps'
     | '/dev/recommendations'
     | '/learn/$slug'
     | '/legal/privacy'
@@ -485,6 +497,7 @@ export interface RootRouteChildren {
   BookConsultRoute: typeof BookConsultRoute
   ClaimIdRoute: typeof ClaimIdRoute
   DevCrawlRoute: typeof DevCrawlRoute
+  DevFacemapsRoute: typeof DevFacemapsRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
   LearnSlugRoute: typeof LearnSlugRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
@@ -681,6 +694,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevRecommendationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/facemaps': {
+      id: '/dev/facemaps'
+      path: '/dev/facemaps'
+      fullPath: '/dev/facemaps'
+      preLoaderRoute: typeof DevFacemapsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/crawl': {
       id: '/dev/crawl'
       path: '/dev/crawl'
@@ -789,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookConsultRoute: BookConsultRoute,
   ClaimIdRoute: ClaimIdRoute,
   DevCrawlRoute: DevCrawlRoute,
+  DevFacemapsRoute: DevFacemapsRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
   LearnSlugRoute: LearnSlugRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
