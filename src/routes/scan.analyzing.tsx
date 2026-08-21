@@ -77,8 +77,10 @@ function AnalyzingPage() {
   const started = useRef(false);
   const [phase, setPhase] = useState<Phase>("working");
   const [progress, setProgress] = useState(6);
+  const [failure, setFailure] = useState<Failure>("service");
   const pending = useRef<{ analysis: SkinAnalysis } | null>(null);
-  const fact = useFactRotator(phase === "working");
+  const fact = useRotator(FACTS, phase === "working", 4000);
+  const stage = useRotator(STAGES, phase === "working", 5000);
 
   // progress creeps toward 92 and completes when we navigate
   useEffect(() => {
