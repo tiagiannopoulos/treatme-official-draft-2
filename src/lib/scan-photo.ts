@@ -28,48 +28,118 @@ export async function uploadScanPhoto(dataUrl: string): Promise<string | null> {
     .upload(path, dataUrlToBlob(dataUrl), { contentType: "image/jpeg", upsert: false });
 
   if (error) {
-    console.warn("scan photo upload failed", error.message);
+    console.warn("[treatme] scan photo upload failed:", error.message);
     return null;
   }
   return path;
 }
 
+export const SCAN_PHOTO_TTL = 60 * 60;
+
+export type ScanPhotoSource = { url: string | null; reason: string | null };
+
 /**
  * the bucket is private, so a stored photo is only readable through a short
  * lived signed url. never build a public url for scan-photos.
  */
-export async function scanPhotoSignedUrl(path: string, expiresInSeconds = 60 * 60): Promise<string | null> {
+export async function scanPhotoSignedUrl(
+  path: string,
+  expiresInSeconds = SCAN_PHOTO_TTL,
+): Promise<ScanPhotoSource> {
   const { data, error } = await supabase.storage
     .from("scan-photos")
     .createSignedUrl(path, expiresInSeconds);
   if (error) {
-    console.warn("scan photo sign failed", error.message);
-    return null;
+    console.warn(`[treatme] scan photo sign failed for ${path}:`, error.message);
+    return { url: null, reason: `signing failed: ${error.message}` };
   }
-  return data?.signedUrl ?? null;
+  if (!data?.signedUrl) return { url: null, reason: "signing returned no url" };
+  return { url: data.signedUrl, reason: null };
 }
 
 /**
- * the photo to render on analysis screens: the in session capture when we still
- * have it, otherwise a signed url for the stored file.
+ * THE one way to resolve a stored scan photo: give it a scan id, get back a
+ * signed url valid for one hour. every screen that renders a scan photo goes
+ * through this (or through useScanPhoto, which wraps it).
  */
-export function useScanPhoto(): string | null {
-  const { photoDataUrl, photoPath } = useScan();
-  const [signed, setSigned] = useState<string | null>(null);
+export async function scanPhotoUrlForScan(scanId: string): Promise<ScanPhotoSource> {
+  const { data, error } = await supabase
+    .from("scans")
+    .select("photo_path")
+    .eq("id", scanId)
+    .maybeSingle();
+
+  if (error) {
+    console.warn(`[treatme] scan photo lookup failed for scan ${scanId}:`, error.message);
+    return { url: null, reason: `scan lookup failed: ${error.message}` };
+  }
+  if (!data?.photo_path) {
+    return { url: null, reason: "no photo saved on this scan" };
+  }
+  return scanPhotoSignedUrl(data.photo_path);
+}
+
+/** signed url for a path we already hold (scan lists that selected photo_path). */
+export function useScanPhotoByPath(path: string | null | undefined): ScanPhotoSource {
+  const [state, setState] = useState<ScanPhotoSource>({ url: null, reason: null });
 
   useEffect(() => {
-    if (photoDataUrl || !photoPath) {
-      setSigned(null);
+    if (!path) {
+      setState({ url: null, reason: path === undefined ? null : "no photo saved on this scan" });
       return;
     }
     let alive = true;
-    void scanPhotoSignedUrl(photoPath).then((url) => {
-      if (alive) setSigned(url);
+    void scanPhotoSignedUrl(path).then((next) => {
+      if (alive) setState(next);
     });
     return () => {
       alive = false;
     };
-  }, [photoDataUrl, photoPath]);
+  }, [path]);
 
-  return photoDataUrl ?? signed;
+  return state;
+}
+
+/**
+ * the photo to render on analysis screens: the in session capture when we still
+ * have it, otherwise a signed url for the stored file. one source, used by the
+ * results screen, every indicator detail view and the profile tab.
+ */
+export function useScanPhotoSource(): ScanPhotoSource {
+  const { photoDataUrl, photoPath, scanId, storePhoto } = useScan();
+  const [state, setState] = useState<ScanPhotoSource>({ url: null, reason: null });
+
+  useEffect(() => {
+    if (photoDataUrl) {
+      setState({ url: null, reason: null });
+      return;
+    }
+    let alive = true;
+    void (async () => {
+      if (photoPath) {
+        const next = await scanPhotoSignedUrl(photoPath);
+        if (alive) setState(next);
+        return;
+      }
+      if (scanId) {
+        const next = await scanPhotoUrlForScan(scanId);
+        if (alive) setState(next);
+        return;
+      }
+      const reason = storePhoto ? "no photo path on this scan" : "photo was not saved for this scan";
+      console.warn(`[treatme] scan photo unavailable: ${reason}`);
+      if (alive) setState({ url: null, reason });
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [photoDataUrl, photoPath, scanId, storePhoto]);
+
+  if (photoDataUrl) return { url: photoDataUrl, reason: null };
+  return state;
+}
+
+/** convenience wrapper for callers that only need the url. */
+export function useScanPhoto(): string | null {
+  return useScanPhotoSource().url;
 }
