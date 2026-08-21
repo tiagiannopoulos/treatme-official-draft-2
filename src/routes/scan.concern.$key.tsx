@@ -120,7 +120,8 @@ function ConcernDetailPage() {
       {/* image */}
       <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden aspect-[4/5]">
         <PinchZoom className="absolute inset-0">
-          <ScanPhoto source={photoSource} className="absolute inset-0">
+          <div className="absolute inset-0">
+            <ScanPhoto source={photoSource} className="h-full w-full">
             {/* the overlay is the point of this screen, so it is always on when
                 there is region data for this indicator. no data, clean photo. */}
             <ConcernOverlay
@@ -130,7 +131,8 @@ function ConcernDetailPage() {
               regionScores={row.region_scores}
               regionFilter={regionFilter}
             />
-          </ScanPhoto>
+            </ScanPhoto>
+          </div>
         </PinchZoom>
       </div>
 

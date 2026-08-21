@@ -36,7 +36,7 @@ export function ScanPhoto({
     return (
       <div
         className={`grid place-items-center border border-ink/10 ${className}`}
-        style={{ backgroundColor: "#FCFBF7" }}
+        style={{ backgroundColor: "#FCFBF7", position: "relative" }}
       >
         <p className="text-[13px] lowercase text-ink/50">photo unavailable</p>
       </div>
@@ -44,7 +44,10 @@ export function ScanPhoto({
   }
 
   return (
-    <div className={`relative overflow-hidden ${className}`} style={{ backgroundColor: "#FCFBF7" }}>
+    <div
+      className={`overflow-hidden ${className}`}
+      style={{ backgroundColor: "#FCFBF7", position: "relative" }}
+    >
       <img
         src={source.url ?? undefined}
         alt={alt}
