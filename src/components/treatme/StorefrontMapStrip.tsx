@@ -36,13 +36,14 @@ export function StorefrontMapStrip({
   mapsHref: string;
   name: string;
 }) {
-  const { data } = useQuery(keyQuery);
   const divRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [failed, setFailed] = useState(false);
 
-  const browserKey = data?.browserKey ?? null;
-  const trackingId = data?.trackingId ?? null;
+  // resolved client-side: VITE_GOOGLE_MAPS_API_KEY (vercel/self-host) first,
+  // then the lovable connector key. null when neither is set.
+  const browserKey = resolveBrowserKey();
+  const trackingId = resolveTrackingId();
 
   useEffect(() => {
     if (!browserKey || !divRef.current || mapRef.current) return;
