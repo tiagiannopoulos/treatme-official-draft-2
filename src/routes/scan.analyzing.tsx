@@ -36,18 +36,38 @@ const FACTS = [
   "your skin barrier repairs itself fastest while you sleep.",
 ];
 
-const TIMEOUT_MS = 30_000;
+/** the stage line changes so a slow read never feels stuck */
+const STAGES = [
+  "reading your photo",
+  "looking at texture and tone",
+  "checking hydration and pores",
+  "almost there",
+];
+
+const TIMEOUT_MS = 60_000;
+const RETRY_DELAYS = [2000, 5000];
 
 type Phase = "working" | "quality" | "timeout" | "failed";
+type Failure = "face" | "image" | "service";
 
-function useFactRotator(active: boolean) {
+const FAILURE_COPY: Record<Failure, string> = {
+  face: "we could not find a face in that one. try again in better light, facing the camera.",
+  image: "that photo did not upload properly. try taking a new one.",
+  service: "our end had a problem. try again in a moment.",
+};
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function useRotator(items: string[], active: boolean, everyMs: number) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (!active) return;
-    const id = setInterval(() => setI((n) => (n + 1) % FACTS.length), 2000);
+    const id = setInterval(() => setI((n) => (n + 1) % items.length), everyMs);
     return () => clearInterval(id);
-  }, [active]);
-  return FACTS[i];
+  }, [active, everyMs, items.length]);
+  return items[Math.min(i, items.length - 1)]!;
 }
 
 function AnalyzingPage() {
