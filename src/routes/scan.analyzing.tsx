@@ -71,6 +71,12 @@ function AnalyzingPage() {
     async (analysis: SkinAnalysis, photoPath: string | null, landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>>) => {
       const result = resultFromAnalysis(analysis, crypto.randomUUID());
       const concerns = topConcerns(result);
+      // write the read back into the patient profile so the rest of the app
+      // (fitzpatrick filtering, "working on") reflects this scan.
+      updateProfile({
+        skinType: analysis.fitzpatrick.toLowerCase() as Fitzpatrick,
+        workingOn: concerns.map((k) => SCAN_CONCERN_LABEL[k] ?? k).slice(0, 5),
+      });
       const { scanDriven, goalDriven } = await getRecommendations(concerns, goals);
 
       const scanId = await saveScan({
