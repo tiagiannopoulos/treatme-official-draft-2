@@ -5,6 +5,7 @@ import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { detectVideoFrame, facemeshReady } from "@/lib/facemesh";
 import { cn } from "@/lib/utils";
+import { fileToScanJpeg, videoToScanJpeg } from "@/lib/image-process";
 
 type CameraError =
   | "permission"
@@ -72,8 +73,6 @@ const CHIP_COPY: Record<"lighting" | "position" | "still", Record<ChipState, str
   still: { adjust: "hold still", good: "holding still" },
 };
 
-const MAX_EDGE = 1568;
-
 function Chip({ label, state }: { label: string; state: ChipState }) {
   return (
     <span
@@ -83,35 +82,6 @@ function Chip({ label, state }: { label: string; state: ChipState }) {
       {label}
     </span>
   );
-}
-
-/** draws a frame at true orientation, downscaled to the analysis pipeline size */
-function frameToDataUrl(video: HTMLVideoElement): string | null {
-  const w = video.videoWidth;
-  const h = video.videoHeight;
-  if (!w || !h) return null;
-  const scale = Math.min(1, MAX_EDGE / Math.max(w, h));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(w * scale);
-  canvas.height = Math.round(h * scale);
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  // the preview is mirrored in css only, so the source frame is already the
-  // true orientation. draw it straight through.
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/jpeg", 0.88);
-}
-
-async function fileToDataUrl(file: File): Promise<string> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  const ctx = canvas.getContext("2d")!;
-  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return canvas.toDataURL("image/jpeg", 0.88);
 }
 
 function CapturePage() {
@@ -142,7 +112,9 @@ function CapturePage() {
   useEffect(() => {
     if (still) return;
     if (!navigator.mediaDevices?.getUserMedia) {
+      // no camera api at all: skip straight to the file picker
       setCamError("security");
+      fileRef.current?.click();
       return;
     }
     setCamError(null);
@@ -243,9 +215,9 @@ function CapturePage() {
   const capture = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    const url = frameToDataUrl(video);
-    if (!url) return;
-    setStill(url); // freeze immediately so the tap feels instant
+    void videoToScanJpeg(video).then((url) => {
+      if (url) setStill(url); // freeze on the captured frame
+    });
     stopStream();
   }, [stopStream]);
 
@@ -253,7 +225,7 @@ function CapturePage() {
     if (!file) return;
     stopStream();
     try {
-      setStill(await fileToDataUrl(file));
+      setStill(await fileToScanJpeg(file));
     } catch {
       /* ignore unreadable files */
     }
