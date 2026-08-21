@@ -197,48 +197,30 @@ function ResultsPage() {
         </div>
         <div className="mt-4 overflow-x-auto scrollbar-none">
           <div className="flex gap-3 px-6 pb-2">
-            {ordered.map((row) => (
-              <button
-                key={row.concern_key}
-                type="button"
-                onClick={() => navigate({ to: "/scan/concern/$key", params: { key: row.concern_key } })}
-                className="text-left shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
-              >
-                <ScanPhoto source={photoSource} className="relative aspect-[4/5]">
-                  {row.score >= 90 ? (
-                    <span
-                      className="absolute inset-x-3 bottom-3 rounded-full px-3 py-2 text-[12px] font-semibold text-center lowercase"
-                      style={{ backgroundColor: "#DFFFF8" }}
-                    >
-                      nothing to flag
-                    </span>
-                  ) : (
-                    <ConcernOverlay
-                      concernKey={row.concern_key}
-                      tint={bandTint(row.band)}
-                      landmarks={landmarks}
-                    />
-                  )}
-                </ScanPhoto>
-                <div className="p-4">
-                  <p className="font-bold text-[16px] lowercase leading-tight">
-                    {SCAN_CONCERN_LABEL[row.concern_key]}
+            {ordered.map((row) => {
+              const ind = findIndicator(indicators, row.concern_key);
+              return (
+                <button
+                  key={row.concern_key}
+                  type="button"
+                  onClick={() => navigate({ to: "/scan/concern/$key", params: { key: ind?.slug ?? row.concern_key } })}
+                  className="text-left shrink-0 w-[112px]"
+                >
+                  <FaceMap
+                    compact
+                    overlayKind={ind?.overlayKind ?? "patches_soft"}
+                    accent={ind?.accent ?? "#F8A1C6"}
+                    region={ind?.region ?? "full_face"}
+                    score={row.score}
+                    className="w-[112px] rounded-2xl border border-ink/10"
+                  />
+                  <p className="mt-2 text-[13px] font-semibold lowercase leading-tight">
+                    {ind?.name ?? SCAN_CONCERN_LABEL[row.concern_key]}
                   </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <p className="text-[14px] font-semibold">
-                      {row.score}
-                      <span className="text-ink-mute text-[12px]"> /100</span>
-                    </p>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold lowercase"
-                      style={{ backgroundColor: bandTint(row.band) }}
-                    >
-                      {row.band}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            ))}
+                  <p className="text-[12px] text-ink/55">{row.score}/100</p>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
