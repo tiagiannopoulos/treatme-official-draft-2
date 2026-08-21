@@ -219,7 +219,7 @@ function ResultsPage() {
                       landmarks={landmarks}
                     />
                   )}
-                </div>
+                </ScanPhoto>
                 <div className="p-4">
                   <p className="font-bold text-[16px] lowercase leading-tight">
                     {SCAN_CONCERN_LABEL[row.concern_key]}
