@@ -128,8 +128,35 @@ function AnalyzingPage() {
       return;
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    setPhase("working");
+    setProgress(6);
+
+    /** one attempt. throws { retryable, failure } shaped errors. */
+    const attempt = async () => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const res = await fetch("/api/public/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageDataUrl: photoDataUrl }),
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { code?: string; detail?: string };
+          console.error("scan analysis rejected", res.status, body.code, body.detail);
+          const retryable = res.status === 429 || res.status >= 500;
+          const failure: Failure = body.code === "image" ? "image" : "service";
+          throw Object.assign(new Error(body.detail ?? `status_${res.status}`), { retryable, failure });
+        }
+
+        const json = (await res.json()) as { analysis?: unknown };
+        return AnalysisSchema.parse(json.analysis);
+      } finally {
+        clearTimeout(timer);
+      }
+    };
 
     try {
       const [landmarks, photoPath] = await Promise.all([
@@ -138,17 +165,24 @@ function AnalyzingPage() {
       ]);
       setPhotoPath(photoPath);
 
-      const res = await fetch("/api/public/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl: photoDataUrl }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) throw new Error("analysis_failed");
+      let analysis: SkinAnalysis | null = null;
+      let lastError: unknown = null;
 
-      const json = (await res.json()) as { analysis?: unknown };
-      const analysis = AnalysisSchema.parse(json.analysis);
+      for (let i = 0; i <= RETRY_DELAYS.length; i += 1) {
+        try {
+          analysis = await attempt();
+          break;
+        } catch (err) {
+          lastError = err;
+          const meta = err as { retryable?: boolean };
+          const aborted = err instanceof DOMException && err.name === "AbortError";
+          const canRetry = (meta.retryable || aborted) && i < RETRY_DELAYS.length;
+          if (!canRetry) throw err;
+          await sleep(RETRY_DELAYS[i]!);
+        }
+      }
+
+      if (!analysis) throw lastError ?? new Error("analysis_failed");
 
       if (analysis.photoQuality === "poor") {
         pending.current = { analysis };
@@ -159,9 +193,13 @@ function AnalyzingPage() {
 
       await finish(analysis, photoPath, landmarks);
     } catch (err) {
-      clearTimeout(timer);
-      const aborted = err instanceof DOMException && err.name === "AbortError";
       console.error("scan analysis failed", err);
+      const aborted = err instanceof DOMException && err.name === "AbortError";
+      const meta = err as { failure?: Failure };
+      const message = err instanceof Error ? err.message.toLowerCase() : "";
+      setFailure(
+        aborted ? "service" : message.includes("face") ? "face" : (meta.failure ?? "service"),
+      );
       setPhase(aborted ? "timeout" : "failed");
     }
   }, [finish, navigate, photoDataUrl, setPhotoPath, storePhoto]);
