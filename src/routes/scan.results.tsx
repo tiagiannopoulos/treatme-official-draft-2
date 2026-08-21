@@ -185,22 +185,8 @@ function ResultsPage() {
         )}
       </div>
 
-      {/* mint setup card */}
-      {analysis && (
-        <div className="mx-6 mt-3 rounded-2xl p-4" style={{ backgroundColor: "#DFFFF8" }}>
-          <p className="font-bold text-[15px] lowercase">treatme is now set up for your skin</p>
-          <p className="text-[13px] text-ink/80 mt-1 leading-relaxed">
-            because you are a fitzpatrick {analysis.fitzpatrick.toLowerCase()}, treatme will show you
-            treatments and providers suited to your skin and hide the ones that are not.
-          </p>
-          <Link
-            to="/profile"
-            className="inline-block mt-2 text-[13px] font-semibold lowercase underline underline-offset-4"
-          >
-            change this in your profile
-          </Link>
-        </div>
-      )}
+
+
 
       {/* the detail */}
       <div className="mt-8">
