@@ -6,6 +6,8 @@ import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { PillButton } from "@/components/treatme/PillButton";
+import { ScanPhoto } from "@/components/treatme/ScanPhoto";
+import { useScanPhotoByPath } from "@/lib/scan-photo";
 
 const INK = "#111111";
 
@@ -25,6 +27,11 @@ function bandWord(score: number | null) {
 function shortDate(iso: string) {
   const d = new Date(iso);
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+function ScanThumb({ path }: { path: string | null }) {
+  const source = useScanPhotoByPath(path);
+  return <ScanPhoto source={source} alt="scan photo" className="size-12 shrink-0 rounded-xl" />;
 }
 
 export function MyScans() {
@@ -87,6 +94,7 @@ export function MyScans() {
             const confirming = confirmId === s.id;
             const body = (
               <>
+                <ScanThumb path={s.photo_path} />
                 <div className="min-w-0">
                   <p className="text-[14px] lowercase">{shortDate(s.created_at)}</p>
                   <p className="text-[12px] lowercase text-ink/55">
