@@ -94,16 +94,22 @@ function pick(rand: () => number, zones: Zone[]): { x: number; y: number } {
 }
 
 /** lower score draws more. 90 reads almost clear, 40 reads clearly marked. */
-/** how many passes of the drawing it takes for this accent to read on the face */
-function layersFor(accent: string): number {
+/**
+ * a few accents in the table sit almost exactly on the face fill, so drawing with
+ * them literally reads as an empty card. keep the hue from the database and only
+ * deepen it until it is actually visible.
+ */
+function readableAccent(accent: string): string {
   const hex = accent.replace("#", "");
-  if (hex.length !== 6) return 1;
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  const [fr, fg, fb] = [241, 240, 237];
-  const dist = Math.abs(r! - fr) + Math.abs(g! - fg) + Math.abs(b! - fb);
-  if (dist < 45) return 3;
-  if (dist < 110) return 2;
-  return 1;
+  if (hex.length !== 6) return accent;
+  let [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+  const dist = () => Math.abs(r - 241) + Math.abs(g - 240) + Math.abs(b - 237);
+  for (let step = 0; step < 12 && dist() < 150; step += 1) {
+    r = Math.round(r * 0.9);
+    g = Math.round(g * 0.9);
+    b = Math.round(b * 0.9);
+  }
+  return `#${[r, g, b].map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join("")}`;
 }
 
 function densityFor(score: number): number {
@@ -130,7 +136,7 @@ export function FaceMap({
 
   // some accents sit very close to the face fill, so one pass reads as nothing.
   // stacking the same drawing keeps the database colour and still shows up.
-  const layers = layersFor(accent);
+
 
   return (
     <svg
@@ -157,9 +163,7 @@ export function FaceMap({
           drawing never buries the face */}
       <ellipse cx="100" cy="100" rx="47" ry="70" fill={FACE} />
       <g clipPath={`url(#face${uid})`}>
-        {Array.from({ length: layers }, (_, i) => (
-          <g key={i}>{overlay}</g>
-        ))}
+        {overlay}
       </g>
 
       <rect x="70" y="88" width="19" height="5" rx="2.5" fill={FEATURE} />
@@ -181,7 +185,8 @@ interface DrawArgs {
 }
 
 function drawOverlay(a: DrawArgs) {
-  const { overlayKind, accent, region, score, softId, heavyId, compact } = a;
+  const { overlayKind, region, score, softId, heavyId, compact } = a;
+  const accent = readableAccent(a.accent);
   const d = densityFor(score);
   const rand = rng(seedOf(`${overlayKind}:${region}:${Math.round(score)}`));
   const zones = zonesFor(region);
