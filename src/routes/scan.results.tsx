@@ -151,6 +151,12 @@ function ResultsPage() {
         </button>
       </header>
 
+      {/* the photo lives here and only here */}
+      <div className="mt-4 mx-6 rounded-3xl overflow-hidden border border-ink/10">
+        <ScanPhoto source={photoSource} className="relative aspect-[4/5]" />
+      </div>
+
+
       {/* stat cards */}
       <div className="mt-4 px-6 grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-ink/10 bg-white p-4">
