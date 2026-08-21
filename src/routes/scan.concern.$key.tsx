@@ -1,22 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { useScanPhotoSource } from "@/lib/scan-photo";
-import { ScanPhoto } from "@/components/treatme/ScanPhoto";
-import {
-  SCAN_CONCERN_KEYS,
-  SCAN_CONCERN_LABEL,
-  bandFor,
-  bandTint,
-  toConcernRows,
-} from "@/lib/scan-concerns";
-import { CONCERN_SUBS } from "@/lib/scan-overlay";
-import { CONCERN_ABOUT } from "@/lib/concern-copy";
-import { treatmentsForOneConcern } from "@/lib/concern-treatments";
-import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
-import { PinchZoom } from "@/components/treatme/PinchZoom";
+import { supabase } from "@/integrations/supabase/client";
+import { SCAN_CONCERN_LABEL, toConcernRows } from "@/lib/scan-concerns";
+import { findIndicator, indicatorKey, skinIndicatorsQuery } from "@/lib/skin-indicators";
+import { FaceMap } from "@/components/treatme/FaceMap";
+import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
 
@@ -24,9 +15,9 @@ export const Route = createFileRoute("/scan/concern/$key")({
   head: () => ({
     meta: [
       { title: "one indicator, up close · treatme" },
-      { name: "description", content: "where this shows up on your face, what it means, and what treats it." },
+      { name: "description", content: "where this shows up on the face, what it means, and what tends to help." },
       { property: "og:title", content: "one indicator, up close · treatme" },
-      { property: "og:description", content: "where this shows up on your face, what it means, and what treats it." },
+      { property: "og:description", content: "where this shows up on the face, what it means, and what tends to help." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -34,23 +25,37 @@ export const Route = createFileRoute("/scan/concern/$key")({
   component: ConcernDetailPage,
 });
 
+function useTreatmentNames(slugs: string[]) {
+  const key = [...slugs].sort().join(",");
+  return useQuery({
+    queryKey: ["treatment-names", key],
+    enabled: slugs.length > 0,
+    staleTime: 30 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("treatments").select("slug, name").in("slug", slugs);
+      if (error) throw new Error(error.message);
+      const map: Record<string, string> = {};
+      for (const row of data ?? []) map[row.slug] = row.name;
+      return map;
+    },
+  });
+}
+
 function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
-  const { result, landmarks } = useScan();
-  const photoSource = useScanPhotoSource();
+  const { result } = useScan();
+  const { openTreatment } = useTreatmentSheet();
 
-  const [sub, setSub] = useState<string | null>(null);
+  const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
-  const row = rows.find((r) => r.concern_key === key);
-  const label = SCAN_CONCERN_LABEL[key] ?? key;
+  const row = rows.find((r) => indicatorKey(r.concern_key) === indicatorKey(key));
+  const indicator = findIndicator(indicators, key);
+  const label = indicator?.name ?? SCAN_CONCERN_LABEL[key] ?? key.replace(/_/g, " ");
 
-  const { data: treatments = [], isLoading } = useQuery({
-    queryKey: ["concern-treatments-all", label],
-    queryFn: () => treatmentsForOneConcern(label),
-    staleTime: 5 * 60 * 1000,
-  });
+  const helps = indicator?.whatHelps ?? [];
+  const { data: names = {} } = useTreatmentNames(helps);
 
   if (!row) {
     return (
@@ -66,24 +71,12 @@ function ConcernDetailPage() {
     );
   }
 
-  const subs = CONCERN_SUBS[key] ?? [];
-  const activeSub = subs.find((s) => s.key === sub) ?? null;
-  const regionFilter = activeSub?.regions ?? null;
-
-  const subScore =
-    activeSub && row.region_scores
-      ? Math.round(
-          activeSub.regions.reduce((sum, r) => sum + (row.region_scores?.[r] ?? row.score), 0) /
-            activeSub.regions.length,
-        )
-      : row.score;
-  const shownScore = activeSub ? subScore : row.score;
-  const shownBand = bandFor(shownScore);
-  const tint = bandTint(shownBand);
+  const score = row.score;
+  const accent = indicator?.accent ?? "#F8A1C6";
 
   return (
     <div className="pt-4 pb-28">
-      {/* tabs */}
+      {/* indicator strip, ordered as the table orders them */}
       <div className="flex items-center gap-2 pl-4 pr-0">
         <button
           type="button"
@@ -95,21 +88,18 @@ function ConcernDetailPage() {
         </button>
         <div className="min-w-0 flex-1 overflow-x-auto scrollbar-none">
           <div className="flex gap-2 pr-6">
-            {SCAN_CONCERN_KEYS.map((k) => {
-              const active = k === key;
+            {indicators.map((i) => {
+              const active = indicatorKey(i.slug) === indicatorKey(key);
               return (
                 <button
-                  key={k}
+                  key={i.slug}
                   type="button"
-                  onClick={() => {
-                    setSub(null);
-                    navigate({ to: "/scan/concern/$key", params: { key: k } });
-                  }}
+                  onClick={() => navigate({ to: "/scan/concern/$key", params: { key: i.slug } })}
                   className={`shrink-0 h-9 px-4 rounded-full text-[13px] font-semibold lowercase whitespace-nowrap border ${
                     active ? "bg-ink text-white border-ink" : "bg-white text-ink border-ink/20"
                   }`}
                 >
-                  {SCAN_CONCERN_LABEL[k] ?? k}
+                  {i.name}
                 </button>
               );
             })}
@@ -117,136 +107,68 @@ function ConcernDetailPage() {
         </div>
       </div>
 
-      {/* image */}
-      <div className="mt-4 mx-6 relative rounded-3xl overflow-hidden aspect-[4/5]">
-        <PinchZoom className="h-full w-full">
-          <div className="absolute inset-0">
-            <ScanPhoto source={photoSource} className="h-full w-full">
-            {/* the overlay is the point of this screen, so it is always on when
-                there is region data for this indicator. no data, clean photo. */}
-            <ConcernOverlay
-              concernKey={key}
-              tint={tint}
-              landmarks={landmarks}
-              regionScores={row.region_scores}
-              regionFilter={regionFilter}
-            />
-            </ScanPhoto>
-          </div>
-        </PinchZoom>
+      {/* header */}
+      <div className="mt-5 px-6 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
+        <h1 className="min-w-0 brand-display text-[30px] leading-none lowercase">{label}</h1>
+        <p className="shrink-0 font-bold text-[18px]">
+          {score}
+          <span className="text-ink-mute">/100</span>
+        </p>
       </div>
 
-      {/* sub concern pills */}
-      {subs.length > 0 && (
-        <div className="mt-3 overflow-x-auto scrollbar-none">
-          <div className="flex gap-2 px-6">
-            <button
-              type="button"
-              onClick={() => setSub(null)}
-              className={`shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold lowercase border ${
-                sub === null ? "bg-ink text-white border-ink" : "bg-white text-ink border-ink/20"
-              }`}
-            >
-              all
-            </button>
-            {subs.map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setSub(s.key)}
-                className={`shrink-0 h-8 px-3 rounded-full text-[12px] font-semibold lowercase whitespace-nowrap border ${
-                  sub === s.key ? "bg-ink text-white border-ink" : "bg-white text-ink border-ink/20"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+      {/* the face map, not the patient photo */}
+      <div className="mt-4 mx-6">
+        <FaceMap
+          overlayKind={indicator?.overlayKind ?? "patches_soft"}
+          accent={accent}
+          region={indicator?.region ?? "full_face"}
+          score={score}
+          className="w-full rounded-2xl"
+        />
+        <div className="mt-3 h-1.5 rounded-full bg-ink/10 overflow-hidden">
+          <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: accent }} />
+        </div>
+      </div>
+
+      {/* what this means */}
+      {indicator?.whatItMeans && (
+        <div className="mt-6 mx-6 rounded-2xl border border-ink/10 bg-white p-5">
+          <h2 className="brand-eyebrow">what this means</h2>
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{indicator.whatItMeans}</p>
         </div>
       )}
 
-      <div className="mt-5 mx-6 rounded-3xl border border-ink/10 bg-white p-5">
-        <div className="flex items-center justify-end gap-3">
-          <span
-            className="rounded-full px-2.5 py-0.5 text-[12px] font-semibold lowercase"
-            style={{ backgroundColor: tint }}
-          >
-            {shownBand}
-          </span>
-        </div>
-        <h1 className="mt-2 font-bold text-[18px] lowercase leading-tight">
-          {activeSub ? activeSub.label : label}
-        </h1>
-        <p className="brand-display text-[46px] leading-none mt-2">
-          {shownScore}
-          <span className="text-[16px] text-ink-mute"> /100</span>
-        </p>
-        <div className="mt-4 h-2.5 rounded-full bg-ink/10 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{ width: `${shownScore}%`, backgroundColor: tint }}
-          />
-        </div>
-      </div>
-
-      {/* about */}
-      <div className="mt-4 mx-6 rounded-3xl border border-ink/10 bg-white p-5">
-        <h2 className="brand-eyebrow">about {label}</h2>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">{CONCERN_ABOUT[key]}</p>
-      </div>
-
-      {/* treatments */}
-      <div className="mt-7 px-6">
-        <h2 className="brand-display text-[22px] lowercase">
-          treatments for {label}<span className="text-hot">.</span>
-        </h2>
-
-        {isLoading ? (
-          <p className="mt-4 text-[14px] text-ink-mute">pulling matches.</p>
-        ) : treatments.length === 0 ? (
-          <div className="mt-4 rounded-3xl border border-ink/10 bg-white p-5">
-            <p className="text-[14px] leading-relaxed text-ink-soft">
-              nothing we book treats this directly. worth raising at a consult.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate({ to: "/scan/chat" })}
-              className="mt-3 text-[13px] font-semibold lowercase underline underline-offset-4"
-            >
-              talk it through
-            </button>
-          </div>
+      {/* what tends to help */}
+      <div className="mt-4 mx-6 rounded-2xl border border-ink/10 bg-white p-5">
+        <h2 className="brand-eyebrow">what tends to help</h2>
+        {helps.length === 0 ? (
+          <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
+            nothing we book targets this directly. worth raising at a consult.
+          </p>
         ) : (
-          <div className="mt-4 space-y-3">
-            {treatments.map((t) => (
-              <article key={t.slug} className="rounded-3xl border border-ink/10 bg-white p-5">
-                <p className="font-bold text-[17px] lowercase leading-tight">{t.name}</p>
-                {t.shortDescription && (
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-ink-soft">{t.shortDescription}</p>
-                )}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {t.priceFrom !== null && (
-                    <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold">
-                      from ${Math.round(t.priceFrom)}
-                    </span>
-                  )}
-                  {t.downtime && (
-                    <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold lowercase">
-                      {t.downtime.toLowerCase()} downtime
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate({ to: "/match/$slug", params: { slug: t.slug } })}
-                  className="mt-4 h-11 w-full rounded-full bg-ink text-white text-[14px] font-semibold lowercase"
-                >
-                  see providers
-                </button>
-              </article>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {helps.map((slug) => (
+              <button
+                key={slug}
+                type="button"
+                onClick={() => openTreatment(slug)}
+                className="h-9 px-4 rounded-full border border-ink/15 bg-cream text-[13px] font-semibold lowercase"
+              >
+                {(names[slug] ?? slug.replace(/-/g, " ")).toLowerCase()}
+              </button>
             ))}
           </div>
         )}
+      </div>
+
+      <div className="mt-5 px-6">
+        <button
+          type="button"
+          onClick={() => navigate({ to: "/scan/results" })}
+          className="text-[13px] font-semibold lowercase underline underline-offset-4"
+        >
+          see all indicators
+        </button>
       </div>
 
       <AnalysisFooter className="mt-6 px-6" />

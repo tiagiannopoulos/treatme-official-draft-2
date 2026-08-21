@@ -1191,6 +1191,39 @@ export type Database = {
         }
         Relationships: []
       }
+      skin_indicators: {
+        Row: {
+          accent: string
+          name: string
+          overlay_kind: string
+          region: string
+          slug: string
+          sort_order: number
+          what_helps: string[] | null
+          what_it_means: string | null
+        }
+        Insert: {
+          accent: string
+          name: string
+          overlay_kind: string
+          region: string
+          slug: string
+          sort_order: number
+          what_helps?: string[] | null
+          what_it_means?: string | null
+        }
+        Update: {
+          accent?: string
+          name?: string
+          overlay_kind?: string
+          region?: string
+          slug?: string
+          sort_order?: number
+          what_helps?: string[] | null
+          what_it_means?: string | null
+        }
+        Relationships: []
+      }
       storefront_claims: {
         Row: {
           contact_name: string | null

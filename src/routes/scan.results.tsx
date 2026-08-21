@@ -3,9 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Check } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { toConcernRows, overallScore, bandTint, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { toConcernRows, overallScore,  SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { treatmentsForConcerns, bestTreatmentByImproves } from "@/lib/concern-treatments";
-import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
 import { useScanPhotoSource } from "@/lib/scan-photo";
 import { ScanPhoto } from "@/components/treatme/ScanPhoto";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
@@ -14,6 +13,8 @@ import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
 import { fetchSavedScan } from "@/lib/scan-history";
 import { getRecommendations } from "@/lib/recommendations";
 import { topConcerns } from "@/lib/skinAnalysis";
+import { FaceMap } from "@/components/treatme/FaceMap";
+import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
 
 
 export const Route = createFileRoute("/scan/results")({
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
-  const { result, analysis, landmarks, scanId, hydrate, setResult } = useScan();
+  const { result, analysis, scanId, hydrate, setResult } = useScan();
   const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
@@ -80,6 +81,7 @@ function ResultsPage() {
   const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
   const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
+  const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
   const worst = ordered[0];
 
@@ -149,6 +151,12 @@ function ResultsPage() {
         </button>
       </header>
 
+      {/* the photo lives here and only here */}
+      <div className="mt-4 mx-6 rounded-3xl overflow-hidden border border-ink/10">
+        <ScanPhoto source={photoSource} className="relative aspect-[4/5]" />
+      </div>
+
+
       {/* stat cards */}
       <div className="mt-4 px-6 grid grid-cols-2 gap-3">
         <div className="rounded-2xl border border-ink/10 bg-white p-4">
@@ -197,48 +205,30 @@ function ResultsPage() {
         </div>
         <div className="mt-4 overflow-x-auto scrollbar-none">
           <div className="flex gap-3 px-6 pb-2">
-            {ordered.map((row) => (
-              <button
-                key={row.concern_key}
-                type="button"
-                onClick={() => navigate({ to: "/scan/concern/$key", params: { key: row.concern_key } })}
-                className="text-left shrink-0 w-[228px] rounded-3xl border border-ink/10 bg-white overflow-hidden"
-              >
-                <ScanPhoto source={photoSource} className="relative aspect-[4/5]">
-                  {row.score >= 90 ? (
-                    <span
-                      className="absolute inset-x-3 bottom-3 rounded-full px-3 py-2 text-[12px] font-semibold text-center lowercase"
-                      style={{ backgroundColor: "#DFFFF8" }}
-                    >
-                      nothing to flag
-                    </span>
-                  ) : (
-                    <ConcernOverlay
-                      concernKey={row.concern_key}
-                      tint={bandTint(row.band)}
-                      landmarks={landmarks}
-                    />
-                  )}
-                </ScanPhoto>
-                <div className="p-4">
-                  <p className="font-bold text-[16px] lowercase leading-tight">
-                    {SCAN_CONCERN_LABEL[row.concern_key]}
+            {ordered.map((row) => {
+              const ind = findIndicator(indicators, row.concern_key);
+              return (
+                <button
+                  key={row.concern_key}
+                  type="button"
+                  onClick={() => navigate({ to: "/scan/concern/$key", params: { key: ind?.slug ?? row.concern_key } })}
+                  className="text-left shrink-0 w-[112px]"
+                >
+                  <FaceMap
+                    compact
+                    overlayKind={ind?.overlayKind ?? "patches_soft"}
+                    accent={ind?.accent ?? "#F8A1C6"}
+                    region={ind?.region ?? "full_face"}
+                    score={row.score}
+                    className="w-[112px] rounded-2xl border border-ink/10"
+                  />
+                  <p className="mt-2 text-[13px] font-semibold lowercase leading-tight">
+                    {ind?.name ?? SCAN_CONCERN_LABEL[row.concern_key]}
                   </p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <p className="text-[14px] font-semibold">
-                      {row.score}
-                      <span className="text-ink-mute text-[12px]"> /100</span>
-                    </p>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold lowercase"
-                      style={{ backgroundColor: bandTint(row.band) }}
-                    >
-                      {row.band}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            ))}
+                  <p className="text-[12px] text-ink/55">{row.score}/100</p>
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
