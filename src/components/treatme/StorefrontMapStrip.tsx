@@ -1,17 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 
-import { getGoogleMapsKey } from "@/lib/map.functions";
-import { loadGoogleMaps, MAP_STYLE } from "@/lib/google-maps-loader";
+import { loadGoogleMaps, MAP_STYLE, resolveBrowserKey, resolveTrackingId } from "@/lib/google-maps-loader";
 import { accentTint, textOnAccent } from "@/lib/storefront-brand";
 
-const keyQuery = {
-  queryKey: ["google-maps-key"],
-  queryFn: () => getGoogleMapsKey(),
-  staleTime: Infinity,
-  retry: false,
-} as const;
 
 function pinIcon(accent: string): google.maps.Symbol {
   return {
