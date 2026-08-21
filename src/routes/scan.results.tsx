@@ -3,9 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Check } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { toConcernRows, overallScore, bandTint, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { toConcernRows, overallScore,  SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { treatmentsForConcerns, bestTreatmentByImproves } from "@/lib/concern-treatments";
-import { ConcernOverlay } from "@/components/treatme/ConcernOverlay";
 import { useScanPhotoSource } from "@/lib/scan-photo";
 import { ScanPhoto } from "@/components/treatme/ScanPhoto";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
@@ -37,7 +36,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
-  const { result, analysis, landmarks, scanId, hydrate, setResult } = useScan();
+  const { result, analysis, scanId, hydrate, setResult } = useScan();
   const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
