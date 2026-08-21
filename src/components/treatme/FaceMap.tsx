@@ -116,6 +116,10 @@ export function FaceMap({
     [overlayKind, accent, region, score, softId, heavyId, compact],
   );
 
+  // some accents sit very close to the face fill, so one pass reads as nothing.
+  // stacking the same drawing keeps the database colour and still shows up.
+  const layers = layersFor(accent);
+
   return (
     <svg
       viewBox="0 0 200 200"
