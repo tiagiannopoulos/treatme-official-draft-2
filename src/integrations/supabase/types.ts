@@ -1016,6 +1016,36 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_errors: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          image_bytes: number | null
+          media_type: string | null
+          status_code: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_bytes?: number | null
+          media_type?: string | null
+          status_code?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          image_bytes?: number | null
+          media_type?: string | null
+          status_code?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       scan_reports: {
         Row: {
           created_at: string
