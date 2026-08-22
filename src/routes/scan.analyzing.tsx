@@ -5,7 +5,7 @@ import { useScan } from "@/lib/scan-store";
 import { topConcerns } from "@/lib/skinAnalysis";
 import { resultFromAnalysis } from "@/lib/skinAnalysis/fromAnalysis";
 import { getRecommendations } from "@/lib/recommendations";
-import { uploadScanPhoto } from "@/lib/scan-photo";
+import { uploadScanPhoto, type StoredScanPhoto } from "@/lib/scan-photo";
 import { landmarksFromDataUrl } from "@/lib/facemesh";
 import { saveScan } from "@/lib/scan-persist";
 import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
@@ -90,7 +90,7 @@ function AnalyzingPage() {
   }, [phase]);
 
   const finish = useCallback(
-    async (analysis: SkinAnalysis, photoPath: string | null, landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>>) => {
+    async (analysis: SkinAnalysis, photo: StoredScanPhoto, landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>>) => {
       const result = resultFromAnalysis(analysis, crypto.randomUUID());
       const concerns = topConcerns(result);
       // write the read back into the patient profile so the rest of the app
@@ -102,7 +102,8 @@ function AnalyzingPage() {
       const { scanDriven, goalDriven } = await getRecommendations(concerns, goals);
 
       const scanId = await saveScan({
-        photoPath,
+        photoPath: photo.path,
+        thumbPath: photo.thumbPath,
         storePhoto,
         landmarks,
         result,
@@ -159,11 +160,13 @@ function AnalyzingPage() {
     };
 
     try {
-      const [landmarks, photoPath] = await Promise.all([
+      const [landmarks, photo] = await Promise.all([
         landmarksFromDataUrl(photoDataUrl),
-        storePhoto ? uploadScanPhoto(photoDataUrl).catch(() => null) : Promise.resolve(null),
+        storePhoto
+          ? uploadScanPhoto(photoDataUrl).catch<StoredScanPhoto>(() => ({ path: null, thumbPath: null }))
+          : Promise.resolve<StoredScanPhoto>({ path: null, thumbPath: null }),
       ]);
-      setPhotoPath(photoPath);
+      setPhotoPath(photo.path);
 
       let analysis: SkinAnalysis | null = null;
       let lastError: unknown = null;
@@ -186,12 +189,12 @@ function AnalyzingPage() {
 
       if (analysis.photoQuality === "poor") {
         pending.current = { analysis };
-        pendingMeta.current = { photoPath, landmarks };
+        pendingMeta.current = { photo, landmarks };
         setPhase("quality");
         return;
       }
 
-      await finish(analysis, photoPath, landmarks);
+      await finish(analysis, photo, landmarks);
     } catch (err) {
       console.error("scan analysis failed", err);
       const aborted = err instanceof DOMException && err.name === "AbortError";
@@ -204,8 +207,8 @@ function AnalyzingPage() {
     }
   }, [finish, navigate, photoDataUrl, setPhotoPath, storePhoto]);
 
-  const pendingMeta = useRef<{ photoPath: string | null; landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>> }>({
-    photoPath: null,
+  const pendingMeta = useRef<{ photo: StoredScanPhoto; landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>> }>({
+    photo: { path: null, thumbPath: null },
     landmarks: null,
   });
 
@@ -219,7 +222,7 @@ function AnalyzingPage() {
     const held = pending.current;
     if (!held) return;
     setPhase("working");
-    void finish(held.analysis, pendingMeta.current.photoPath, pendingMeta.current.landmarks);
+    void finish(held.analysis, pendingMeta.current.photo, pendingMeta.current.landmarks);
   };
 
   const retake = () => navigate({ to: "/scan/capture" });
