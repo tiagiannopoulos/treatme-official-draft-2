@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PillButton } from "@/components/treatme/PillButton";
 import { ScanPhoto } from "@/components/treatme/ScanPhoto";
-import { useScanPhotoByPath } from "@/lib/scan-photo";
+import { useScanPhotoUrls } from "@/lib/scan-photo";
 
 const INK = "#111111";
 
@@ -29,8 +29,11 @@ function shortDate(iso: string) {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
-function ScanThumb({ path }: { path: string | null }) {
-  const source = useScanPhotoByPath(path);
+/** the row image is the 320px thumbnail, never the full size photo */
+function ScanThumb({ path, url }: { path: string | null; url: string | undefined }) {
+  const source = path
+    ? { url: url ?? null, reason: null }
+    : { url: null, reason: "no photo saved on this scan" };
   return <ScanPhoto source={source} alt="scan photo" className="size-12 shrink-0 rounded-xl" />;
 }
 
@@ -43,19 +46,24 @@ export function MyScans() {
     queryFn: async () => {
       const { data } = await supabase
         .from("scans")
-        .select("id, created_at, overall_score, skin_type, photo_path, result")
+        .select("id, created_at, overall_score, skin_type, photo_path, thumb_path, result")
         .order("created_at", { ascending: false })
         .limit(20);
       return data ?? [];
     },
   });
 
+  // one signing round trip for the whole list, cached for the hour it is valid
+  const thumbPaths = scans.map((s) => s.thumb_path ?? s.photo_path);
+  const thumbUrls = useScanPhotoUrls(thumbPaths);
+
   const remove = useMutation({
-    mutationFn: async (scan: { id: string; photo_path: string | null }) => {
+    mutationFn: async (scan: { id: string; photo_path: string | null; thumb_path: string | null }) => {
       // consult chats point at the scan without a cascade, so unlink them first.
       await supabase.from("consult_chats").update({ scan_id: null }).eq("scan_id", scan.id);
-      if (scan.photo_path) {
-        await supabase.storage.from("scan-photos").remove([scan.photo_path]);
+      const files = [scan.photo_path, scan.thumb_path].filter((p): p is string => Boolean(p));
+      if (files.length) {
+        await supabase.storage.from("scan-photos").remove(files);
       }
       const { error } = await supabase.from("scans").delete().eq("id", scan.id);
       if (error) throw error;
@@ -94,7 +102,10 @@ export function MyScans() {
             const confirming = confirmId === s.id;
             const body = (
               <>
-                <ScanThumb path={s.photo_path} />
+                <ScanThumb
+                  path={s.thumb_path ?? s.photo_path}
+                  url={thumbUrls[s.thumb_path ?? s.photo_path ?? ""]}
+                />
                 <div className="min-w-0">
                   <p className="text-[14px] lowercase">{shortDate(s.created_at)}</p>
                   <p className="text-[12px] lowercase text-ink/55">
@@ -150,7 +161,7 @@ export function MyScans() {
                       <button
                         type="button"
                         disabled={remove.isPending}
-                        onClick={() => remove.mutate({ id: s.id, photo_path: s.photo_path })}
+                        onClick={() => remove.mutate({ id: s.id, photo_path: s.photo_path, thumb_path: s.thumb_path })}
                         className="rounded-full px-3 py-1.5 text-[12.5px] lowercase disabled:opacity-60"
                         style={{ backgroundColor: "#F8A1C6", color: INK }}
                       >
