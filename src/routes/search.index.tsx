@@ -176,8 +176,13 @@ function SearchPage() {
 
 
 
+  // a clinic counts as a match when their own website lists the treatment, even
+  // when we have nobody on their roster yet.
   const medspaResults = useMemo(
-    () => storefrontsInRange.filter((s) => matchStorefront(s, needle)),
+    () =>
+      storefrontsInRange
+        .map((s) => ({ ...s, ...matchStorefrontVia(s, needle) }))
+        .filter((s) => s.hit),
     [storefrontsInRange, needle],
   );
 
@@ -359,6 +364,7 @@ function SearchPage() {
                         storefront={s}
                         km={s.km}
                         providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                        viaWebsite={s.viaWebsite}
                         active={selected === s.id}
                         onSelect={() => setSelected(s.id)}
                       />
@@ -552,6 +558,7 @@ function SearchPage() {
                     storefront={s}
                     km={s.km}
                     providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                    viaWebsite={s.viaWebsite}
                     active={selected === s.id}
                     onSelect={() => setSelected(s.id)}
                   />
@@ -689,12 +696,15 @@ function MedspaCard({
   storefront,
   km,
   providers,
+  viaWebsite = false,
   active,
   onSelect,
 }: {
   storefront: Storefront;
   km: number;
   providers: Provider[];
+  /** the clinic only matched because their website lists it. say so. */
+  viaWebsite?: boolean;
   active: boolean;
   onSelect: () => void;
 }) {
@@ -747,12 +757,15 @@ function MedspaCardCompact({
   storefront,
   km,
   providers,
+  viaWebsite = false,
   active,
   onSelect,
 }: {
   storefront: Storefront;
   km: number;
   providers: Provider[];
+  /** the clinic only matched because their website lists it. say so. */
+  viaWebsite?: boolean;
   active: boolean;
   onSelect: () => void;
 }) {
@@ -797,6 +810,9 @@ function MedspaCardCompact({
             {providers.length} provider{providers.length === 1 ? "" : "s"}
           </span>
         </div>
+        {viaWebsite && (
+          <p className="mt-1.5 text-[11px] lowercase text-ink/45">listed on their website</p>
+        )}
       </div>
     </Link>
 
