@@ -4,7 +4,24 @@
 
 export const MAX_EDGE = 1568;
 export const MAX_BYTES = 3_500_000;
+/** the one shape the stream, the preview and the capture all agree on */
+export const CAPTURE_ASPECT = 3 / 4;
+/** modest digital zoom: front cameras are wide, so a face sits small */
+export const CAPTURE_ZOOM = 1.2;
 const QUALITIES = [0.85, 0.7, 0.55, 0.4];
+
+/** the exact cover crop the 3:4 preview shows, with the same zoom applied */
+export function coverCrop(srcW: number, srcH: number) {
+  const srcAspect = srcW / srcH;
+  let w = srcW;
+  let h = srcH;
+  if (srcAspect > CAPTURE_ASPECT) w = srcH * CAPTURE_ASPECT;
+  else h = srcW / CAPTURE_ASPECT;
+  w /= CAPTURE_ZOOM;
+  h /= CAPTURE_ZOOM;
+  return { x: (srcW - w) / 2, y: (srcH - h) / 2, w, h };
+}
+
 
 function canvasFor(width: number, height: number) {
   const scale = Math.min(1, MAX_EDGE / Math.max(width, height));
