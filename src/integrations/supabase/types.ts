@@ -84,49 +84,85 @@ export type Database = {
       }
       booking_requests: {
         Row: {
-          created_at: string
+          created_at: string | null
+          email: string | null
+          flexibility: string | null
+          full_name: string | null
           id: string
+          internal_note: string | null
+          is_first_time: boolean | null
           note: string | null
-          patient_email: string
-          patient_id: string
-          patient_name: string
-          patient_phone: string
-          preferred_slots: Json
+          notes: string | null
+          patient_email: string | null
+          patient_id: string | null
+          patient_name: string | null
+          patient_phone: string | null
+          phone: string | null
+          preferred_1: string | null
+          preferred_2: string | null
+          preferred_3: string | null
+          preferred_slots: Json | null
           provider_id: string | null
-          status: string
-          storefront_id: string
+          status: string | null
+          storefront_id: string | null
           treatment_id: string | null
           treatment_slug: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
+          flexibility?: string | null
+          full_name?: string | null
           id?: string
+          internal_note?: string | null
+          is_first_time?: boolean | null
           note?: string | null
-          patient_email: string
-          patient_id: string
-          patient_name: string
-          patient_phone: string
-          preferred_slots: Json
+          notes?: string | null
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          phone?: string | null
+          preferred_1?: string | null
+          preferred_2?: string | null
+          preferred_3?: string | null
+          preferred_slots?: Json | null
           provider_id?: string | null
-          status?: string
-          storefront_id: string
+          status?: string | null
+          storefront_id?: string | null
           treatment_id?: string | null
           treatment_slug?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
+          email?: string | null
+          flexibility?: string | null
+          full_name?: string | null
           id?: string
+          internal_note?: string | null
+          is_first_time?: boolean | null
           note?: string | null
-          patient_email?: string
-          patient_id?: string
-          patient_name?: string
-          patient_phone?: string
-          preferred_slots?: Json
+          notes?: string | null
+          patient_email?: string | null
+          patient_id?: string | null
+          patient_name?: string | null
+          patient_phone?: string | null
+          phone?: string | null
+          preferred_1?: string | null
+          preferred_2?: string | null
+          preferred_3?: string | null
+          preferred_slots?: Json | null
           provider_id?: string | null
-          status?: string
-          storefront_id?: string
+          status?: string | null
+          storefront_id?: string | null
           treatment_id?: string | null
           treatment_slug?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

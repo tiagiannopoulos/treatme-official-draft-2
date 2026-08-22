@@ -42,6 +42,18 @@ export interface Storefront {
   cancellation_policy: string | null;
   deposit_policy: string | null;
   late_policy: string | null;
+  /** treatments this clinic lists, read off their own website or verified by them. */
+  listed: ListedOffer[];
+}
+
+/** one treatment a clinic offers, sourced from storefront_treatments. */
+export interface ListedOffer {
+  slug: string;
+  name: string;
+  price_from: number | null;
+  /** true once the clinic confirmed it. crawled rows stay false. */
+  verified: boolean;
+  evidence_url: string | null;
 }
 
 /** neighbourhood is encoded as the trailing segment of the slug (e.g. the-glass-house-marylebone). */
@@ -133,7 +145,7 @@ export function formatDistance(km: number): string {
 }
 
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
-  const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes] = await Promise.all([
+  const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes, listedRes] = await Promise.all([
     supabase.from("storefronts").select("*").order("name"),
     supabase.from("providers").select("*").order("name"),
     supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
@@ -141,6 +153,9 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
     supabase.from("treatments").select("slug, name, category"),
     // treatme ratings are derived live from the treatme reviews table, never stored.
     supabase.from("provider_rating_stats").select("provider_id, rating, review_count"),
+    supabase
+      .from("storefront_treatments")
+      .select("storefront_id, treatment_slug, price_from, verified_by_clinic, evidence_url"),
   ]);
 
   const err =
@@ -152,12 +167,32 @@ async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: S
     statsRes.error;
   if (err) throw new Error(err.message);
 
+  const listedByStore = new Map<string, ListedOffer[]>();
+  const catalogue = new Map(
+    (treatmentsRes.data ?? []).map((t) => [t.slug, t as { slug: string; name: string; category: string }]),
+  );
+  for (const row of listedRes.data ?? []) {
+    const list = listedByStore.get(row.storefront_id) ?? [];
+    list.push({
+      slug: row.treatment_slug,
+      name: displayTreatmentName(
+        catalogue.get(row.treatment_slug)?.name ?? row.treatment_slug.replace(/-/g, " "),
+        row.treatment_slug,
+      ),
+      price_from: row.price_from === null ? null : Number(row.price_from),
+      verified: Boolean(row.verified_by_clinic),
+      evidence_url: row.evidence_url ?? null,
+    });
+    listedByStore.set(row.storefront_id, list);
+  }
+
   const storefronts = ((storefrontsRes.data ?? []) as unknown as Storefront[]).map((s) => ({
     ...s,
     // brand rule: no dash characters and no ampersands in visible copy.
     name: s.name
       ? s.name.replace(/\s*&\s*/g, " and ").replace(/[\u2010-\u2015-]/g, " ").replace(/\s+/g, " ").trim()
       : s.name,
+    listed: listedByStore.get(s.id) ?? [],
 
   }));
 
@@ -289,6 +324,24 @@ export function matchTreatment(t: SearchTreatment, q: string): { hit: boolean; v
   const alias = t.aliases.find((a) => a.toLowerCase().includes(needle));
   if (alias) return { hit: true, via: alias.toLowerCase() };
   return { hit: false };
+}
+
+/**
+ * a clinic matches a treatment search when their own website lists it, even when
+ * we have nobody on their roster yet. viaWebsite says the note belongs on the card.
+ */
+export function matchStorefrontVia(
+  s: Storefront,
+  q: string,
+): { hit: boolean; viaWebsite: boolean; evidenceUrl: string | null } {
+  if (matchStorefront(s, q)) return { hit: true, viaWebsite: false, evidenceUrl: null };
+  const needle = q.trim().toLowerCase();
+  if (!needle) return { hit: false, viaWebsite: false, evidenceUrl: null };
+  const offer = s.listed.find(
+    (o) => o.name.toLowerCase().includes(needle) || o.slug.replace(/-/g, " ").includes(needle),
+  );
+  if (!offer) return { hit: false, viaWebsite: false, evidenceUrl: null };
+  return { hit: true, viaWebsite: !offer.verified, evidenceUrl: offer.verified ? null : offer.evidence_url };
 }
 
 export function matchStorefront(s: Storefront, q: string): boolean {
