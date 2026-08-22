@@ -1153,6 +1153,7 @@ export type Database = {
           skin_type: string | null
           status: string
           store_photo: boolean
+          thumb_path: string | null
           user_id: string
         }
         Insert: {
@@ -1170,6 +1171,7 @@ export type Database = {
           skin_type?: string | null
           status?: string
           store_photo?: boolean
+          thumb_path?: string | null
           user_id: string
         }
         Update: {
@@ -1187,6 +1189,7 @@ export type Database = {
           skin_type?: string | null
           status?: string
           store_photo?: boolean
+          thumb_path?: string | null
           user_id?: string
         }
         Relationships: []
