@@ -1,18 +1,14 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bookmark, ChevronRight, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 import { INK, MINT } from "@/lib/treatment-catalog";
-import {
-  usePatient,
-  removeTreatment,
-  restoreTreatment,
-  type SavedTreatment,
-} from "@/lib/patient-store";
+import { removeTreatment, saveTreatment } from "@/lib/patient-store";
+import { JOURNEY_QUERY_KEY, journeyQuery, removeJourneyItem, saveJourneyItem } from "@/lib/journey";
 import { PillButton } from "@/components/treatme/PillButton";
 
 interface SavedRow {
@@ -44,18 +40,47 @@ export function SavedTreatments({
   hideHeading?: boolean;
 } = {}) {
   const navigate = useNavigate();
-  const { saved } = usePatient();
+  const queryClient = useQueryClient();
+  // the journey list is read from the database on every mount, never from
+  // whatever this session assumed happened.
+  const { data: journey = [] } = useQuery(journeyQuery);
   const { data: all = [] } = useQuery(savedPricesQuery);
 
-  const rows = saved
-    .map((s) => ({ saved: s, treatment: all.find((t) => t.slug === s.slug) }))
-    .filter((r): r is { saved: SavedTreatment; treatment: SavedRow } => Boolean(r.treatment));
+  const rows = journey
+    .map((j) => ({ slug: j.slug, treatment: all.find((t) => t.slug === j.slug) }))
+    .filter((r): r is { slug: string; treatment: SavedRow } => Boolean(r.treatment));
 
-  function drop(entry: SavedTreatment, name: string) {
-    removeTreatment(entry.slug);
+  async function refresh() {
+    await queryClient.invalidateQueries({ queryKey: JOURNEY_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: ["getting-started-counts"] });
+  }
+
+  async function drop(slug: string, name: string) {
+    try {
+      await removeJourneyItem(slug);
+      removeTreatment(slug);
+      await refresh();
+    } catch (error) {
+      console.error("remove treatment failed", error);
+      toast("could not save, try again", { duration: 4000 });
+      return;
+    }
     toast(`removed ${name}`, {
       duration: 4000,
-      action: { label: "undo", onClick: () => restoreTreatment(entry) },
+      action: {
+        label: "undo",
+        onClick: () => {
+          void saveJourneyItem(slug)
+            .then(() => {
+              saveTreatment(slug);
+              return refresh();
+            })
+            .catch((error) => {
+              console.error("restore treatment failed", error);
+              toast("could not save, try again", { duration: 4000 });
+            });
+        },
+      },
     });
   }
 
@@ -92,13 +117,13 @@ export function SavedTreatments({
           </div>
         ) : (
           <ul>
-            {visible.map(({ saved: entry, treatment }) => (
+            {visible.map(({ slug, treatment }) => (
               <SavedRowItem
-                key={entry.slug}
+                key={slug}
                 name={treatment.name}
                 priceFrom={treatment.price_from}
-                onOpen={() => navigate({ to: "/treatment/$slug/story", params: { slug: entry.slug } })}
-                onRemove={() => drop(entry, treatment.name)}
+                onOpen={() => navigate({ to: "/treatment/$slug/story", params: { slug } })}
+                onRemove={() => void drop(slug, treatment.name)}
               />
             ))}
           </ul>
