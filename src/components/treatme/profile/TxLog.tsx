@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, NotebookPen, X } from "lucide-react";
+import { Bell, NotebookPen, Pencil, Plus, X } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { INK } from "@/lib/treatment-catalog";
 import { PillButton } from "@/components/treatme/PillButton";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { displayTreatmentName } from "@/lib/treatment-labels";
+import { TxLogEntrySheet, type EditableEntry } from "@/components/treatme/profile/TxLogEntrySheet";
 
 interface LogMedia {
   id: string;
@@ -26,6 +28,11 @@ interface LogEntry {
   provider_notes: string | null;
   next_due_at: string | null;
   provider_id: string | null;
+  storefront_id: string | null;
+  storefront_name_text: string | null;
+  provider_name_text: string | null;
+  note: string | null;
+  source: string;
   provider_name: string | null;
   storefront_name: string | null;
   provider_slug: string | null;
@@ -54,7 +61,7 @@ async function fetchLog(): Promise<LogEntry[]> {
   const { data, error } = await supabase
     .from("treatment_log")
     .select(
-      "id, treatment_slug, performed_at, product_name, amount, amount_unit, price_paid, areas_treated, provider_notes, next_due_at, provider_id",
+      "id, treatment_slug, performed_at, product_name, amount, amount_unit, price_paid, areas_treated, provider_notes, next_due_at, provider_id, storefront_id, storefront_name_text, provider_name_text, note, source",
     )
     .order("performed_at", { ascending: false });
   if (error || !data || data.length === 0) return [];
@@ -84,9 +91,9 @@ async function fetchLog(): Promise<LogEntry[]> {
     const tx = (txRes.data ?? []).find((t) => t.slug === r.treatment_slug);
     return {
       ...r,
-      provider_name: prov?.name ?? null,
+      provider_name: prov?.name ?? r.provider_name_text ?? null,
       provider_slug: prov?.slug ?? null,
-      storefront_name: store?.storefronts?.name ?? null,
+      storefront_name: store?.storefronts?.name ?? r.storefront_name_text ?? null,
       treatment_name: displayTreatmentName(tx?.name ?? r.treatment_slug.replace(/-/g, " ")),
       media: (mediaRes.data ?? []).filter((m) => m.log_id === r.id).map((m) => ({ id: m.id, url: m.url, kind: m.kind })),
     };
@@ -96,15 +103,55 @@ async function fetchLog(): Promise<LogEntry[]> {
 export function TxLog() {
   const navigate = useNavigate();
   const [zoom, setZoom] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [editing, setEditing] = useState<EditableEntry | null>(null);
+  const [reading, setReading] = useState<LogEntry | null>(null);
   const { data: entries = [] } = useQuery({ queryKey: ["treatment-log"], queryFn: fetchLog });
 
   let lastYear: number | null = null;
 
+  function openAdd() {
+    setEditing(null);
+    setSheetOpen(true);
+  }
+
+  function openEdit(e: LogEntry) {
+    setEditing({
+      id: e.id,
+      treatment_slug: e.treatment_slug,
+      performed_at: e.performed_at,
+      storefront_id: e.storefront_id,
+      storefront_name_text: e.storefront_name_text,
+      provider_id: e.provider_id,
+      provider_name_text: e.provider_name_text,
+      product_name: e.product_name,
+      price_paid: e.price_paid,
+      areas_treated: e.areas_treated,
+      next_due_at: e.next_due_at,
+      note: e.note,
+    });
+    setSheetOpen(true);
+  }
+
   return (
     <section className="mt-8">
-      <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
-        tx log
-      </h2>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-[17px] font-semibold lowercase" style={{ color: INK }}>
+          tx log
+        </h2>
+        <button
+          type="button"
+          onClick={openAdd}
+          className="flex items-center gap-1 text-[13px] lowercase"
+          style={{ color: INK }}
+        >
+          <Plus className="size-[14px]" strokeWidth={2} />
+          add
+        </button>
+      </div>
+      <p className="mt-1 text-[12.5px] lowercase" style={{ color: "rgba(17,17,17,0.55)" }}>
+        every treatment you have had, in one place
+      </p>
 
       {entries.length === 0 ? (
         <div
@@ -128,6 +175,14 @@ export function TxLog() {
             >
               find a provider
             </PillButton>
+            <button
+              type="button"
+              onClick={openAdd}
+              className="mt-3 text-[12.5px] lowercase underline"
+              style={{ color: "rgba(17,17,17,0.55)" }}
+            >
+              or add one you have already had
+            </button>
           </div>
         </div>
       ) : (
@@ -158,9 +213,23 @@ export function TxLog() {
                       {e.treatment_name}
                       {e.product_name ? ` · ${e.product_name.toLowerCase()}` : ""}
                     </p>
-                    <p className="shrink-0 text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.50)" }}>
-                      {shortDate(e.performed_at)}
-                    </p>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <p className="text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.50)" }}>
+                        {shortDate(e.performed_at)}
+                      </p>
+                      {e.source === "self_reported" && (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10.5px] lowercase"
+                          style={{
+                            backgroundColor: "#FCFBF7",
+                            border: "1px solid rgba(17,17,17,0.10)",
+                            color: "rgba(17,17,17,0.55)",
+                          }}
+                        >
+                          added by you
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {pills.length > 0 && (
@@ -218,6 +287,26 @@ export function TxLog() {
                       </span>
                     </div>
                   )}
+                  {e.source === "self_reported" ? (
+                    <button
+                      type="button"
+                      onClick={() => openEdit(e)}
+                      className="mt-3 flex items-center gap-1.5 text-[12.5px] lowercase"
+                      style={{ color: INK }}
+                    >
+                      <Pencil className="size-[13px]" strokeWidth={2} />
+                      edit this entry
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setReading(e)}
+                      className="mt-3 text-[12.5px] lowercase underline"
+                      style={{ color: "rgba(17,17,17,0.55)" }}
+                    >
+                      view details
+                    </button>
+                  )}
                 </article>
               </div>
             );
@@ -239,6 +328,52 @@ export function TxLog() {
           <img src={zoom} alt="treatment photo" className="max-h-[80vh] max-w-[92vw] rounded-[18px] object-contain" />
         </div>
       )}
+      <TxLogEntrySheet open={sheetOpen} entry={editing} onClose={() => setSheetOpen(false)} />
+
+      {reading && <ReadOnlyDetail entry={reading} onClose={() => setReading(null)} />}
     </section>
+  );
+}
+
+/** provider recorded entries open read only. no edit, no delete, anywhere. */
+function ReadOnlyDetail({ entry, onClose }: { entry: LogEntry; onClose: () => void }) {
+  const rows: Array<[string, string]> = [
+    ["when", shortDate(entry.performed_at)],
+    entry.provider_name ? ["who did it", entry.provider_name.toLowerCase()] : null,
+    entry.storefront_name ? ["where", entry.storefront_name.toLowerCase()] : null,
+    entry.product_name ? ["what they used", entry.product_name.toLowerCase()] : null,
+    entry.amount !== null ? ["how much was used", `${entry.amount}${entry.amount_unit ? ` ${entry.amount_unit}` : ""}`] : null,
+    entry.price_paid !== null ? ["what it cost", `$${entry.price_paid}`] : null,
+    entry.areas_treated && entry.areas_treated.length > 0 ? ["areas treated", entry.areas_treated.join(", ").toLowerCase()] : null,
+    entry.next_due_at ? ["due again", monthYear(entry.next_due_at)] : null,
+    entry.provider_notes ? ["notes from your provider", entry.provider_notes.toLowerCase()] : null,
+  ].filter((r): r is [string, string] => Boolean(r));
+
+  return (
+    <Sheet open onOpenChange={(v) => !v && onClose()}>
+      <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-[24px] bg-cream px-5 pb-8 pt-4">
+        <SheetHeader className="pb-1 text-left">
+          <SheetTitle className="brand-display text-[22px] lowercase">{entry.treatment_name}</SheetTitle>
+        </SheetHeader>
+        <p className="text-[12.5px] lowercase" style={{ color: "rgba(17,17,17,0.55)" }}>
+          recorded by the person who did it
+        </p>
+        <div
+          className="mt-4 overflow-hidden rounded-[18px] border"
+          style={{ borderColor: "rgba(17,17,17,0.10)", backgroundColor: "#FFFFFF" }}
+        >
+          {rows.map(([label, value]) => (
+            <div key={label} className="border-b px-4 py-3 last:border-b-0" style={{ borderColor: "rgba(17,17,17,0.08)" }}>
+              <p className="text-[11.5px] lowercase" style={{ color: "rgba(17,17,17,0.50)" }}>
+                {label}
+              </p>
+              <p className="mt-0.5 text-[14px] lowercase" style={{ color: INK }}>
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

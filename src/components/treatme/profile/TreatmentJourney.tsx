@@ -4,7 +4,6 @@ import { Check } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useScan } from "@/lib/scan-store";
-import { usePatient } from "@/lib/patient-store";
 import { INK, MINT, HOT } from "@/lib/treatment-catalog";
 import { PillButton } from "@/components/treatme/PillButton";
 
@@ -23,7 +22,7 @@ async function fetchCounts(): Promise<Counts> {
   const head = { count: "exact" as const, head: true };
   const [scans, saved, requests, log] = await Promise.all([
     supabase.from("scans").select("id", head),
-    supabase.from("saved_treatments").select("treatment_slug", head),
+    supabase.from("journey_items").select("treatment_slug", head),
     supabase.from("booking_requests").select("id", head),
     supabase.from("treatment_log").select("id", head),
   ]);
@@ -46,7 +45,6 @@ interface Step {
 
 export function TreatmentJourney() {
   const navigate = useNavigate();
-  const { saved } = usePatient();
   const { data: counts, isLoading } = useQuery({
     queryKey: ["getting-started-counts"],
     queryFn: fetchCounts,
@@ -54,7 +52,7 @@ export function TreatmentJourney() {
   });
 
   const scanCount = counts?.scans ?? 0;
-  const savedCount = Math.max(counts?.saved ?? 0, saved.length);
+  const savedCount = counts?.saved ?? 0;
   const requestCount = counts?.requests ?? 0;
   const logCount = counts?.log ?? 0;
 
