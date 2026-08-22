@@ -5,7 +5,13 @@ import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { detectVideoFrame, facemeshReady } from "@/lib/facemesh";
 import { cn } from "@/lib/utils";
-import { fileToScanJpeg, videoToScanJpeg } from "@/lib/image-process";
+import {
+  CAPTURE_ASPECT,
+  CAPTURE_ZOOM,
+  coverCrop,
+  fileToScanJpeg,
+  videoToScanJpeg,
+} from "@/lib/image-process";
 
 type CameraError =
   | "permission"
