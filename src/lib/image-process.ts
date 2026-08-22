@@ -90,3 +90,29 @@ export async function videoToScanJpeg(video: HTMLVideoElement): Promise<string |
   ctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, canvas.width, canvas.height);
   return canvasToScanJpeg(canvas);
 }
+
+/**
+ * a 320px long edge jpeg used for every small scan image. cheap to fetch, so a
+ * list of ten scans is a few kilobytes instead of ten full size photos.
+ */
+export async function dataUrlToThumbBlob(dataUrl: string): Promise<Blob | null> {
+  try {
+    const source = await fetch(dataUrl).then((r) => r.blob());
+    const bitmap = await createImageBitmap(source);
+    const scale = Math.min(1, THUMB_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return null;
+    }
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    return await toBlob(canvas, THUMB_QUALITY);
+  } catch (err) {
+    console.warn("[treatme] thumbnail encode failed", err);
+    return null;
+  }
+}
