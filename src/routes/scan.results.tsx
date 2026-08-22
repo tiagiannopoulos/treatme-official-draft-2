@@ -42,7 +42,9 @@ function ResultsPage() {
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
   const loadedFor = useRef<string | null>(null);
 
-  // reopening a saved scan from the profile tab: pull the stored read back in.
+  // reopening a saved scan from the profile tab: the scores are a few kilobytes
+  // of json, so they land first and the screen renders straight away. the photo
+  // and the treatment matches arrive afterwards, they never gate the page.
   useEffect(() => {
     if (!requestedId || requestedId === scanId || loadedFor.current === requestedId) return;
     loadedFor.current = requestedId;
@@ -51,10 +53,8 @@ function ResultsPage() {
     void (async () => {
       const saved = await fetchSavedScan(requestedId);
       if (!alive) return;
-      if (!saved) {
-        setLoading(false);
-        return;
-      }
+      setLoading(false);
+      if (!saved) return;
       hydrate({
         scanId: saved.scanId,
         photoDataUrl: null,
@@ -68,10 +68,10 @@ function ResultsPage() {
         goalRecommendations: [],
       });
       if (saved.result) {
+        // in the background: the screen is already up by now
         const { scanDriven, goalDriven } = await getRecommendations(topConcerns(saved.result), []);
         if (alive) setResult(saved.result, scanDriven, goalDriven);
       }
-      if (alive) setLoading(false);
     })();
     return () => {
       alive = false;
@@ -100,13 +100,7 @@ function ResultsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (loading) {
-    return (
-      <div className="px-6 pt-16 text-center">
-        <p className="text-[15px] lowercase text-ink-mute">loading your saved scan...</p>
-      </div>
-    );
-  }
+  if (loading && !result) return <ResultsSkeleton />;
 
   if (!result) {
     return (
@@ -123,6 +117,7 @@ function ResultsPage() {
       </div>
     );
   }
+
 
   const openTopConcern = () => {
     if (!worst) return;
