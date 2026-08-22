@@ -78,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
       <AuthSheet
         open={open}
+        headline={options.headline}
         reason={options.reason}
         onClose={() => {
           setOpen(false);
