@@ -5,7 +5,13 @@ import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { detectVideoFrame, facemeshReady } from "@/lib/facemesh";
 import { cn } from "@/lib/utils";
-import { fileToScanJpeg, videoToScanJpeg } from "@/lib/image-process";
+import {
+  CAPTURE_ASPECT,
+  CAPTURE_ZOOM,
+  coverCrop,
+  fileToScanJpeg,
+  videoToScanJpeg,
+} from "@/lib/image-process";
 
 type CameraError =
   | "permission"
@@ -84,6 +90,8 @@ function Chip({ label, state }: { label: string; state: ChipState }) {
   );
 }
 
+const HOLD_MS = 1500;
+
 function CapturePage() {
   const navigate = useNavigate();
   const { setPhoto } = useScan();
@@ -100,6 +108,9 @@ function CapturePage() {
   const [lighting, setLighting] = useState<ChipState>("adjust");
   const [position, setPosition] = useState<ChipState>("adjust");
   const [steady, setSteady] = useState<ChipState>("adjust");
+  const [holdProgress, setHoldProgress] = useState(0);
+  const holdingRef = useRef(false);
+  const steadyRef = useRef<ChipState>("adjust");
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -122,7 +133,12 @@ function CapturePage() {
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1440 } },
+          video: {
+            facingMode: facing,
+            aspectRatio: { ideal: CAPTURE_ASPECT },
+            width: { ideal: 1080 },
+            height: { ideal: 1440 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -158,7 +174,7 @@ function CapturePage() {
     };
   }, [stopStream]);
 
-  // live coaching loop
+  // live coaching loop. samples the same cropped region the preview shows.
   useEffect(() => {
     if (still || camError) return;
     let alive = true;
@@ -176,7 +192,8 @@ function CapturePage() {
       canvas.height = 80;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) return;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const crop = coverCrop(video.videoWidth, video.videoHeight);
+      ctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, canvas.width, canvas.height);
       const frame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
       let sum = 0;
@@ -190,7 +207,11 @@ function CapturePage() {
       if (prev && prev.length === frame.length) {
         let diff = 0;
         for (let i = 0; i < frame.length; i += 4) diff += Math.abs(frame[i] - prev[i]);
-        setSteady(diff / (frame.length / 4) < 9 ? "good" : "adjust");
+        // loosened: a slightly imperfect photo that succeeds beats a perfect
+        // one nobody waits for.
+        const next: ChipState = diff / (frame.length / 4) < 18 ? "good" : "adjust";
+        steadyRef.current = next;
+        setSteady(next);
       }
       prevPixels.current = new Uint8ClampedArray(frame);
 
@@ -210,9 +231,11 @@ function CapturePage() {
     };
   }, [still, camError]);
 
-  const allGood = lighting === "good" && position === "good" && steady === "good";
+  const readyToShoot = lighting === "good" && position === "good";
 
-  const capture = useCallback(() => {
+  const takeFrame = useCallback(() => {
+    holdingRef.current = false;
+    setHoldProgress(0);
     const video = videoRef.current;
     if (!video) return;
     void videoToScanJpeg(video).then((url) => {
@@ -220,6 +243,37 @@ function CapturePage() {
     });
     stopStream();
   }, [stopStream]);
+
+  // the hold: at most 1.5s, ends early once the frame settles, and a second
+  // tap on the shutter fires straight away.
+  const onShutter = useCallback(() => {
+    if (holdingRef.current) {
+      takeFrame();
+      return;
+    }
+    if (!readyToShoot) return;
+    holdingRef.current = true;
+    const start = performance.now();
+    const frame = () => {
+      if (!holdingRef.current) return;
+      const elapsed = performance.now() - start;
+      setHoldProgress(Math.min(1, elapsed / HOLD_MS));
+      if (steadyRef.current === "good" && elapsed > 350) {
+        takeFrame();
+        return;
+      }
+      if (elapsed >= HOLD_MS) {
+        takeFrame(); // time is up: shoot anyway rather than wait forever
+        return;
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [readyToShoot, takeFrame]);
+
+  useEffect(() => () => {
+    holdingRef.current = false;
+  }, []);
 
   const onPick = async (file: File | undefined) => {
     if (!file) return;
@@ -230,6 +284,7 @@ function CapturePage() {
       /* ignore unreadable files */
     }
   };
+
 
   const useThis = () => {
     if (!still) return;
@@ -291,54 +346,67 @@ function CapturePage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-ink">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-ink">
       {picker}
-      {still ? (
-        <img src={still} alt="your scan photo" className="absolute inset-0 size-full object-cover" />
-      ) : (
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          autoPlay
-          disablePictureInPicture
-          className={cn(
-            "absolute inset-0 size-full object-cover",
-            facing === "user" && "scale-x-[-1]",
-          )}
-        />
-      )}
+
+      {/* the stream, this box and the capture canvas all share one 3:4 shape */}
+      <div
+        className="relative w-full max-w-[460px] overflow-hidden bg-ink"
+        style={{ aspectRatio: "3 / 4" }}
+      >
+        {still ? (
+          <img src={still} alt="your scan photo" className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            disablePictureInPicture
+            className="absolute inset-0 size-full object-cover"
+            style={{
+              // same zoom factor the capture crop uses, so preview and photo match
+              transform: `scale(${facing === "user" ? -CAPTURE_ZOOM : CAPTURE_ZOOM}, ${CAPTURE_ZOOM})`,
+            }}
+          />
+        )}
+
+        {!still && (
+          <>
+            <svg
+              viewBox="0 0 300 400"
+              className="absolute inset-0 size-full"
+              aria-hidden="true"
+            >
+              <ellipse
+                cx="150"
+                cy="188"
+                rx="104"
+                ry="140"
+                fill="none"
+                stroke="#FCFBF7"
+                strokeWidth="2"
+                strokeDasharray="9 9"
+                opacity="0.6"
+              />
+            </svg>
+
+            <div className="absolute inset-x-0 top-3 flex justify-center gap-2 px-3">
+              <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
+              <Chip label={CHIP_COPY.position[position]} state={position} />
+              <Chip label={CHIP_COPY.still[steady]} state={steady} />
+            </div>
+
+            <p className="absolute inset-x-0 bottom-4 text-center text-[13px] font-semibold lowercase text-cream/80">
+              fill the oval, face the light
+            </p>
+          </>
+        )}
+      </div>
 
       {!still && (
         <>
-          <svg
-            viewBox="0 0 100 125"
-            preserveAspectRatio="xMidYMid slice"
-            className="absolute inset-0 size-full"
-            aria-hidden="true"
-          >
-            <ellipse
-              cx="50"
-              cy="56"
-              rx="30"
-              ry="41"
-              fill="none"
-              stroke="#FCFBF7"
-              strokeWidth="0.8"
-              strokeDasharray="3 3"
-              opacity="0.6"
-            />
-          </svg>
 
-          <div className="absolute top-3 inset-x-0 flex justify-center gap-2 px-3">
-            <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
-            <Chip label={CHIP_COPY.position[position]} state={position} />
-            <Chip label={CHIP_COPY.still[steady]} state={steady} />
-          </div>
-
-          <p className="absolute inset-x-0 bottom-44 text-center text-[13px] font-semibold lowercase text-cream/80">
-            fill the oval, face the light
-          </p>
 
           <div className="absolute inset-x-0 bottom-20 flex items-center justify-center gap-8 p-6">
             <button
@@ -352,17 +420,37 @@ function CapturePage() {
 
             <button
               type="button"
-              onClick={capture}
-              disabled={!allGood}
-              aria-label="capture photo"
-              style={{ backgroundColor: "#FF1F87" }}
+              onClick={onShutter}
+              disabled={!readyToShoot && holdProgress === 0}
+              aria-label={holdProgress > 0 ? "capture now" : "capture photo"}
               className={cn(
-                "grid size-[74px] place-items-center rounded-full border-4 border-cream/70 transition-opacity",
-                allGood ? "opacity-100" : "opacity-40",
+                "relative grid size-[86px] place-items-center rounded-full transition-opacity",
+                readyToShoot || holdProgress > 0 ? "opacity-100" : "opacity-40",
               )}
             >
-              <span className="size-[54px] rounded-full border border-cream/40" />
+              {/* thin ring that fills over the hold so the wait is visible */}
+              <svg viewBox="0 0 86 86" className="absolute inset-0 size-full -rotate-90" aria-hidden="true">
+                <circle cx="43" cy="43" r="40" fill="none" stroke="#FCFBF7" strokeOpacity="0.25" strokeWidth="3" />
+                <circle
+                  cx="43"
+                  cy="43"
+                  r="40"
+                  fill="none"
+                  stroke="#FF1F87"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 40}
+                  strokeDashoffset={2 * Math.PI * 40 * (1 - holdProgress)}
+                />
+              </svg>
+              <span
+                className="grid size-[68px] place-items-center rounded-full border-4 border-cream/70"
+                style={{ backgroundColor: "#FF1F87" }}
+              >
+                <span className="size-[48px] rounded-full border border-cream/40" />
+              </span>
             </button>
+
 
             <button
               type="button"
