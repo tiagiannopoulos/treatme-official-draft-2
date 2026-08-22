@@ -20,6 +20,7 @@ import {
   matchProvider,
   matchTreatment,
   matchStorefront,
+  matchStorefrontVia,
   providerFromPrice,
   LOCATION_PRESETS,
   neighbourhood,
