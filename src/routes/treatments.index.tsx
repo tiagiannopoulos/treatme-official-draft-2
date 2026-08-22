@@ -237,7 +237,7 @@ function TreatmentsPage() {
                 </SheetClose>
               </section>
               <section>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-ink-mute mb-3">all concerns</p>
+                <p className="text-[13px] font-semibold lowercase text-ink mb-3">all concerns</p>
                 <div className="grid grid-cols-2 gap-3">
                   {concerns.map((c) => (
                     <SheetClose key={c} asChild>
