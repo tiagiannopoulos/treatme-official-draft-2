@@ -122,8 +122,29 @@ async function fetchTreatments(providerId?: string): Promise<TreatmentOption[]> 
   return (data ?? []) as TreatmentOption[];
 }
 
+/** rough time of day to a local hour, so we never imply a real slot. */
+const HOUR_FOR: Record<TimeOfDay, number> = { morning: 9, afternoon: 14, evening: 18 };
+
+/** yyyy-mm-dd plus a rough time of day to an iso timestamp. */
+export function slotToTimestamp(slot: PreferredSlot): string {
+  const [y, m, d] = slot.date.split("-").map(Number);
+  const dt = new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1, HOUR_FOR[slot.time_of_day], 0, 0, 0);
+  return dt.toISOString();
+}
+
+/** iso timestamp back to the rough shape the ui shows. */
+export function timestampToSlot(iso: string): PreferredSlot {
+  const dt = new Date(iso);
+  const hour = dt.getHours();
+  const time_of_day: TimeOfDay = hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+  const date = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  return { date, time_of_day };
+}
+
+export type Flexibility = "very" | "somewhat" | "these times only";
+
 export interface SubmitBooking {
-  /** optional. booking routes to the clinic, an individual is never required. */
+  /** optional. a request routes to the clinic, an individual is never required. */
   providerId?: string | null;
   storefrontId: string;
   treatmentSlug: string;
@@ -132,26 +153,42 @@ export interface SubmitBooking {
   name: string;
   phone: string;
   email: string;
+  flexibility?: Flexibility;
+  isFirstTime?: boolean | null;
 }
 
-/** inserts one request as the signed in patient. rls scopes it to auth.uid(). */
-export async function submitBookingRequest(input: SubmitBooking): Promise<void> {
+/**
+ * saves one request. signing in is optional, so user_id stays null for guests and
+ * the row is the only record that matters. never says booked anywhere.
+ */
+export async function submitBookingRequest(input: SubmitBooking): Promise<string> {
   const { data: session } = await supabase.auth.getSession();
-  const uid = session.session?.user.id;
-  if (!uid) throw new Error("you need an account to send a request.");
+  const uid = session.session?.user.id ?? null;
 
-  const { error } = await supabase.from("booking_requests").insert({
-    patient_id: uid,
-    provider_id: input.providerId ? input.providerId : null,
-    storefront_id: input.storefrontId,
-    treatment_slug: input.treatmentSlug,
-    preferred_slots: input.slots.map((s) => ({ date: s.date, time_of_day: s.time_of_day })),
-    note: input.note.trim() ? input.note.trim() : null,
-    patient_name: input.name.trim(),
-    patient_phone: input.phone.trim(),
-    patient_email: input.email.trim(),
-  });
+  const times = input.slots.map(slotToTimestamp);
+
+  const { data, error } = await supabase
+    .from("booking_requests")
+    .insert({
+      user_id: uid,
+      provider_id: input.providerId ? input.providerId : null,
+      storefront_id: input.storefrontId,
+      treatment_slug: input.treatmentSlug,
+      full_name: input.name.trim(),
+      email: input.email.trim(),
+      phone: input.phone.trim(),
+      preferred_1: times[0] ?? null,
+      preferred_2: times[1] ?? null,
+      preferred_3: times[2] ?? null,
+      flexibility: input.flexibility ?? null,
+      is_first_time: input.isFirstTime ?? null,
+      notes: input.note.trim() ? input.note.trim() : null,
+      status: "new",
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(error.message);
+  return data.id;
 }
 
 export interface MyBooking {
@@ -175,7 +212,7 @@ export const myBookingsQuery = queryOptions({
 
     const { data, error } = await supabase
       .from("booking_requests")
-      .select("id, status, created_at, preferred_slots, treatment_slug, provider_id, storefront_id")
+      .select("id, status, created_at, preferred_1, preferred_2, preferred_3, treatment_slug, provider_id, storefront_id")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = data ?? [];
@@ -202,13 +239,16 @@ export const myBookingsQuery = queryOptions({
 
     return rows.map((r) => {
       const store = r.storefront_id ? storeById.get(r.storefront_id) : undefined;
+      const slots = [r.preferred_1, r.preferred_2, r.preferred_3]
+        .filter((v): v is string => Boolean(v))
+        .map(timestampToSlot);
       return {
         id: r.id,
-        status: r.status ?? "pending",
+        status: r.status ?? "new",
         created_at: r.created_at ?? new Date().toISOString(),
-        slots: Array.isArray(r.preferred_slots) ? (r.preferred_slots as unknown as PreferredSlot[]) : [],
+        slots,
         treatmentName: (r.treatment_slug ? treatName.get(r.treatment_slug) : null) ?? "treatment",
-        providerName: (r.provider_id ? provName.get(r.provider_id) : null) ?? "any available provider",
+        providerName: (r.provider_id ? provName.get(r.provider_id) : null) ?? "no preference",
         providerId: r.provider_id ?? null,
         storefrontName: store?.name ?? "clinic",
         storefrontId: r.storefront_id,
@@ -231,8 +271,17 @@ export function slotDateLabel(date: string): string {
   return `${MONTHS[m - 1]} ${d}`;
 }
 
+/**
+ * a request is never an appointment until a human confirms it, so the chip stays
+ * honest: awaiting confirmation while it sits with the treatme team.
+ */
 export function statusChip(status: string): { label: string; bg: string; fg: string } {
-  if (status === "confirmed") return { label: "confirmed", bg: "#DFFFF8", fg: "#111111" };
-  if (status === "declined") return { label: "declined", bg: "#ECECEC", fg: "#6B6B6B" };
-  return { label: "pending", bg: "#FFEDB4", fg: "#111111" };
+  if (status === "declined") return { label: "could not arrange", bg: "#ECECEC", fg: "#6B6B6B" };
+  if (status === "contacting") return { label: "awaiting confirmation", bg: "#FCFBF7", fg: "#111111" };
+  return { label: "awaiting confirmation", bg: "#FCFBF7", fg: "#111111" };
+}
+
+/** a request is still just a request while it has one of these statuses. */
+export function isPendingRequest(status: string): boolean {
+  return status === "new" || status === "contacting" || status === "pending";
 }
