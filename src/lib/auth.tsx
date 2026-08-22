@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { AuthSheet } from "@/components/treatme/AuthSheet";
 
 interface OpenOptions {
+  /** the lowercase headline at the top of the sheet. */
+  headline?: string;
   /** one lowercase line explaining why we're asking. */
   reason?: string;
   /** runs once the user is signed in and set up. */
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
       <AuthSheet
         open={open}
+        headline={options.headline}
         reason={options.reason}
         onClose={() => {
           setOpen(false);

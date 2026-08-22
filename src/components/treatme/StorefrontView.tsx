@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock,
   Copy,
-  Droplet,
   Globe,
   Info,
   MapPin,
@@ -196,7 +195,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   );
 
   const skinMatches = providersForSkinType(roster, patient.profile);
-  const hasSkinType = fitzNumber(patient.profile.skinType) !== null;
   const skinFitz = fitzNumber(patient.profile.skinType);
 
   const shownRoster = filterSlug
@@ -385,33 +383,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
             treatme ratings come only from verified visits booked through treatme
           </p>
 
-          {hasSkinType && (
-            <Expandable
-              icon={Droplet}
-              label={
-                skinMatches.length > 0
-                  ? "works with your skin type"
-                  : "does not list experience with your skin type"
-              }
-              sub={
-                skinMatches.length > 0
-                  ? `${skinMatches.map((p) => noDash(p.name)).slice(0, 3).join(", ")} here do`
-                  : undefined
-              }
-            >
-              <div className="space-y-2 pb-3">
-                {skinMatches.length > 0 ? (
-                  skinMatches.map((p) => (
-                    <ProviderCard key={p.id} provider={p} km={km} shops={p.storefronts} />
-                  ))
-                ) : (
-                  <p className="text-[13px] lowercase text-ink/60">
-                    no provider here lists fitzpatrick {patient.profile.skinType} yet
-                  </p>
-                )}
-              </div>
-            </Expandable>
-          )}
 
           {booked > 10 && (
             <InfoRow icon={Users} label={`${booked} people booked here this month`} />

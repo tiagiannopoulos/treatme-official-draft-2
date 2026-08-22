@@ -47,11 +47,13 @@ function Field({
 
 export function AuthSheet({
   open,
+  headline,
   reason,
   onClose,
   onDone,
 }: {
   open: boolean;
+  headline?: string;
   reason?: string;
   onClose: () => void;
   onDone: () => void;
@@ -146,7 +148,7 @@ export function AuthSheet({
                   ? "reset your password"
                   : mode === "confirm"
                     ? "check your email"
-                    : "save your results"}
+                    : (headline ?? "save your results")}
             </h2>
             <p className="mt-2 text-[13px] lowercase leading-relaxed text-ink/60">
               {mode === "setup"
