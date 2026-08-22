@@ -163,7 +163,7 @@ export interface MyBooking {
   providerName: string;
   providerId: string | null;
   storefrontName: string;
-  storefrontId: string;
+  storefrontId: string | null;
   neighbourhood: string | null;
 }
 
@@ -189,7 +189,7 @@ export const myBookingsQuery = queryOptions({
       supabase
         .from("storefronts")
         .select("id, name, neighbourhood")
-        .in("id", rows.map((r) => r.storefront_id)),
+        .in("id", rows.map((r) => r.storefront_id).filter((id): id is string => Boolean(id))),
       supabase
         .from("treatments")
         .select("slug, name")
@@ -201,11 +201,11 @@ export const myBookingsQuery = queryOptions({
     const treatName = new Map((treats ?? []).map((t) => [t.slug, t.name]));
 
     return rows.map((r) => {
-      const store = storeById.get(r.storefront_id);
+      const store = r.storefront_id ? storeById.get(r.storefront_id) : undefined;
       return {
         id: r.id,
-        status: r.status,
-        created_at: r.created_at,
+        status: r.status ?? "pending",
+        created_at: r.created_at ?? new Date().toISOString(),
         slots: Array.isArray(r.preferred_slots) ? (r.preferred_slots as unknown as PreferredSlot[]) : [],
         treatmentName: (r.treatment_slug ? treatName.get(r.treatment_slug) : null) ?? "treatment",
         providerName: (r.provider_id ? provName.get(r.provider_id) : null) ?? "any available provider",
