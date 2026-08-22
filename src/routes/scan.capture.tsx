@@ -414,17 +414,37 @@ function CapturePage() {
 
             <button
               type="button"
-              onClick={capture}
-              disabled={!allGood}
-              aria-label="capture photo"
-              style={{ backgroundColor: "#FF1F87" }}
+              onClick={onShutter}
+              disabled={!readyToShoot && holdProgress === 0}
+              aria-label={holdProgress > 0 ? "capture now" : "capture photo"}
               className={cn(
-                "grid size-[74px] place-items-center rounded-full border-4 border-cream/70 transition-opacity",
-                allGood ? "opacity-100" : "opacity-40",
+                "relative grid size-[86px] place-items-center rounded-full transition-opacity",
+                readyToShoot || holdProgress > 0 ? "opacity-100" : "opacity-40",
               )}
             >
-              <span className="size-[54px] rounded-full border border-cream/40" />
+              {/* thin ring that fills over the hold so the wait is visible */}
+              <svg viewBox="0 0 86 86" className="absolute inset-0 size-full -rotate-90" aria-hidden="true">
+                <circle cx="43" cy="43" r="40" fill="none" stroke="#FCFBF7" strokeOpacity="0.25" strokeWidth="3" />
+                <circle
+                  cx="43"
+                  cy="43"
+                  r="40"
+                  fill="none"
+                  stroke="#FF1F87"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 40}
+                  strokeDashoffset={2 * Math.PI * 40 * (1 - holdProgress)}
+                />
+              </svg>
+              <span
+                className="grid size-[68px] place-items-center rounded-full border-4 border-cream/70"
+                style={{ backgroundColor: "#FF1F87" }}
+              >
+                <span className="size-[48px] rounded-full border border-cream/40" />
+              </span>
             </button>
+
 
             <button
               type="button"
