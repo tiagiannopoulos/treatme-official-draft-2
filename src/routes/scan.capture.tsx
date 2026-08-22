@@ -84,6 +84,8 @@ function Chip({ label, state }: { label: string; state: ChipState }) {
   );
 }
 
+const HOLD_MS = 1500;
+
 function CapturePage() {
   const navigate = useNavigate();
   const { setPhoto } = useScan();
@@ -100,6 +102,9 @@ function CapturePage() {
   const [lighting, setLighting] = useState<ChipState>("adjust");
   const [position, setPosition] = useState<ChipState>("adjust");
   const [steady, setSteady] = useState<ChipState>("adjust");
+  const [holdProgress, setHoldProgress] = useState(0);
+  const holdingRef = useRef(false);
+  const steadyRef = useRef<ChipState>("adjust");
 
   const stopStream = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -122,7 +127,12 @@ function CapturePage() {
     (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: facing, width: { ideal: 1080 }, height: { ideal: 1440 } },
+          video: {
+            facingMode: facing,
+            aspectRatio: { ideal: CAPTURE_ASPECT },
+            width: { ideal: 1080 },
+            height: { ideal: 1440 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -158,7 +168,7 @@ function CapturePage() {
     };
   }, [stopStream]);
 
-  // live coaching loop
+  // live coaching loop. samples the same cropped region the preview shows.
   useEffect(() => {
     if (still || camError) return;
     let alive = true;
@@ -176,7 +186,8 @@ function CapturePage() {
       canvas.height = 80;
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) return;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const crop = coverCrop(video.videoWidth, video.videoHeight);
+      ctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, canvas.width, canvas.height);
       const frame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
 
       let sum = 0;
@@ -190,7 +201,11 @@ function CapturePage() {
       if (prev && prev.length === frame.length) {
         let diff = 0;
         for (let i = 0; i < frame.length; i += 4) diff += Math.abs(frame[i] - prev[i]);
-        setSteady(diff / (frame.length / 4) < 9 ? "good" : "adjust");
+        // loosened: a slightly imperfect photo that succeeds beats a perfect
+        // one nobody waits for.
+        const next: ChipState = diff / (frame.length / 4) < 18 ? "good" : "adjust";
+        steadyRef.current = next;
+        setSteady(next);
       }
       prevPixels.current = new Uint8ClampedArray(frame);
 
@@ -210,9 +225,11 @@ function CapturePage() {
     };
   }, [still, camError]);
 
-  const allGood = lighting === "good" && position === "good" && steady === "good";
+  const readyToShoot = lighting === "good" && position === "good";
 
-  const capture = useCallback(() => {
+  const takeFrame = useCallback(() => {
+    holdingRef.current = false;
+    setHoldProgress(0);
     const video = videoRef.current;
     if (!video) return;
     void videoToScanJpeg(video).then((url) => {
@@ -220,6 +237,37 @@ function CapturePage() {
     });
     stopStream();
   }, [stopStream]);
+
+  // the hold: at most 1.5s, ends early once the frame settles, and a second
+  // tap on the shutter fires straight away.
+  const onShutter = useCallback(() => {
+    if (holdingRef.current) {
+      takeFrame();
+      return;
+    }
+    if (!readyToShoot) return;
+    holdingRef.current = true;
+    const start = performance.now();
+    const frame = () => {
+      if (!holdingRef.current) return;
+      const elapsed = performance.now() - start;
+      setHoldProgress(Math.min(1, elapsed / HOLD_MS));
+      if (steadyRef.current === "good" && elapsed > 350) {
+        takeFrame();
+        return;
+      }
+      if (elapsed >= HOLD_MS) {
+        takeFrame(); // time is up: shoot anyway rather than wait forever
+        return;
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [readyToShoot, takeFrame]);
+
+  useEffect(() => () => {
+    holdingRef.current = false;
+  }, []);
 
   const onPick = async (file: File | undefined) => {
     if (!file) return;
@@ -230,6 +278,7 @@ function CapturePage() {
       /* ignore unreadable files */
     }
   };
+
 
   const useThis = () => {
     if (!still) return;
