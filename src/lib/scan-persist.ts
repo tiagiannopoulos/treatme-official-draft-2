@@ -6,6 +6,7 @@ import { overallScore, toConcernRows } from "@/lib/scan-concerns";
 
 export interface SaveScanInput {
   photoPath: string | null;
+  thumbPath?: string | null;
   storePhoto: boolean;
   landmarks: Landmark[] | null;
   result: ScanResult;
@@ -30,6 +31,7 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
     .insert({
       user_id: userId,
       photo_path: input.storePhoto ? input.photoPath : null,
+      thumb_path: input.storePhoto ? (input.thumbPath ?? null) : null,
       store_photo: input.storePhoto,
       landmarks: input.landmarks ? (input.landmarks as unknown as never) : null,
       overall_score: overallScore(rows),
