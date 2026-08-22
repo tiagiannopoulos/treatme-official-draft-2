@@ -1649,13 +1649,16 @@ export type Database = {
           created_by_provider_id: string | null
           id: string
           next_due_at: string | null
+          note: string | null
           performed_at: string
           price_paid: number | null
           product_name: string | null
           provider_id: string | null
+          provider_name_text: string | null
           provider_notes: string | null
           source: string
           storefront_id: string | null
+          storefront_name_text: string | null
           treatment_slug: string
           user_id: string
         }
@@ -1668,13 +1671,16 @@ export type Database = {
           created_by_provider_id?: string | null
           id?: string
           next_due_at?: string | null
+          note?: string | null
           performed_at: string
           price_paid?: number | null
           product_name?: string | null
           provider_id?: string | null
+          provider_name_text?: string | null
           provider_notes?: string | null
           source?: string
           storefront_id?: string | null
+          storefront_name_text?: string | null
           treatment_slug: string
           user_id: string
         }
@@ -1687,13 +1693,16 @@ export type Database = {
           created_by_provider_id?: string | null
           id?: string
           next_due_at?: string | null
+          note?: string | null
           performed_at?: string
           price_paid?: number | null
           product_name?: string | null
           provider_id?: string | null
+          provider_name_text?: string | null
           provider_notes?: string | null
           source?: string
           storefront_id?: string | null
+          storefront_name_text?: string | null
           treatment_slug?: string
           user_id?: string
         }
