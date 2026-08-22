@@ -1,4 +1,4 @@
-import { useId, useMemo } from "react";
+import type { ReactNode } from "react";
 
 /**
  * one stylised face diagram, reused by all 18 indicators. the patient's own photo
@@ -117,6 +117,31 @@ function densityFor(score: number): number {
   return Math.max(0.18, Math.min(1.25, (100 - clamped) / 55));
 }
 
+/**
+ * filter and clip ids are shared on purpose: every diagram defines the exact
+ * same blur and clip, so stable ids let one generated overlay be reused across
+ * every card instead of being rebuilt per instance.
+ */
+function ids(compact: boolean) {
+  const suffix = compact ? "c" : "f";
+  return { softId: `tmSoft${suffix}`, heavyId: `tmHeavy${suffix}`, clipId: `tmFace${suffix}` };
+}
+
+/** one overlay per indicator + score, computed once for the whole session */
+const overlayCache = new Map<string, ReactNode>();
+
+function cachedOverlay(args: DrawArgs): ReactNode {
+  const key = [
+    args.overlayKind,
+    args.accent,
+    args.region,
+    Math.round(args.score),
+    args.compact ? "c" : "f",
+  ].join("|");
+  if (!overlayCache.has(key)) overlayCache.set(key, drawOverlay(args));
+  return overlayCache.get(key)!;
+}
+
 export function FaceMap({
   overlayKind,
   accent,
@@ -125,18 +150,8 @@ export function FaceMap({
   className,
   compact = false,
 }: FaceMapProps) {
-  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const softId = `soft${uid}`;
-  const heavyId = `heavy${uid}`;
-
-  const overlay = useMemo(
-    () => drawOverlay({ overlayKind, accent, region, score, softId, heavyId, compact }),
-    [overlayKind, accent, region, score, softId, heavyId, compact],
-  );
-
-  // some accents sit very close to the face fill, so one pass reads as nothing.
-  // stacking the same drawing keeps the database colour and still shows up.
-
+  const { softId, heavyId, clipId } = ids(compact);
+  const overlay = cachedOverlay({ overlayKind, accent, region, score, softId, heavyId, compact });
 
   return (
     <svg
@@ -152,7 +167,7 @@ export function FaceMap({
         <filter id={heavyId} x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur stdDeviation={compact ? 5 : 9} />
         </filter>
-        <clipPath id={`face${uid}`}>
+        <clipPath id={clipId}>
           <ellipse cx="100" cy="100" rx="47" ry="70" />
         </clipPath>
       </defs>
@@ -162,9 +177,7 @@ export function FaceMap({
       {/* the face, then the overlay clipped to it, then the features on top so the
           drawing never buries the face */}
       <ellipse cx="100" cy="100" rx="47" ry="70" fill={FACE} />
-      <g clipPath={`url(#face${uid})`}>
-        {overlay}
-      </g>
+      <g clipPath={`url(#${clipId})`}>{overlay}</g>
 
       <rect x="70" y="88" width="19" height="5" rx="2.5" fill={FEATURE} />
       <rect x="111" y="88" width="19" height="5" rx="2.5" fill={FEATURE} />
@@ -234,16 +247,18 @@ function drawOverlay(a: DrawArgs) {
 
     case "dots_dense":
     case "dots_scatter": {
+      // hundreds of <circle> nodes is thousands of dom nodes across 18
+      // indicators, so the whole field is one path of tiny subpaths instead.
       const dense = overlayKind === "dots_dense";
-      const n = count(dense ? 200 : 150);
-      return (
-        <g opacity={dense ? 0.7 : 0.65}>
-          {Array.from({ length: n }, (_, i) => {
-            const p = pick(rand, zones);
-            return <circle key={i} cx={p.x} cy={p.y} r={1} fill={accent} />;
-          })}
-        </g>
-      );
+      // at 44px nobody can count dots, so thumbnails draw a quarter of them
+      const n = Math.max(2, Math.round((dense ? 200 : 150) * d * (compact ? 0.25 : 1)));
+      let path = "";
+      for (let i = 0; i < n; i += 1) {
+        const p = pick(rand, zones);
+        const x = p.x.toFixed(1);
+        path += `M${x} ${(p.y - 1).toFixed(1)}a1 1 0 1 0 0 2a1 1 0 1 0 0 -2`;
+      }
+      return <path d={path} fill={accent} opacity={dense ? 0.7 : 0.65} />;
     }
 
     case "spots": {

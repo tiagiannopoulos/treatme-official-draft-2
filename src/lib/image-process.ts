@@ -4,11 +4,15 @@
 
 export const MAX_EDGE = 1568;
 export const MAX_BYTES = 3_500_000;
+/** every small scan image in the app (list rows, 44px maps) uses this copy */
+export const THUMB_EDGE = 320;
+export const THUMB_QUALITY = 0.7;
 /** the one shape the stream, the preview and the capture all agree on */
 export const CAPTURE_ASPECT = 3 / 4;
 /** modest digital zoom: front cameras are wide, so a face sits small */
 export const CAPTURE_ZOOM = 1.2;
 const QUALITIES = [0.85, 0.7, 0.55, 0.4];
+
 
 /** the exact cover crop the 3:4 preview shows, with the same zoom applied */
 export function coverCrop(srcW: number, srcH: number) {
@@ -85,4 +89,30 @@ export async function videoToScanJpeg(video: HTMLVideoElement): Promise<string |
   // true orientation. draw the cropped region straight through.
   ctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, canvas.width, canvas.height);
   return canvasToScanJpeg(canvas);
+}
+
+/**
+ * a 320px long edge jpeg used for every small scan image. cheap to fetch, so a
+ * list of ten scans is a few kilobytes instead of ten full size photos.
+ */
+export async function dataUrlToThumbBlob(dataUrl: string): Promise<Blob | null> {
+  try {
+    const source = await fetch(dataUrl).then((r) => r.blob());
+    const bitmap = await createImageBitmap(source);
+    const scale = Math.min(1, THUMB_EDGE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return null;
+    }
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    return await toBlob(canvas, THUMB_QUALITY);
+  } catch (err) {
+    console.warn("[treatme] thumbnail encode failed", err);
+    return null;
+  }
 }

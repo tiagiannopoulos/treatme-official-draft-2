@@ -42,7 +42,9 @@ function ResultsPage() {
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
   const loadedFor = useRef<string | null>(null);
 
-  // reopening a saved scan from the profile tab: pull the stored read back in.
+  // reopening a saved scan from the profile tab: the scores are a few kilobytes
+  // of json, so they land first and the screen renders straight away. the photo
+  // and the treatment matches arrive afterwards, they never gate the page.
   useEffect(() => {
     if (!requestedId || requestedId === scanId || loadedFor.current === requestedId) return;
     loadedFor.current = requestedId;
@@ -51,10 +53,8 @@ function ResultsPage() {
     void (async () => {
       const saved = await fetchSavedScan(requestedId);
       if (!alive) return;
-      if (!saved) {
-        setLoading(false);
-        return;
-      }
+      setLoading(false);
+      if (!saved) return;
       hydrate({
         scanId: saved.scanId,
         photoDataUrl: null,
@@ -68,10 +68,10 @@ function ResultsPage() {
         goalRecommendations: [],
       });
       if (saved.result) {
+        // in the background: the screen is already up by now
         const { scanDriven, goalDriven } = await getRecommendations(topConcerns(saved.result), []);
         if (alive) setResult(saved.result, scanDriven, goalDriven);
       }
-      if (alive) setLoading(false);
     })();
     return () => {
       alive = false;
@@ -100,13 +100,7 @@ function ResultsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (loading) {
-    return (
-      <div className="px-6 pt-16 text-center">
-        <p className="text-[15px] lowercase text-ink-mute">loading your saved scan...</p>
-      </div>
-    );
-  }
+  if (loading && !result) return <ResultsSkeleton />;
 
   if (!result) {
     return (
@@ -123,6 +117,7 @@ function ResultsPage() {
       </div>
     );
   }
+
 
   const openTopConcern = () => {
     if (!worst) return;
@@ -303,6 +298,33 @@ function ResultsPage() {
       </div>
 
       <SharePdfSheet open={shareOpen} onOpenChange={setShareOpen} scanId={scanId} analysis={analysis} />
+    </div>
+  );
+}
+
+/** the shape of the real screen, so nothing jumps when the scores land */
+function ResultsSkeleton() {
+  return (
+    <div className="pb-24" aria-hidden="true">
+      <div className="px-6 flex items-center justify-between gap-3" style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}>
+        <div className="h-7 w-48 rounded-full bg-ink/10 animate-pulse" />
+        <div className="h-9 w-20 rounded-full bg-ink/10 animate-pulse" />
+      </div>
+      <div className="mt-4 mx-6 rounded-3xl aspect-[4/5] bg-ink/[0.06] animate-pulse" />
+      <div className="mt-4 px-6 grid grid-cols-2 gap-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-[92px] rounded-2xl bg-ink/[0.06] animate-pulse" />
+        ))}
+      </div>
+      <div className="mt-8 px-6">
+        <div className="h-6 w-32 rounded-full bg-ink/10 animate-pulse" />
+      </div>
+      <div className="mt-4 flex gap-3 px-6">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="size-[112px] shrink-0 rounded-2xl bg-ink/[0.06] animate-pulse" />
+        ))}
+      </div>
+      <div className="mt-8 mx-6 h-52 rounded-3xl bg-ink/[0.06] animate-pulse" />
     </div>
   );
 }
