@@ -301,3 +301,30 @@ function ResultsPage() {
     </div>
   );
 }
+
+/** the shape of the real screen, so nothing jumps when the scores land */
+function ResultsSkeleton() {
+  return (
+    <div className="pb-24" aria-hidden="true">
+      <div className="px-6 flex items-center justify-between gap-3" style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}>
+        <div className="h-7 w-48 rounded-full bg-ink/10 animate-pulse" />
+        <div className="h-9 w-20 rounded-full bg-ink/10 animate-pulse" />
+      </div>
+      <div className="mt-4 mx-6 rounded-3xl aspect-[4/5] bg-ink/[0.06] animate-pulse" />
+      <div className="mt-4 px-6 grid grid-cols-2 gap-3">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-[92px] rounded-2xl bg-ink/[0.06] animate-pulse" />
+        ))}
+      </div>
+      <div className="mt-8 px-6">
+        <div className="h-6 w-32 rounded-full bg-ink/10 animate-pulse" />
+      </div>
+      <div className="mt-4 flex gap-3 px-6">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="size-[112px] shrink-0 rounded-2xl bg-ink/[0.06] animate-pulse" />
+        ))}
+      </div>
+      <div className="mt-8 mx-6 h-52 rounded-3xl bg-ink/[0.06] animate-pulse" />
+    </div>
+  );
+}
