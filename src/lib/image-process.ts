@@ -68,16 +68,21 @@ export async function fileToScanJpeg(file: File): Promise<string> {
   return canvasToScanJpeg(canvas);
 }
 
-/** a live camera frame turned into a compliant jpeg data url, true orientation */
+/**
+ * a live camera frame turned into a compliant jpeg data url. we draw only the
+ * region the 3:4 preview is actually showing (same cover crop, same zoom), so
+ * the saved photo is identical to what was framed on screen.
+ */
 export async function videoToScanJpeg(video: HTMLVideoElement): Promise<string | null> {
   const w = video.videoWidth;
   const h = video.videoHeight;
   if (!w || !h) return null;
-  const canvas = canvasFor(w, h);
+  const crop = coverCrop(w, h);
+  const canvas = canvasFor(crop.w, crop.h);
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   // the preview is mirrored in css only, so the source frame is already the
-  // true orientation. draw it straight through.
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // true orientation. draw the cropped region straight through.
+  ctx.drawImage(video, crop.x, crop.y, crop.w, crop.h, 0, 0, canvas.width, canvas.height);
   return canvasToScanJpeg(canvas);
 }
