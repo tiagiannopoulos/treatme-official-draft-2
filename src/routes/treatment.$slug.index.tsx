@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, Clock, Lock, Minus, Plus, Star } from "lucide-react";
 
+import { ClinicsOffering } from "@/components/treatme/ClinicsOffering";
 import { ProviderCard } from "@/components/treatme/ProviderCard";
 import { treatmentDetailQuery, type TreatmentDetail } from "@/lib/treatment-detail";
 import { directoryQuery, distanceKm, TORONTO_CENTROID } from "@/lib/search-data";
@@ -239,6 +240,10 @@ function TreatmentDetailPage() {
           </div>
         </section>
       )}
+
+      <div className="px-4">
+        <ClinicsOffering slug={t.slug} limit={6} />
+      </div>
 
       {/* faqs */}
       {t.faqs.length > 0 && (

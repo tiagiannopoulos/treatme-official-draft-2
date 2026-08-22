@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
 
 import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
+import { ClinicsOffering } from "@/components/treatme/ClinicsOffering";
 import { ProviderCard } from "@/components/treatme/ProviderCard";
 import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { directoryQuery, distanceKm, TORONTO_CENTROID } from "@/lib/search-data";
@@ -136,6 +137,8 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
                 )}
               </div>
             </section>
+
+            <ClinicsOffering slug={treatment.slug} />
 
             <button
               type="button"
