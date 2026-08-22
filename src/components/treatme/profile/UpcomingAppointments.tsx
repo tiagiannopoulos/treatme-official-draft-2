@@ -204,10 +204,14 @@ export function UpcomingAppointments() {
                   <MapPin className="size-3.5" strokeWidth={1.6} />
                   <span>{b.providerName.toLowerCase()}</span>
                   <span>at</span>
-                  <Link to="/storefront/$id" params={{ id: b.storefrontId }} className="underline decoration-transparent">
-                    {b.storefrontName.toLowerCase()}
-                    {b.neighbourhood ? ` · ${b.neighbourhood.toLowerCase()}` : ""}
-                  </Link>
+                  {b.storefrontId ? (
+                    <Link to="/storefront/$id" params={{ id: b.storefrontId }} className="underline decoration-transparent">
+                      {b.storefrontName.toLowerCase()}
+                      {b.neighbourhood ? ` · ${b.neighbourhood.toLowerCase()}` : ""}
+                    </Link>
+                  ) : (
+                    <span>{b.storefrontName.toLowerCase()}</span>
+                  )}
                 </p>
                 {b.slots.length > 0 && (
                   <p className="mt-2 text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.50)" }}>
