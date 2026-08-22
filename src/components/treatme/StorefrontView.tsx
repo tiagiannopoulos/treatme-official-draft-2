@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Clock,
   Copy,
-  Droplet,
   Globe,
   Info,
   MapPin,
@@ -196,7 +195,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   );
 
   const skinMatches = providersForSkinType(roster, patient.profile);
-  const hasSkinType = fitzNumber(patient.profile.skinType) !== null;
   const skinFitz = fitzNumber(patient.profile.skinType);
 
   const shownRoster = filterSlug
