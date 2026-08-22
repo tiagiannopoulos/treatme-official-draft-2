@@ -340,54 +340,67 @@ function CapturePage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-ink">
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-ink">
       {picker}
-      {still ? (
-        <img src={still} alt="your scan photo" className="absolute inset-0 size-full object-cover" />
-      ) : (
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          autoPlay
-          disablePictureInPicture
-          className={cn(
-            "absolute inset-0 size-full object-cover",
-            facing === "user" && "scale-x-[-1]",
-          )}
-        />
-      )}
+
+      {/* the stream, this box and the capture canvas all share one 3:4 shape */}
+      <div
+        className="relative w-full max-w-[460px] overflow-hidden bg-ink"
+        style={{ aspectRatio: "3 / 4" }}
+      >
+        {still ? (
+          <img src={still} alt="your scan photo" className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            autoPlay
+            disablePictureInPicture
+            className="absolute inset-0 size-full object-cover"
+            style={{
+              // same zoom factor the capture crop uses, so preview and photo match
+              transform: `scale(${facing === "user" ? -CAPTURE_ZOOM : CAPTURE_ZOOM}, ${CAPTURE_ZOOM})`,
+            }}
+          />
+        )}
+
+        {!still && (
+          <>
+            <svg
+              viewBox="0 0 300 400"
+              className="absolute inset-0 size-full"
+              aria-hidden="true"
+            >
+              <ellipse
+                cx="150"
+                cy="188"
+                rx="104"
+                ry="140"
+                fill="none"
+                stroke="#FCFBF7"
+                strokeWidth="2"
+                strokeDasharray="9 9"
+                opacity="0.6"
+              />
+            </svg>
+
+            <div className="absolute inset-x-0 top-3 flex justify-center gap-2 px-3">
+              <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
+              <Chip label={CHIP_COPY.position[position]} state={position} />
+              <Chip label={CHIP_COPY.still[steady]} state={steady} />
+            </div>
+
+            <p className="absolute inset-x-0 bottom-4 text-center text-[13px] font-semibold lowercase text-cream/80">
+              fill the oval, face the light
+            </p>
+          </>
+        )}
+      </div>
 
       {!still && (
         <>
-          <svg
-            viewBox="0 0 100 125"
-            preserveAspectRatio="xMidYMid slice"
-            className="absolute inset-0 size-full"
-            aria-hidden="true"
-          >
-            <ellipse
-              cx="50"
-              cy="56"
-              rx="30"
-              ry="41"
-              fill="none"
-              stroke="#FCFBF7"
-              strokeWidth="0.8"
-              strokeDasharray="3 3"
-              opacity="0.6"
-            />
-          </svg>
 
-          <div className="absolute top-3 inset-x-0 flex justify-center gap-2 px-3">
-            <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
-            <Chip label={CHIP_COPY.position[position]} state={position} />
-            <Chip label={CHIP_COPY.still[steady]} state={steady} />
-          </div>
-
-          <p className="absolute inset-x-0 bottom-44 text-center text-[13px] font-semibold lowercase text-cream/80">
-            fill the oval, face the light
-          </p>
 
           <div className="absolute inset-x-0 bottom-20 flex items-center justify-center gap-8 p-6">
             <button
