@@ -32,6 +32,7 @@ import {
 } from "@/lib/search-data";
 import { googleRatingQuery, noDash, storefrontMediaQuery } from "@/lib/storefront-detail";
 import { storefrontTreatmentsQuery, type ListedTreatment } from "@/lib/storefront-treatments";
+import { StorefrontOffers, type OfferRow } from "@/components/treatme/StorefrontOffers";
 import {
   accentOf,
   accentTint,
@@ -97,15 +98,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
     ...storefrontTreatmentsQuery(storefront?.id ?? ""),
     enabled: Boolean(storefront?.id),
   });
-
-  interface OfferRow {
-    slug: string;
-    name: string;
-    family: string;
-    from: number | null;
-    /** null when a person here offers it or the clinic verified it, a url when it came from their website. */
-    listedOnSiteUrl: string | null;
-  }
 
   const treatments = useMemo(() => {
     const bySlug = new Map<string, OfferRow>();
@@ -461,6 +453,9 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
         </section>
       )}
 
+      {/* what they offer, directly under the roster */}
+      <StorefrontOffers rows={treatments} onOpen={openTreatment} />
+
       {/* section 5, what they have on site */}
       {pillGroups.length > 0 && (
         <section className="px-5 pt-8">
@@ -512,65 +507,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
               </button>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* section 7, treatments and prices */}
-      {treatments.length > 0 && (
-        <section className="px-5 pt-8">
-          <h2 className="text-[20px] font-medium lowercase tracking-[-0.02em]">what they offer</h2>
-          {families.map(([family, list]) => (
-            <div key={family} className="mt-4">
-              <p className="text-[12px] lowercase text-ink/55">{noDash(family)}</p>
-              <ul className="mt-1.5 overflow-hidden rounded-[16px] border border-line">
-                {list.map((t, i) => (
-                  <li key={t.slug} style={{ borderTop: i === 0 ? "none" : "1px solid rgba(17,17,17,0.08)" }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFilterSlug(t.slug);
-                        scrollToRoster();
-                      }}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left"
-                    >
-                      <span className="min-w-0 flex-1 text-[14px] lowercase">
-                        <span className="block truncate">{noDash(t.name)}</span>
-                        {t.listedOnSiteUrl && (
-                          <span className="mt-0.5 block text-[11px] lowercase text-ink/50">
-                            listed on their website
-                          </span>
-                        )}
-                      </span>
-                      {t.from !== null && (
-                        <span className="shrink-0 text-[13px] lowercase text-ink/70">
-                          from ${Math.round(t.from)}
-                        </span>
-                      )}
-                      <ChevronRight className="size-4 shrink-0 text-ink/30" />
-                    </button>
-                    {t.listedOnSiteUrl && (
-                      <a
-                        href={t.listedOnSiteUrl}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="block px-4 pb-3 text-[11px] lowercase text-ink/45 underline"
-                      >
-                        see the page it came from
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-
-          <button
-            type="button"
-            onClick={() => openTreatment(treatments[0]!.slug)}
-            className="mt-3 text-[12px] lowercase text-ink/50 underline"
-          >
-            what these treatments do
-          </button>
         </section>
       )}
 
