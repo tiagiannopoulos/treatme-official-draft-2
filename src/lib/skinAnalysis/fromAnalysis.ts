@@ -1,5 +1,5 @@
 import type { SkinAnalysis } from "@/lib/skin-analysis";
-import { CONCERN_KEYS, type ConcernKey, type ConcernResult, type ScanResult } from "./types";
+import { CONCERN_KEYS, type ConcernKey, type ConcernResult, type MarkedRegion, type ScanResult } from "./types";
 
 /** marker scores are higher = better; engine concern scores are higher = worse */
 const sev = (v: number) => Math.max(0, Math.min(100, Math.round(100 - v)));
@@ -29,11 +29,31 @@ export function resultFromAnalysis(analysis: SkinAnalysis, scanId: string): Scan
     symmetry: sev(m.symmetry.score),
   };
 
+  // which marker's coordinates describe each engine concern
+  const markerFor: Record<ConcernKey, keyof typeof m> = {
+    hydration: "hydration",
+    texture: "texture",
+    pores: "pores",
+    dullness: "hydration",
+    fineLines: "fineLines",
+    wrinkles: "wrinkles",
+    pigmentation: "pigmentation",
+    darkSpots: "darkSpots",
+    redness: "redness",
+    acne: "texture",
+    acneScars: "texture",
+    underEyes: "darkSpots",
+    volumeLoss: "volumeLoss",
+    laxity: "volumeLoss",
+    symmetry: "symmetry",
+  };
+
   const concerns: ConcernResult[] = CONCERN_KEYS.map((key) => ({
     key,
     score: severity[key],
     confidence: 0.9,
     assessable: true,
+    regions: ((m[markerFor[key]].regions ?? []) as MarkedRegion[]).slice(0, 40),
   }));
 
   return {

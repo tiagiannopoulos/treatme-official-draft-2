@@ -1133,6 +1133,7 @@ export type Database = {
           id: string
           notes: string | null
           region_scores: Json | null
+          regions: Json
           scan_id: string
           score: number
           sub_scores: Json | null
@@ -1143,6 +1144,7 @@ export type Database = {
           id?: string
           notes?: string | null
           region_scores?: Json | null
+          regions?: Json
           scan_id: string
           score: number
           sub_scores?: Json | null
@@ -1153,6 +1155,7 @@ export type Database = {
           id?: string
           notes?: string | null
           region_scores?: Json | null
+          regions?: Json
           scan_id?: string
           score?: number
           sub_scores?: Json | null

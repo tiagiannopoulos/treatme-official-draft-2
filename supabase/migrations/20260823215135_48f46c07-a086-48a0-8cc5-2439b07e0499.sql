@@ -1,0 +1,1 @@
+ALTER TABLE public.scan_results ADD COLUMN IF NOT EXISTS regions jsonb NOT NULL DEFAULT '[]'::jsonb;

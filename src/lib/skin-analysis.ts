@@ -59,10 +59,26 @@ export const ZONE_POINTS: Record<FaceZone, { x: number; y: number }> = {
   jawline: { x: 0.5, y: 0.78 },
 };
 
+/**
+ * one marked place on the photo, in normalised image coordinates.
+ * 0,0 is the top left of the image as supplied, 1,1 the bottom right.
+ * r is a radius as a fraction of image width. intensity is 0..1.
+ */
+export const RegionSchema = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  r: z.number().min(0).max(1),
+  intensity: z.number().min(0).max(1),
+});
+
+export type MarkerRegion = z.infer<typeof RegionSchema>;
+
 export const MarkerSchema = z.object({
   score: z.number().min(0).max(100),
   note: z.string().max(160),
   zones: z.array(z.enum(FACE_ZONES)).min(0).max(6),
+  /** empty when there is nothing visible to mark. older scans have no regions. */
+  regions: z.array(RegionSchema).max(40).default([]),
 });
 
 export const AnalysisSchema = z.object({

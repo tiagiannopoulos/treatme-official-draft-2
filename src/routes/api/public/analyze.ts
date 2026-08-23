@@ -40,6 +40,10 @@ rules:
 - "zones" lists the 1–4 face regions where this concern is most visible, drawn from this fixed list: ${FACE_ZONES.join(
   ", ",
 )}. empty array if the concern isn't notable.
+- "regions" marks where on the photo you can actually see this concern. each region is { x, y, r, intensity }:
+  x and y are the centre as a fraction of image width and height, r is the radius as a fraction of image width, intensity is 0 to 1 for how pronounced that spot is.
+  coordinates are relative to the image exactly as supplied, with 0,0 at the top left and 1,1 at the bottom right.
+  return between 0 and 40 regions per marker. only mark places you can actually see the thing. never distribute markers evenly to look thorough, and never invent positions: return an empty array when there is nothing to mark.
 - fitzpatrick: classify I–VI honestly.
 - skinAge: integer estimate.
 - blurb: ~3 short sentences. brand-voice. lead with the headline finding.
@@ -55,7 +59,7 @@ required keys:
 - skinType: one of oily, dry, combination, normal, sensitive
 - fitzpatrick: one of I, II, III, IV, V, VI
 - skinAge: integer
-- markers: object with keys ${MARKER_KEYS.join(", ")} and for each key: { score: 0-100, note: short string, zones: array of ${FACE_ZONES.join(", ")} }
+- markers: object with keys ${MARKER_KEYS.join(", ")} and for each key: { score: 0-100, note: short string, zones: array of ${FACE_ZONES.join(", ")}, regions: array of 0-40 objects { x, y, r, intensity } where x,y are the centre as fractions of image width and height with 0,0 top left and 1,1 bottom right, r is a radius as a fraction of image width, intensity is 0-1. empty array when nothing is visible to mark }
 - blurb: 2-3 short sentences
 - strengths: array of 2-4 short phrases
 - weaknesses: array of 2-4 short phrases
@@ -116,12 +120,34 @@ function normalizeZones(value: unknown): FaceZone[] {
     .slice(0, 6);
 }
 
+/** coordinates from a vision model are approximate, so we only clamp them into range. */
+function normalizeRegions(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  const out: Array<{ x: number; y: number; r: number; intensity: number }> = [];
+  for (const item of value) {
+    const record = asRecord(item);
+    if (!record) continue;
+    const x = Number(record.x);
+    const y = Number(record.y);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    out.push({
+      x: Math.min(1, Math.max(0, x)),
+      y: Math.min(1, Math.max(0, y)),
+      r: toNumberValue(record.r, 0.05, 0.005, 0.4),
+      intensity: toNumberValue(record.intensity, 0.6, 0, 1),
+    });
+    if (out.length === 40) break;
+  }
+  return out;
+}
+
 function normalizeMarker(key: string, value: unknown) {
   const record = asRecord(value);
   return {
     score: Math.round(toNumberValue(record?.score, 62, 0, 100)),
     note: toStringValue(record?.note, `${key} looks fairly balanced in this photo.`).slice(0, 160),
     zones: normalizeZones(record?.zones),
+    regions: normalizeRegions(record?.regions),
   };
 }
 

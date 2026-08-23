@@ -2,7 +2,7 @@
 // scores here are health scores: 0 = needs the most work, 100 = great.
 
 import type { ScanResult } from "@/lib/skinAnalysis";
-import type { ConcernKey as EngineKey } from "@/lib/skinAnalysis";
+import type { ConcernKey as EngineKey, MarkedRegion } from "@/lib/skinAnalysis";
 
 export const CONCERN_GROUPS = [
   {
@@ -80,6 +80,41 @@ export interface ScanConcernRow {
   sub_scores: Record<string, number> | null;
   /** per-region health score, keyed by the region keys in CONCERN_REGIONS */
   region_scores: Record<string, number> | null;
+  /** marked places on the patient photo. empty when the read found nothing to mark. */
+  regions: MarkedRegion[];
+}
+
+/** which engine concerns carry the photo coordinates for each indicator */
+const REGION_SOURCES: Record<string, EngineKey[]> = {
+  pores: ["pores"],
+  breakouts: ["acne"],
+  texture: ["texture"],
+  oiliness: ["pores"],
+  redness: ["redness"],
+  pigmentation: ["pigmentation"],
+  uniformness: ["darkSpots", "pigmentation"],
+  radiance: ["dullness"],
+  lines: ["fineLines", "wrinkles"],
+  firmness: ["laxity"],
+  volume_loss: ["volumeLoss"],
+  hydration: ["hydration"],
+  dark_circles: ["underEyes"],
+  under_eye_puffiness: ["underEyes"],
+  tear_trough: ["underEyes"],
+  eyelid_heaviness: ["laxity"],
+};
+
+/** dedupes near identical spots so a merged indicator does not double up markers */
+function mergeRegions(lists: MarkedRegion[][]): MarkedRegion[] {
+  const out: MarkedRegion[] = [];
+  for (const list of lists) {
+    for (const r of list) {
+      if (out.some((o) => Math.abs(o.x - r.x) < 0.02 && Math.abs(o.y - r.y) < 0.02)) continue;
+      out.push(r);
+      if (out.length === 40) return out;
+    }
+  }
+  return out;
 }
 
 /**
@@ -149,6 +184,13 @@ export function toConcernRows(result: ScanResult): ScanConcernRow[] {
     eyelid_heaviness: { upper_lid: raw.eyelid_heaviness },
   };
 
+  const regionsFor = (key: string): MarkedRegion[] =>
+    mergeRegions(
+      (REGION_SOURCES[key] ?? []).map(
+        (engineKey) => result.concerns.find((c) => c.key === engineKey)?.regions ?? [],
+      ),
+    );
+
   return SCAN_CONCERN_KEYS.map((key) => ({
     concern_key: key,
     score: raw[key] ?? 0,
@@ -158,6 +200,7 @@ export function toConcernRows(result: ScanResult): ScanConcernRow[] {
         ? { fine: health(sev("fineLines")), deep: health(sev("wrinkles")) }
         : null,
     region_scores: regions[key] ?? null,
+    regions: regionsFor(key),
   }));
 }
 

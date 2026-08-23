@@ -15,6 +15,7 @@ import { fetchSavedScan } from "@/lib/scan-history";
 import { getRecommendations } from "@/lib/recommendations";
 import { topConcerns } from "@/lib/skinAnalysis";
 import { FaceMap } from "@/components/treatme/FaceMap";
+import { MarkerOverlay, hasMarkers } from "@/components/treatme/MarkerOverlay";
 import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
 
 
@@ -213,14 +214,29 @@ function ResultsPage() {
                   onClick={() => navigate({ to: "/scan/concern/$key", params: { key: ind?.slug ?? row.concern_key } })}
                   className="text-left shrink-0 w-[112px]"
                 >
-                  <FaceMap
-                    compact
-                    overlayKind={ind?.overlayKind ?? "patches_soft"}
-                    accent={ind?.accent ?? "#F8A1C6"}
-                    region={ind?.region ?? "full_face"}
-                    score={row.score}
-                    className="w-[112px] rounded-2xl border border-ink/10"
-                  />
+                  {hasMarkers(row.regions) && photoSource.url ? (
+                    <ScanPhoto
+                      source={photoSource}
+                      alt={`your photo with ${ind?.name ?? row.concern_key} marked`}
+                      className="w-[112px] aspect-square rounded-2xl border border-ink/10"
+                    >
+                      <MarkerOverlay
+                        regions={row.regions}
+                        accent={ind?.accent ?? "#F8A1C6"}
+                        overlayKind={ind?.overlayKind ?? "patches_soft"}
+                        limit={10}
+                      />
+                    </ScanPhoto>
+                  ) : (
+                    <FaceMap
+                      compact
+                      overlayKind={ind?.overlayKind ?? "patches_soft"}
+                      accent={ind?.accent ?? "#F8A1C6"}
+                      region={ind?.region ?? "full_face"}
+                      score={row.score}
+                      className="w-[112px] rounded-2xl border border-ink/10"
+                    />
+                  )}
                   <p className="mt-2 text-[13px] font-semibold lowercase leading-tight">
                     {ind?.name ?? SCAN_CONCERN_LABEL[row.concern_key]}
                   </p>

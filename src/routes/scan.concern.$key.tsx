@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { SCAN_CONCERN_LABEL, toConcernRows } from "@/lib/scan-concerns";
 import { findIndicator, indicatorKey, skinIndicatorsQuery } from "@/lib/skin-indicators";
 import { FaceMap } from "@/components/treatme/FaceMap";
+import { MarkerOverlay, hasMarkers } from "@/components/treatme/MarkerOverlay";
+import { ScanPhoto } from "@/components/treatme/ScanPhoto";
+import { useScanPhotoSource } from "@/lib/scan-photo";
 import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 import { AnalysisFooter } from "@/components/treatme/AnalysisFooter";
 import { PillButton } from "@/components/treatme/PillButton";
@@ -45,6 +48,7 @@ function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
   const { result } = useScan();
+  const photoSource = useScanPhotoSource();
   const { openTreatment } = useTreatmentSheet();
 
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
@@ -116,15 +120,29 @@ function ConcernDetailPage() {
         </p>
       </div>
 
-      {/* the face map, not the patient photo */}
+      {/* your own photo with this indicator marked. the diagram is the fallback. */}
       <div className="mt-4 mx-6">
-        <FaceMap
-          overlayKind={indicator?.overlayKind ?? "patches_soft"}
-          accent={accent}
-          region={indicator?.region ?? "full_face"}
-          score={score}
-          className="w-full rounded-2xl"
-        />
+        {hasMarkers(row.regions) && photoSource.url ? (
+          <ScanPhoto
+            source={photoSource}
+            alt={`your photo with ${label} marked`}
+            className="w-full aspect-[4/5] rounded-2xl border border-ink/10"
+          >
+            <MarkerOverlay
+              regions={row.regions}
+              accent={accent}
+              overlayKind={indicator?.overlayKind ?? "patches_soft"}
+            />
+          </ScanPhoto>
+        ) : (
+          <FaceMap
+            overlayKind={indicator?.overlayKind ?? "patches_soft"}
+            accent={accent}
+            region={indicator?.region ?? "full_face"}
+            score={score}
+            className="w-full rounded-2xl"
+          />
+        )}
         <div className="mt-3 h-1.5 rounded-full bg-ink/10 overflow-hidden">
           <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: accent }} />
         </div>

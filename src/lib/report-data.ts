@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CONCERN_ABOUT } from "@/lib/concern-copy";
+import type { MarkedRegion } from "@/lib/skinAnalysis";
 import {
   CONCERN_GROUPS,
   SCAN_CONCERN_LABEL,
@@ -34,6 +35,11 @@ export interface ReportIndicator {
   treatments: ReportTreatment[];
   /** data url or signed url of the cropped region tile, when photos are on */
   photoUrl: string | null;
+  /** marked places on the photo, normalised 0..1. empty means draw the fallback tile. */
+  regions: MarkedRegion[];
+  /** accent + draw style, so the pdf overlay matches the app */
+  accent: string;
+  overlayKind: string;
 }
 
 export interface ReportGroup {
@@ -152,6 +158,13 @@ export async function buildReportData(input: {
   const rows = toConcernRows(input.result);
   const overall = overallScore(rows);
 
+  const { data: indicatorRows } = await supabase
+    .from("skin_indicators")
+    .select("slug, accent, overlay_kind");
+  const styleFor = new Map(
+    (indicatorRows ?? []).map((i) => [i.slug.replace(/-/g, "_"), { accent: i.accent, kind: i.overlay_kind }]),
+  );
+
   const { data } = await supabase
     .from("treatments")
     .select("slug, name, price_from, downtime, downtime_days, improves");
@@ -182,6 +195,9 @@ export async function buildReportData(input: {
     blurb: CONCERN_ABOUT[row.concern_key] ?? "",
     treatments: row.score >= 80 ? [] : matchFor(row.concern_key),
     photoUrl: input.photoTiles?.[row.concern_key] ?? null,
+    regions: row.regions ?? [],
+    accent: styleFor.get(row.concern_key)?.accent ?? "#F8A1C6",
+    overlayKind: styleFor.get(row.concern_key)?.kind ?? "patches_soft",
   });
 
   const indicators = rows.map(indicatorFor);
@@ -290,6 +306,9 @@ export function mockReportData(): ReportData {
     blurb: CONCERN_ABOUT[key] ?? "",
     treatments: score >= 80 ? [] : (tx.default ?? []).slice(0, score < 50 ? 3 : 2),
     photoUrl: null,
+    regions: [],
+    accent: "#F8A1C6",
+    overlayKind: "patches_soft",
   }));
 
   const byKey = new Map(indicators.map((i) => [i.key, i]));
