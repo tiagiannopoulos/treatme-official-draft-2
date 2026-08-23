@@ -63,13 +63,19 @@ function RequestPage() {
   const accent = storefront?.brand_accent || "#F8A1C6";
   const clinicName = (storefront?.name ?? "this clinic").toLowerCase();
 
-  const options = useMemo(() => {
+  // only what this clinic offers: their own listing first, their roster otherwise.
+  const options = useMemo<Array<{ slug: string; name: string }>>(() => {
     if (listed.length) return listed.map((l) => ({ slug: l.slug, name: l.name.toLowerCase() }));
-    const fromRoster = new Set(roster.flatMap((p) => p.treatments.map((t) => t.treatment_slug)));
-    return (directory?.treatments ?? [])
-      .filter((t) => fromRoster.has(t.slug))
-      .map((t) => ({ slug: t.slug, name: displayTreatmentName(t.name, t.slug).toLowerCase() }));
-  }, [listed, roster, directory]);
+    const seen = new Map<string, string>();
+    for (const p of roster) {
+      for (const t of p.treatments) {
+        if (!seen.has(t.treatment_slug)) {
+          seen.set(t.treatment_slug, displayTreatmentName(t.name, t.treatment_slug).toLowerCase());
+        }
+      }
+    }
+    return [...seen].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name));
+  }, [listed, roster]);
 
   const [slug, setSlug] = useState(prefill ?? "");
   const [pickerOpen, setPickerOpen] = useState(false);
