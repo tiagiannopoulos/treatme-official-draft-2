@@ -9,7 +9,6 @@ import {
   ArrowRight,
   BadgeCheck,
   ChevronRight,
-
 } from "lucide-react";
 
 import {
@@ -43,8 +42,6 @@ import { cn } from "@/lib/utils";
 
 const FITZ_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
 
-
-
 export const Route = createFileRoute("/search/")({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === "string" ? search.q : undefined,
@@ -55,12 +52,14 @@ export const Route = createFileRoute("/search/")({
       { title: "find a provider · treatme" },
       {
         name: "description",
-        content: "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+        content:
+          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
       },
       { property: "og:title", content: "find a provider · treatme" },
       {
         property: "og:description",
-        content: "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+        content:
+          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -85,11 +84,9 @@ type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
 function SearchPage() {
-
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const patient = usePatient();
-
 
   const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
@@ -144,11 +141,15 @@ function SearchPage() {
       .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
   }, [data.storefronts, location, kmById]);
 
-  const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
+  const inRangeIds = useMemo(
+    () => new Set(storefrontsInRange.map((s) => s.id)),
+    [storefrontsInRange],
+  );
 
   const providerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
+    for (const p of data.providers)
+      for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
     return counts;
   }, [data.providers]);
 
@@ -158,9 +159,6 @@ function SearchPage() {
     [data.storefronts],
   );
 
-
-
-
   const providerResults = useMemo(() => {
     return data.providers
       .map((p) => {
@@ -169,7 +167,7 @@ function SearchPage() {
         const ranked = [...shops].sort(
           (a, b) => (kmById.get(a.id) ?? Infinity) - (kmById.get(b.id) ?? Infinity),
         );
-        const km = ranked.length ? kmById.get(ranked[0].id) ?? null : null;
+        const km = ranked.length ? (kmById.get(ranked[0].id) ?? null) : null;
         return { p, hit, via, shops: ranked, km };
       })
       .filter((r) => r.hit && r.shops.length > 0)
@@ -178,7 +176,7 @@ function SearchPage() {
 
   /** five nearest providers, skin type matches first, for the explore row. */
   const nearbyProviders = useMemo(() => {
-    const fitz = patient.profile.skinType ? FITZ_NUMBER[patient.profile.skinType] ?? null : null;
+    const fitz = patient.profile.skinType ? (FITZ_NUMBER[patient.profile.skinType] ?? null) : null;
     const withMatch = providerResults.map((r) => ({
       ...r,
       matches:
@@ -188,12 +186,8 @@ function SearchPage() {
         fitz >= r.p.fitzpatrick_min &&
         fitz <= r.p.fitzpatrick_max,
     }));
-    return [...withMatch]
-      .sort((a, b) => Number(b.matches) - Number(a.matches))
-      .slice(0, 5);
+    return [...withMatch].sort((a, b) => Number(b.matches) - Number(a.matches)).slice(0, 5);
   }, [providerResults, patient.profile.skinType]);
-
-
 
   // a clinic counts as a match when their own website lists the treatment, even
   // when we have nobody on their roster yet.
@@ -241,13 +235,23 @@ function SearchPage() {
     if (showMedspas) for (const s of medspaResults) ids.add(s.id);
     const picked = data.storefronts.filter((s) => ids.has(s.id));
     return picked.length ? picked : storefrontsInRange;
-  }, [showProviders, showMedspas, providerResults, medspaResults, data.storefronts, storefrontsInRange]);
+  }, [
+    showProviders,
+    showMedspas,
+    providerResults,
+    medspaResults,
+    data.storefronts,
+    storefrontsInRange,
+  ]);
 
   const countLine = (() => {
     const where = ` in ${locLabel}`;
-    if (scope === "providers") return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "medspas") return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "treatments") return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
+    if (scope === "providers")
+      return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
+    if (scope === "medspas")
+      return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
+    if (scope === "treatments")
+      return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
     return `${totalResults} result${totalResults === 1 ? "" : "s"}${where}`;
   })();
 
@@ -309,7 +313,9 @@ function SearchPage() {
         <div className="px-6">
           {/* map stays pinned at the top, pins filtered to the results */}
           <div className="mt-1">
-            <ClientOnly fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}>
+            <ClientOnly
+              fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}
+            >
               <SearchMap
                 storefronts={resultStorefronts}
                 center={center}
@@ -352,13 +358,18 @@ function SearchPage() {
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                     {(scope === "all" ? providerResults.slice(0, 6) : providerResults).map(
                       ({ p, via, shops, km }) => (
-                        <ProviderCardCompact key={p.id} provider={p} via={via} km={km} shops={shops} />
+                        <ProviderCardCompact
+                          key={p.id}
+                          provider={p}
+                          via={via}
+                          km={km}
+                          shops={shops}
+                        />
                       ),
                     )}
                   </div>
                 </section>
               )}
-
 
               {showMedspas && medspaResults.length > 0 && (
                 <section className="mt-6">
@@ -382,7 +393,9 @@ function SearchPage() {
                         key={s.id}
                         storefront={s}
                         km={s.km}
-                        providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                        providers={data.providers.filter((p) =>
+                          p.storefronts.some((x) => x.id === s.id),
+                        )}
                         viaWebsite={s.viaWebsite}
                         active={selected === s.id}
                         onSelect={() => setSelected(s.id)}
@@ -391,7 +404,6 @@ function SearchPage() {
                   </div>
                 </section>
               )}
-
 
               {showTreatments && treatmentResults.length > 0 && (
                 <section className="mt-6">
@@ -410,28 +422,28 @@ function SearchPage() {
                     </div>
                   )}
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(({ t }) => (
-                      <TreatmentCardCompact
-                        key={t.slug}
-                        treatment={t}
-                        providerCount={treatmentProviderCounts[t.slug] ?? 0}
-                        onClick={() => {
-                          setQ(t.name.toLowerCase());
-                          setScope("providers");
-                        }}
-                      />
-                    ))}
+                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(
+                      ({ t }) => (
+                        <TreatmentCardCompact
+                          key={t.slug}
+                          treatment={t}
+                          providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                          onClick={() => {
+                            setQ(t.name.toLowerCase());
+                            setScope("providers");
+                          }}
+                        />
+                      ),
+                    )}
                   </div>
                 </section>
               )}
-
 
               {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
             </>
           )}
         </div>
       ) : (
-
         /* ---------- explore state ---------- */
         <div className="px-6">
           {/* a) map card */}
@@ -456,7 +468,11 @@ function SearchPage() {
           ) : (
             <>
               <div className="mt-2">
-                <ClientOnly fallback={<div className="h-[220px] rounded-[20px] border border-line bg-muted" />}>
+                <ClientOnly
+                  fallback={
+                    <div className="h-[220px] rounded-[20px] border border-line bg-muted" />
+                  }
+                >
                   <SearchMap
                     storefronts={storefrontsInRange}
                     center={center}
@@ -478,7 +494,9 @@ function SearchPage() {
                     onClick={() => setRadius(r)}
                     className={cn(
                       "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                      radius === r ? "border-ink bg-ink text-cream font-semibold" : "border-line text-ink-mute",
+                      radius === r
+                        ? "border-ink bg-ink text-cream font-semibold"
+                        : "border-line text-ink-mute",
                     )}
                   >
                     {r} km
@@ -554,7 +572,9 @@ function SearchPage() {
                   <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
                     <ChevronRight className="size-5 text-ink" />
                   </span>
-                  <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">see all providers</p>
+                  <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">
+                    see all providers
+                  </p>
                   <p className="text-[12px] text-ink/60 lowercase">
                     browse everyone within {radius} km
                   </p>
@@ -562,7 +582,6 @@ function SearchPage() {
               </div>
             </section>
           )}
-
 
           {showMedspas && (
             <section className="mt-6">
@@ -588,7 +607,9 @@ function SearchPage() {
                     key={s.id}
                     storefront={s}
                     km={s.km}
-                    providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                    providers={data.providers.filter((p) =>
+                      p.storefronts.some((x) => x.id === s.id),
+                    )}
                     viaWebsite={s.viaWebsite}
                     active={selected === s.id}
                     onSelect={() => setSelected(s.id)}
@@ -606,17 +627,17 @@ function SearchPage() {
                     <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
                       <ChevronRight className="size-5 text-ink" />
                     </span>
-                    <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">see all medspas</p>
+                    <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">
+                      see all medspas
+                    </p>
                     <p className="text-[12px] text-ink/60 lowercase">
                       browse all {medspaResults.length} within {radius} km
                     </p>
                   </button>
                 )}
               </div>
-
             </section>
           )}
-
 
           {showTreatments && (
             <section className="mt-6">
@@ -637,8 +658,8 @@ function SearchPage() {
             </section>
           )}
 
-
-          {((showProviders && providerResults.length === 0) || (showMedspas && medspaResults.length === 0)) && (
+          {((showProviders && providerResults.length === 0) ||
+            (showMedspas && medspaResults.length === 0)) && (
             <div className="mt-6 rounded-2xl border border-line p-5 text-center">
               <p className="brand-display text-[20px]">nothing within {radius} km.</p>
               <p className="text-[13px] text-ink-mute mt-1 lowercase">
@@ -658,7 +679,6 @@ function SearchPage() {
     </div>
   );
 }
-
 
 /** compact horizontal-rail card for treatments. */
 function TreatmentCardCompact({
@@ -684,7 +704,9 @@ function TreatmentCardCompact({
           {treatment.name.slice(0, 2).toLowerCase()}
         </span>
       )}
-      <p className="mt-2.5 text-[14px] font-semibold lowercase leading-tight truncate">{treatment.name}</p>
+      <p className="mt-2.5 text-[14px] font-semibold lowercase leading-tight truncate">
+        {treatment.name}
+      </p>
       <p className="text-[11px] text-ink-mute lowercase truncate">
         {treatment.descriptor || treatment.category || treatment.family}
       </p>
@@ -722,7 +744,6 @@ function TreatmentCardCompact({
   );
 }
 
-
 function MedspaCard({
   storefront,
   km,
@@ -740,14 +761,10 @@ function MedspaCard({
   active: boolean;
   onSelect: () => void;
 }) {
-
   return (
     <div
       onClick={onSelect}
-      className={cn(
-        "rounded-2xl border p-4 bg-white",
-        active ? "border-hot" : "border-line",
-      )}
+      className={cn("rounded-2xl border p-4 bg-white", active ? "border-hot" : "border-line")}
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="brand-display text-[18px]">{storefront.name}</p>
@@ -775,7 +792,9 @@ function MedspaCard({
           >
             <Avatar name={p.name} url={p.avatar_url} size="size-9" />
             <span className="min-w-0">
-              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">{p.name}</span>
+              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">
+                {p.name}
+              </span>
               <span className="block text-[11px] text-ink-mute lowercase truncate">{p.title}</span>
             </span>
           </Link>
@@ -813,7 +832,6 @@ function MedspaCardCompact({
         active ? "border-hot" : "border-line",
       )}
     >
-
       {storefront.hero_image_url ? (
         <img
           src={storefront.hero_image_url}
@@ -856,7 +874,6 @@ function MedspaCardCompact({
         )}
       </div>
     </Link>
-
   );
 }
 

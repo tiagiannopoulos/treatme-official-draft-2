@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Play } from "lucide-react";
@@ -69,7 +75,8 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
         style={{
           height: full ? "94vh" : "75vh",
           transform: `translateY(${Math.max(dragY, 0)}px)`,
-          transition: startRef.current === null ? "transform 200ms ease, height 200ms ease" : "none",
+          transition:
+            startRef.current === null ? "transform 200ms ease, height 200ms ease" : "none",
         }}
       >
         <div
@@ -94,17 +101,25 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
                 showLabel={false}
               />
               <div className="min-w-0">
-                <h2 className="text-[22px] font-semibold lowercase leading-tight text-ink">{treatment.name}</h2>
-                <p className="mt-0.5 text-[13px] lowercase text-ink/60">{treatment.downtime_label} downtime</p>
+                <h2 className="text-[22px] font-semibold lowercase leading-tight text-ink">
+                  {treatment.name}
+                </h2>
+                <p className="mt-0.5 text-[13px] lowercase text-ink/60">
+                  {treatment.downtime_label} downtime
+                </p>
               </div>
             </div>
 
-            <p className="mt-4 text-[15px] leading-relaxed lowercase text-ink/80">{treatment.blurb}</p>
+            <p className="mt-4 text-[15px] leading-relaxed lowercase text-ink/80">
+              {treatment.blurb}
+            </p>
 
             {treatment.has_story && (
               <button
                 type="button"
-                onClick={() => navigate({ to: "/treatment/$slug/story", params: { slug: treatment.slug } })}
+                onClick={() =>
+                  navigate({ to: "/treatment/$slug/story", params: { slug: treatment.slug } })
+                }
                 className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-pill text-[15px] font-semibold lowercase text-ink"
                 style={{ backgroundColor: "#DFFFF8" }}
               >
@@ -150,7 +165,13 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
 }
 
 /** mounted once at the root so any tab can raise the sheet. */
-export function TreatmentSheetHost({ slug, onClose }: { slug: string | null; onClose: () => void }) {
+export function TreatmentSheetHost({
+  slug,
+  onClose,
+}: {
+  slug: string | null;
+  onClose: () => void;
+}) {
   if (!slug) return null;
   return <TreatmentSheet slug={slug} onClose={onClose} />;
 }

@@ -19,7 +19,7 @@ export function useNearbyKm(radiusKm = 500) {
     return {
       hasLocation: Boolean(location),
       label: location?.label ?? null,
-      kmFor: (id: string): number | null => (location ? map.get(id) ?? null : null),
+      kmFor: (id: string): number | null => (location ? (map.get(id) ?? null) : null),
     };
   }, [data, location]);
 }

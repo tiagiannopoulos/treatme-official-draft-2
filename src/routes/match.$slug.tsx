@@ -71,7 +71,13 @@ function MatchScreen() {
   }
 
   const subline = data
-    ? matchSubline(data.providers.length, concerns[0] ?? null, radiusKm, profile.budget, data.treatmentName)
+    ? matchSubline(
+        data.providers.length,
+        concerns[0] ?? null,
+        radiusKm,
+        profile.budget,
+        data.treatmentName,
+      )
     : "";
 
   return (
@@ -100,9 +106,7 @@ function MatchScreen() {
 
       {/* providers */}
       <section className="mt-7 px-6">
-        <h2 className="brand-display text-[22px] lowercase">
-          providers
-        </h2>
+        <h2 className="brand-display text-[22px] lowercase">providers</h2>
 
         {isLoading ? (
           <p className="mt-3 text-[14px] text-ink-mute lowercase">looking.</p>
@@ -121,9 +125,7 @@ function MatchScreen() {
 
       {/* clinics */}
       <section className="mt-8 px-6">
-        <h2 className="brand-display text-[22px] lowercase">
-          clinics
-        </h2>
+        <h2 className="brand-display text-[22px] lowercase">clinics</h2>
 
         {isLoading ? (
           <p className="mt-3 text-[14px] text-ink-mute lowercase">looking.</p>
@@ -234,7 +236,9 @@ function ClinicCard({ clinic, onBook }: { clinic: MatchClinic; onBook: () => voi
             <BadgeCheck className="size-4" /> verified clinic
           </span>
         ) : (
-          <span className="shrink-0 text-[12px] font-semibold lowercase text-ink-mute">unclaimed</span>
+          <span className="shrink-0 text-[12px] font-semibold lowercase text-ink-mute">
+            unclaimed
+          </span>
         )}
       </div>
 
@@ -243,7 +247,9 @@ function ClinicCard({ clinic, onBook }: { clinic: MatchClinic; onBook: () => voi
           {clinic.neighbourhood}
         </span>
         <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold lowercase">
-          {clinic.distanceKm !== null ? `${formatDistance(clinic.distanceKm)} away` : clinic.neighbourhood}
+          {clinic.distanceKm !== null
+            ? `${formatDistance(clinic.distanceKm)} away`
+            : clinic.neighbourhood}
         </span>
         {clinic.priceFrom !== null && (
           <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold lowercase">

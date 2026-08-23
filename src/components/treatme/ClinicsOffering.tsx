@@ -17,7 +17,9 @@ export function ClinicsOffering({ slug, limit = 4 }: { slug: string; limit?: num
     .map((s) => {
       const offer = s.listed.find((o) => o.slug === slug);
       const roster = (data?.providers ?? []).some(
-        (p) => p.storefronts.some((x) => x.id === s.id) && p.treatments.some((t) => t.treatment_slug === slug),
+        (p) =>
+          p.storefronts.some((x) => x.id === s.id) &&
+          p.treatments.some((t) => t.treatment_slug === slug),
       );
       if (!offer && !roster) return null;
       return {
@@ -66,7 +68,9 @@ export function ClinicsOffering({ slug, limit = 4 }: { slug: string; limit?: num
               )}
             </span>
             {r.from !== null && (
-              <span className="shrink-0 text-[13px] lowercase text-ink/60">from ${Math.round(r.from)}</span>
+              <span className="shrink-0 text-[13px] lowercase text-ink/60">
+                from ${Math.round(r.from)}
+              </span>
             )}
             <ChevronRight className="size-4 shrink-0 text-ink/30" />
           </Link>

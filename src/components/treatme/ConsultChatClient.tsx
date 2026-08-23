@@ -3,7 +3,11 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-import { Conversation, ConversationContent, ConversationScrollButton } from "@/components/ai-elements/conversation";
+import {
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
 import {
   PromptInput,
   PromptInputFooter,
@@ -147,7 +151,10 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem-5.5rem)]" style={{ backgroundColor: "#FFFFFF" }}>
+    <div
+      className="flex flex-col h-[calc(100vh-3.5rem-5.5rem)]"
+      style={{ backgroundColor: "#FFFFFF" }}
+    >
       <div className="px-6 pt-4 pb-2 flex items-center justify-between">
         <Link
           to="/scan/results"
@@ -206,7 +213,11 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
                 </p>
 
                 {message.stage === "summary" && (message.treatmentSlugs?.length ?? 0) > 0 && (
-                  <SummaryCard slugs={message.treatmentSlugs ?? []} concerns={rows.map((r) => SCAN_CONCERN_LABEL[r.concern_key] ?? r.concern_key)} budget={profile.budget} />
+                  <SummaryCard
+                    slugs={message.treatmentSlugs ?? []}
+                    concerns={rows.map((r) => SCAN_CONCERN_LABEL[r.concern_key] ?? r.concern_key)}
+                    budget={profile.budget}
+                  />
                 )}
 
                 {message.stage === "escalate" && index === messages.length - 1 && !ended && (
@@ -221,7 +232,12 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
 
                 {message.stage === "summary" && index === messages.length - 1 && (
                   <div className="flex flex-wrap gap-2">
-                    {["why those?", "what's the downside?", "cheaper option?", "how many sessions?"].map((q) => (
+                    {[
+                      "why those?",
+                      "what's the downside?",
+                      "cheaper option?",
+                      "how many sessions?",
+                    ].map((q) => (
                       <button
                         key={q}
                         type="button"
@@ -243,9 +259,7 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
             </div>
           )}
 
-          {error && (
-            <p className="text-[13px] lowercase text-ink-mute">{error}</p>
-          )}
+          {error && <p className="text-[13px] lowercase text-ink-mute">{error}</p>}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
@@ -298,7 +312,10 @@ function SummaryCard({
   const { data: treatments = [] } = useQuery({
     queryKey: ["consult-summary-treatments", slugs.join(",")],
     queryFn: async () => {
-      const { data } = await supabase.from("treatments").select("slug, name, price_from").in("slug", slugs);
+      const { data } = await supabase
+        .from("treatments")
+        .select("slug, name, price_from")
+        .in("slug", slugs);
       return (data ?? []).map((t) => ({
         slug: t.slug,
         name: displayTreatmentName(t.name, t.slug),
@@ -329,14 +346,19 @@ function SummaryCard({
           .map((slug) => treatments.find((t) => t.slug === slug))
           .filter((t): t is { slug: string; name: string; priceFrom: number | null } => Boolean(t))
           .map((t) => (
-            <div key={t.slug} className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-3 py-3">
+            <div
+              key={t.slug}
+              className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-3 py-3"
+            >
               <div className="min-w-0">
                 <p className="text-[14px] font-semibold lowercase text-ink">{t.name}</p>
                 {t.priceFrom !== null && (
                   <p className="text-[12px] lowercase text-ink-mute">from ${t.priceFrom}</p>
                 )}
               </div>
-              <PillButton onClick={() => navigate({ to: "/book/consult", search: { treatmentSlug: t.slug } })}>
+              <PillButton
+                onClick={() => navigate({ to: "/book/consult", search: { treatmentSlug: t.slug } })}
+              >
                 book consult
               </PillButton>
             </div>
@@ -348,9 +370,14 @@ function SummaryCard({
           <p className="brand-eyebrow mt-5">who i'd send you to</p>
           <div className="mt-3 space-y-2">
             {providers.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-3 py-3">
+              <div
+                key={p.id}
+                className="flex items-center justify-between gap-3 rounded-2xl bg-cream px-3 py-3"
+              >
                 <div className="min-w-0">
-                  <p className="text-[14px] font-semibold lowercase leading-snug text-ink break-words">{p.name}</p>
+                  <p className="text-[14px] font-semibold lowercase leading-snug text-ink break-words">
+                    {p.name}
+                  </p>
                   <p className="text-[12px] lowercase leading-snug text-ink-mute break-words">
                     {p.clinicName}, {p.neighbourhood}
                   </p>
@@ -359,7 +386,11 @@ function SummaryCard({
                   onClick={() =>
                     navigate({
                       to: "/book/consult",
-                      search: { treatmentSlug: slugs[0], providerId: p.id, storefrontId: p.clinicId },
+                      search: {
+                        treatmentSlug: slugs[0],
+                        providerId: p.id,
+                        storefrontId: p.clinicId,
+                      },
                     })
                   }
                 >

@@ -117,7 +117,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
     return [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [roster, listed]);
 
-
   const families = useMemo(() => {
     const groups = new Map<string, typeof treatments>();
     for (const t of treatments) {
@@ -146,7 +145,9 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   const accent = accentOf(storefront);
   const onAccent = textOnAccent(accent);
   const claimed = storefront.claimed;
-  const area = storefront.neighbourhood ? noDash(storefront.neighbourhood) : neighbourhood(storefront);
+  const area = storefront.neighbourhood
+    ? noDash(storefront.neighbourhood)
+    : neighbourhood(storefront);
   const name = noDash(storefront.name);
 
   const line = storefront.address_line.trim().replace(/,\s*$/, "");
@@ -356,7 +357,6 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
             treatme ratings come only from verified visits booked through treatme
           </p>
 
-
           {booked > 10 && (
             <InfoRow icon={Users} label={`${booked} people booked here this month`} />
           )}
@@ -408,10 +408,10 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
 
           {filterSlug && treatments.find((t) => t.slug === filterSlug)?.listedOnSiteUrl && (
             <p className="mt-2 text-[12px] lowercase leading-relaxed text-ink/55">
-              this treatment is listed on their website, the clinic has not confirmed it with us yet.
+              this treatment is listed on their website, the clinic has not confirmed it with us
+              yet.
             </p>
           )}
-
 
           <div className="mt-3 space-y-3">
             {sortedRoster.map((p) => (
@@ -473,7 +473,12 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
           <h2 className="px-5 text-[20px] font-medium lowercase tracking-[-0.02em]">the space</h2>
           <div className="mt-3 flex gap-2.5 overflow-x-auto px-5 no-scrollbar">
             {photos.map((ph) => (
-              <button key={ph.id} type="button" onClick={() => setLightbox(ph.url)} className="shrink-0">
+              <button
+                key={ph.id}
+                type="button"
+                onClick={() => setLightbox(ph.url)}
+                className="shrink-0"
+              >
                 <img
                   src={ph.url}
                   alt={ph.caption ? noDash(ph.caption) : `inside ${name}`}
@@ -495,7 +500,8 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       <section className="px-5 pt-8">
         <h2 className="text-[20px] font-medium lowercase tracking-[-0.02em]">book here</h2>
         <p className="mt-1.5 text-[13.5px] lowercase leading-relaxed text-ink/60">
-          tell us when suits you and we will arrange it with the clinic. you will hear back within one business day.
+          tell us when suits you and we will arrange it with the clinic. you will hear back within
+          one business day.
         </p>
         <Link
           to="/storefront/$id/request"
@@ -577,7 +583,11 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
           className="fixed inset-0 z-[300] grid place-items-center bg-ink/95 px-4"
           onClick={() => setLightbox(null)}
         >
-          <img src={lightbox} alt={`inside ${name}`} className="max-h-[86vh] w-full object-contain" />
+          <img
+            src={lightbox}
+            alt={`inside ${name}`}
+            className="max-h-[86vh] w-full object-contain"
+          />
           <button
             type="button"
             aria-label="close"
@@ -640,8 +650,14 @@ function Expandable({
       >
         <Icon className="size-[18px] shrink-0 text-ink/70" aria-hidden />
         <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-medium lowercase leading-snug text-ink">{label}</span>
-          {sub && <span className="mt-0.5 block text-[12px] lowercase leading-snug text-ink/55">{sub}</span>}
+          <span className="block text-[14px] font-medium lowercase leading-snug text-ink">
+            {label}
+          </span>
+          {sub && (
+            <span className="mt-0.5 block text-[12px] lowercase leading-snug text-ink/55">
+              {sub}
+            </span>
+          )}
         </span>
         <ChevronDown
           className={`size-4 shrink-0 text-ink/40 transition-transform ${open ? "rotate-180" : ""}`}

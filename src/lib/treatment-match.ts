@@ -159,17 +159,21 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
   const budgetCeiling = input.budget ? BUDGET_CEILING[input.budget] : Number.POSITIVE_INFINITY;
   const concerns = input.concerns.map((c) => c.toLowerCase());
 
-  const scored = ((pRes.data ?? []) as Array<{
-    id: string;
-    name: string;
-    title: string | null;
-    specialties: string[] | null;
-    treats: string[] | null;
-    avatar_url: string | null;
-    verified: boolean;
-  }>).map((p) => {
+  const scored = (
+    (pRes.data ?? []) as Array<{
+      id: string;
+      name: string;
+      title: string | null;
+      specialties: string[] | null;
+      treats: string[] | null;
+      avatar_url: string | null;
+      verified: boolean;
+    }>
+  ).map((p) => {
     const treats = [...(p.treats ?? []), ...(p.specialties ?? [])].map((v) => v.toLowerCase());
-    const matchedConcerns = concerns.filter((c) => treats.some((t) => t.includes(c) || c.includes(t)));
+    const matchedConcerns = concerns.filter((c) =>
+      treats.some((t) => t.includes(c) || c.includes(t)),
+    );
     const overlap = matchedConcerns.reduce((sum, c) => sum + concernWeight(concerns.indexOf(c)), 0);
 
     const links = (linkRes.data ?? []).filter((l) => l.provider_id === p.id);
@@ -177,7 +181,9 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     for (const l of links) {
       const shop = shops.get(l.storefront_id);
       if (!shop) continue;
-      const km = input.center ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng }) : Number.POSITIVE_INFINITY;
+      const km = input.center
+        ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng })
+        : Number.POSITIVE_INFINITY;
       if (!best || km < best.km || (km === best.km && l.is_primary)) best = { shop, km };
     }
 
@@ -185,7 +191,10 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     const inBudget = price === null ? true : price <= budgetCeiling;
     const agg = reviewsByProvider.get(p.id) ?? { count: 0, sum: 0 };
     const verifiedReviews = agg.count;
-    const rating = verifiedReviews >= MIN_REVIEWS_FOR_RATING ? Number((agg.sum / verifiedReviews).toFixed(1)) : null;
+    const rating =
+      verifiedReviews >= MIN_REVIEWS_FOR_RATING
+        ? Number((agg.sum / verifiedReviews).toFixed(1))
+        : null;
 
     const km = best?.km ?? Number.POSITIVE_INFINITY;
     const nearScore = Number.isFinite(km) ? Math.max(0, input.radiusKm * 2 - km) : 0;
@@ -235,7 +244,9 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     if (!shop) continue;
     const price = priceByProvider.get(l.provider_id) ?? treatmentPriceFrom;
     const existing = clinicRank.get(shop.id);
-    const km = input.center ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng }) : Number.POSITIVE_INFINITY;
+    const km = input.center
+      ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng })
+      : Number.POSITIVE_INFINITY;
     if (!existing) {
       clinicRank.set(shop.id, { shop, price, km });
     } else if (price !== null && (existing.price === null || price < existing.price)) {
@@ -275,7 +286,10 @@ export function matchSubline(
 ): string {
   const count = COUNT_WORDS[providerCount] ?? String(providerCount);
   const who = topConcern ? `who treat ${topConcern}` : `who do ${treatmentName}`;
-  const bits = [`${count} provider${providerCount === 1 ? "" : "s"} ${who}`, `within ${radiusKm}km`];
+  const bits = [
+    `${count} provider${providerCount === 1 ? "" : "s"} ${who}`,
+    `within ${radiusKm}km`,
+  ];
   if (budget) bits.push("in your budget");
   return `${bits.join(", ")}.`;
 }
