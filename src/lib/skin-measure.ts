@@ -627,43 +627,58 @@ function readDarkCircles(field: Field, map: FaceMap): MeasuredIndicator {
 
 /* ---------- layer 3, geometry only ---------- */
 
-/** mirror every landmark across the midline and measure the displacement */
+/**
+ * mirror the landmarks across the midline and measure how far each one sits
+ * from its partner. pairs are explicit, so the read is eye against eye and
+ * mouth corner against mouth corner rather than silhouette against silhouette.
+ */
+const MIRROR_PAIRS: [number, number][] = [
+  [33, 263], // outer eye corners
+  [133, 362], // inner eye corners
+  [159, 386], // upper lids
+  [145, 374], // lower lids
+  [70, 300], // brow starts
+  [105, 334], // brow peaks
+  [46, 276], // brow tails
+  [61, 291], // mouth corners
+  [98, 327], // nostril bases
+  [50, 280], // upper cheeks
+  [123, 352], // mid cheeks
+  [172, 397], // jaw
+  [58, 288], // jaw angles
+  [234, 454], // face width
+];
+
 function readSymmetry(map: FaceMap): MeasuredIndicator {
   const { landmarks, midline, bounds } = map;
   if (!landmarks.length || !bounds.w) return EMPTY;
 
-  const mirrored = landmarks.map((p) => ({ x: 2 * midline - p.x, y: p.y }));
-  let sum = 0;
-  let n = 0;
-  const worst: { x: number; y: number; d: number }[] = [];
-
-  for (const point of landmarks) {
-    // nearest mirrored partner, normalised by face width
-    let best = Infinity;
-    for (const m of mirrored) {
-      const d = (m.x - point.x) ** 2 + (m.y - point.y) ** 2;
-      if (d < best) best = d;
-    }
-    const d = Math.sqrt(best) / bounds.w;
-    sum += d;
-    n += 1;
-    worst.push({ x: point.x, y: point.y, d });
+  const gaps: { x: number; y: number; d: number }[] = [];
+  for (const [a, b] of MIRROR_PAIRS) {
+    const pa = landmarks[a];
+    const pb = landmarks[b];
+    if (!pa || !pb) continue;
+    // reflect the right hand point and compare it with its partner
+    const reflected = { x: 2 * midline - pb.x, y: pb.y };
+    const d = Math.hypot(reflected.x - pa.x, reflected.y - pa.y) / bounds.w;
+    gaps.push({ x: pa.x, y: pa.y, d }, { x: pb.x, y: pb.y, d });
   }
+  if (!gaps.length) return EMPTY;
 
-  const mean = n ? sum / n : 0;
-  const regions = worst
+  const mean = gaps.reduce((sum, g) => sum + g.d, 0) / gaps.length;
+  const loud = Math.max(mean * 1.8, 0.03);
+  const regions = gaps
+    .filter((g) => g.d > loud)
     .sort((a, b) => b.d - a.d)
-    .slice(0, 40)
-    .filter((p) => p.d > mean * 2)
     .slice(0, 8)
-    .map((p) => ({
-      x: round3(p.x),
-      y: round3(p.y),
-      r: round3(bounds.w * 0.12),
-      intensity: round3(clamp01(p.d / (mean * 6 || 1))),
+    .map((g) => ({
+      x: round3(g.x),
+      y: round3(g.y),
+      r: round3(bounds.w * 0.09),
+      intensity: round3(clamp01((g.d - loud) / (loud * 1.5))),
     }));
 
-  return { severity: scale(mean, 0.004, 0.045), zones: {}, regions };
+  return { severity: scale(mean, 0.008, 0.06), zones: {}, regions };
 }
 
 /** lid to iris and lid to brow distance, per eye, normalised by face height */
