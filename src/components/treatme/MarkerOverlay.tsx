@@ -44,8 +44,8 @@ function photoAccent(accent: string): string {
     h *= 60;
     if (h < 0) h += 360;
   }
-  const sat = Math.max(d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1)), 0.45);
-  const lig = 0.56;
+  const sat = Math.max(d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1)), 0.34);
+  const lig = 0.62;
   const c = (1 - Math.abs(2 * lig - 1)) * sat;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = lig - c / 2;
@@ -195,7 +195,7 @@ function drawerFor(kind: string): { draw: Draw; blur: number } {
     case "bloom":
       return { draw: (m, i, a) => blob(m, i, a, 1.9, 0.3), blur: 0.02 };
     case "cloud":
-      return { draw: (m, i, a) => blob(m, i, a, 1.8, 0.2), blur: 0.024 };
+      return { draw: (m, i, a) => blob(m, i, a, 1.8, 0.13), blur: 0.026 };
     case "patches":
       return { draw: (m, i, a) => blob(m, i, a, 1.35, 0.35), blur: 0.012 };
     case "patches_soft":
@@ -235,7 +235,7 @@ function drawerFor(kind: string): { draw: Draw; blur: number } {
         blur: 0.002,
       };
     case "crescent":
-      return { draw: (m, i, a) => crescent(m, i, a, 0.5), blur: 0.005 };
+      return { draw: (m, i, a) => crescent(m, i, a, 0.62), blur: 0.005 };
     case "crescent_soft":
       return { draw: (m, i, a) => crescent(m, i, a, 0.6), blur: 0.01 };
     case "crescent_thin":
