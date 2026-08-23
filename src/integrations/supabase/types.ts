@@ -1131,34 +1131,49 @@ export type Database = {
           band: string
           concern_key: string
           id: string
+          landmarks: Json | null
+          mapping_method: string | null
+          marker_positions: Json | null
+          measured: Json | null
           notes: string | null
           region_scores: Json | null
           regions: Json
           scan_id: string
           score: number
           sub_scores: Json | null
+          zone_scores: Json | null
         }
         Insert: {
           band: string
           concern_key: string
           id?: string
+          landmarks?: Json | null
+          mapping_method?: string | null
+          marker_positions?: Json | null
+          measured?: Json | null
           notes?: string | null
           region_scores?: Json | null
           regions?: Json
           scan_id: string
           score: number
           sub_scores?: Json | null
+          zone_scores?: Json | null
         }
         Update: {
           band?: string
           concern_key?: string
           id?: string
+          landmarks?: Json | null
+          mapping_method?: string | null
+          marker_positions?: Json | null
+          measured?: Json | null
           notes?: string | null
           region_scores?: Json | null
           regions?: Json
           scan_id?: string
           score?: number
           sub_scores?: Json | null
+          zone_scores?: Json | null
         }
         Relationships: [
           {
@@ -1232,6 +1247,7 @@ export type Database = {
           accent: string
           name: string
           overlay_kind: string
+          placement_method: string | null
           region: string
           slug: string
           sort_order: number
@@ -1242,6 +1258,7 @@ export type Database = {
           accent: string
           name: string
           overlay_kind: string
+          placement_method?: string | null
           region: string
           slug: string
           sort_order: number
@@ -1252,6 +1269,7 @@ export type Database = {
           accent?: string
           name?: string
           overlay_kind?: string
+          placement_method?: string | null
           region?: string
           slug?: string
           sort_order?: number
