@@ -208,13 +208,20 @@ export const myBookingsQuery = queryOptions({
   queryKey: ["my-bookings"],
   queryFn: async (): Promise<MyBooking[]> => {
     const { data: session } = await supabase.auth.getSession();
-    if (!session.session?.user.id) return [];
+    const uid = session.session?.user.id;
+    if (!uid) return [];
 
+    // open requests only. a request never becomes an appointment on its own.
     const { data, error } = await supabase
       .from("booking_requests")
       .select("id, status, created_at, preferred_1, preferred_2, preferred_3, treatment_slug, provider_id, storefront_id")
+      .eq("user_id", uid)
+      .in("status", ["new", "contacting"])
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("booking_requests read failed", error);
+      throw new Error(error.message);
+    }
     const rows = data ?? [];
     if (!rows.length) return [];
 

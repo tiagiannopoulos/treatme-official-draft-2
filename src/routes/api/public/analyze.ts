@@ -4,10 +4,26 @@ import { z } from "zod";
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { AnalysisSchema, FACE_ZONES, MARKER_KEYS, type FaceZone } from "@/lib/skin-analysis";
 import { TREATMENTS } from "@/lib/treatments-data";
+import { PHOTO_REASONS, isPhotoReason, type PhotoCheck, type PhotoReason } from "@/lib/photo-check";
 
 const RequestBody = z.object({
   imageDataUrl: z.string().min(64).max(15_000_000),
+  /** set when someone chose "use anyway" after a failed check. */
+  skipValidation: z.boolean().optional(),
 });
+
+const CheckSchema = z.object({
+  usable: z.boolean(),
+  reasons: z.array(z.enum(PHOTO_REASONS)).max(6),
+  detail: z.string().max(200),
+});
+
+const CHECK_SYSTEM = `you check whether a photo can be used for a skin reading. you do not analyse skin.
+return strict json only, no prose, no code fences: { "usable": boolean, "reasons": string[], "detail": string }.
+reasons must be drawn only from this list: ${PHOTO_REASONS.join(", ")}.
+usable is false when any reason would make a skin read unreliable. usable true means reasons is empty.
+detail is one short plain lowercase sentence.
+be practical: a normal selfie in ordinary indoor light is usable.`;
 
 const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const VALID_TREATMENT_SLUGS = new Set(TREATMENTS.map((t) => t.slug));
@@ -232,6 +248,42 @@ async function runAnalysis(model: ReturnType<ReturnType<typeof createLovableAiGa
   }
 }
 
+/** the cheap gate. one small call, strict json, no skin analysis. */
+async function runPhotoCheck(
+  model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>,
+  imageDataUrl: string,
+): Promise<PhotoCheck> {
+  const image = parseImageDataUrl(imageDataUrl);
+  const content = [
+    { type: "text" as const, text: "is this photo usable for a skin reading? json only." },
+    { type: "image" as const, image: image.base64, mediaType: image.mediaType },
+  ];
+
+  let raw: unknown;
+  try {
+    const { object } = await generateObject({
+      model,
+      schema: CheckSchema,
+      system: CHECK_SYSTEM,
+      messages: [{ role: "user", content }],
+    });
+    raw = object;
+  } catch (structuredError) {
+    console.error("photo check structured error:", structuredError instanceof Error ? structuredError.message : structuredError);
+    const { text } = await generateText({ model, system: CHECK_SYSTEM, messages: [{ role: "user", content }] });
+    raw = extractJson(text);
+  }
+
+  const record = asRecord(raw) ?? {};
+  const reasons = (Array.isArray(record.reasons) ? record.reasons : []).filter(isPhotoReason) as PhotoReason[];
+  const usable = record.usable === true && reasons.length === 0;
+  return {
+    usable,
+    reasons: usable ? [] : reasons.length ? reasons : ["no_face"],
+    detail: toStringValue(record.detail, "we could not read that photo clearly."),
+  };
+}
+
 /** every failure lands in scan_errors so the real cause is visible later */
 async function logScanError(input: {
   request: Request;
@@ -286,6 +338,21 @@ export const Route = createFileRoute("/api/public/analyze")({
           const image = parseImageDataUrl(body.imageDataUrl);
           bytes = image.bytes;
           mediaType = image.mediaType;
+
+          if (!body.skipValidation) {
+            const check = await runPhotoCheck(model, body.imageDataUrl);
+            void logScanError({
+              request,
+              status: check.usable ? 200 : 422,
+              message: `photo_check:${check.usable ? "usable" : check.reasons.join(",")} · ${check.detail}`,
+              bytes,
+              mediaType,
+            });
+            if (!check.usable) {
+              // never spend the expensive read on a photo that will read as nonsense.
+              return Response.json({ code: "photo", reasons: check.reasons, detail: check.detail }, { status: 422 });
+            }
+          }
 
           const analysis = await runAnalysis(model, body.imageDataUrl);
           return Response.json({ analysis });

@@ -11,6 +11,7 @@ import { saveScan } from "@/lib/scan-persist";
 import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
 import { updateProfile, type Fitzpatrick } from "@/lib/patient-store";
 import { SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { isPhotoReason, photoReasonMessages, type PhotoReason } from "@/lib/photo-check";
 
 export const Route = createFileRoute("/scan/analyzing")({
   head: () => ({
@@ -47,7 +48,7 @@ const STAGES = [
 const TIMEOUT_MS = 60_000;
 const RETRY_DELAYS = [2000, 5000];
 
-type Phase = "working" | "quality" | "timeout" | "failed";
+type Phase = "working" | "quality" | "photo" | "timeout" | "failed";
 type Failure = "face" | "image" | "service";
 
 const FAILURE_COPY: Record<Failure, string> = {
@@ -78,6 +79,9 @@ function AnalyzingPage() {
   const [phase, setPhase] = useState<Phase>("working");
   const [progress, setProgress] = useState(6);
   const [failure, setFailure] = useState<Failure>("service");
+  const [photoReasons, setPhotoReasons] = useState<PhotoReason[]>([]);
+  // set by "use anyway": skips the gate and flags the read as low quality.
+  const forceRef = useRef(false);
   const pending = useRef<{ analysis: SkinAnalysis } | null>(null);
   const fact = useRotator(FACTS, phase === "working", 4000);
   const stage = useRotator(STAGES, phase === "working", 5000);
@@ -140,12 +144,16 @@ function AnalyzingPage() {
         const res = await fetch("/api/public/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageDataUrl: photoDataUrl }),
+          body: JSON.stringify({ imageDataUrl: photoDataUrl, skipValidation: forceRef.current }),
           signal: controller.signal,
         });
 
         if (!res.ok) {
-          const body = (await res.json().catch(() => ({}))) as { code?: string; detail?: string };
+          const body = (await res.json().catch(() => ({}))) as { code?: string; detail?: string; reasons?: unknown };
+          if (res.status === 422 && body.code === "photo") {
+            const reasons = (Array.isArray(body.reasons) ? body.reasons : []).filter(isPhotoReason);
+            throw Object.assign(new Error("photo_check_failed"), { retryable: false, photoReasons: reasons });
+          }
           console.error("scan analysis rejected", res.status, body.code, body.detail);
           const retryable = res.status === 429 || res.status >= 500;
           const failure: Failure = body.code === "image" ? "image" : "service";
@@ -187,6 +195,11 @@ function AnalyzingPage() {
 
       if (!analysis) throw lastError ?? new Error("analysis_failed");
 
+      if (forceRef.current) {
+        await finish({ ...analysis, photoQuality: "poor" }, photo, landmarks);
+        return;
+      }
+
       if (analysis.photoQuality === "poor") {
         pending.current = { analysis };
         pendingMeta.current = { photo, landmarks };
@@ -197,6 +210,12 @@ function AnalyzingPage() {
       await finish(analysis, photo, landmarks);
     } catch (err) {
       console.error("scan analysis failed", err);
+      const withReasons = err as { photoReasons?: PhotoReason[] };
+      if (withReasons.photoReasons) {
+        setPhotoReasons(withReasons.photoReasons);
+        setPhase("photo");
+        return;
+      }
       const aborted = err instanceof DOMException && err.name === "AbortError";
       const meta = err as { failure?: Failure };
       const message = err instanceof Error ? err.message.toLowerCase() : "";
@@ -218,7 +237,7 @@ function AnalyzingPage() {
     void run();
   }, [run]);
 
-  const useAnyway = () => {
+  const usePendingAnyway = () => {
     const held = pending.current;
     if (!held) return;
     setPhase("working");
@@ -226,6 +245,12 @@ function AnalyzingPage() {
   };
 
   const retake = () => navigate({ to: "/scan/capture" });
+
+  /** three tries in and it still will not pass: let them through, flagged. */
+  const useAnyway = () => {
+    forceRef.current = true;
+    void run();
+  };
 
   return (
     <div className="px-6 pt-8 pb-10 min-h-[calc(100vh-3.5rem-5.5rem)] flex flex-col">
@@ -263,9 +288,36 @@ function AnalyzingPage() {
             <PillButton fullWidth onClick={retake}>
               retake
             </PillButton>
-            <PillButton fullWidth variant="outline" onClick={useAnyway}>
+            <PillButton fullWidth variant="outline" onClick={usePendingAnyway}>
               use it anyway
             </PillButton>
+          </div>
+        </div>
+      )}
+
+      {phase === "photo" && (
+        <div className="mt-7">
+          {photoReasonMessages(photoReasons).map((line) => (
+            <p key={line} className="brand-display text-[22px] leading-snug mb-2 lowercase">
+              {line}
+            </p>
+          ))}
+          <div className="mt-6 space-y-3">
+            <button
+              type="button"
+              onClick={retake}
+              className="w-full rounded-pill py-3.5 text-[15px] font-semibold lowercase text-cream"
+              style={{ backgroundColor: "#FF1F87" }}
+            >
+              retake
+            </button>
+            <button
+              type="button"
+              onClick={useAnyway}
+              className="block w-full py-1 text-center text-[13px] lowercase text-ink/55 underline decoration-transparent"
+            >
+              use anyway
+            </button>
           </div>
         </div>
       )}
