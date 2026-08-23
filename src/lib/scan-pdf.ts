@@ -51,7 +51,7 @@ export async function fetchScanPdf({ scanId, includePhoto, analysis }: ScanPdfIn
     const dataUrl = url ? await asDataUrl(url) : null;
     if (dataUrl) {
       photoTiles = {};
-      for (const row of scan.result.concerns ?? []) photoTiles[row.concern_key] = dataUrl;
+      for (const row of scan.result.concerns ?? []) photoTiles[row.key] = dataUrl;
     }
   }
 
@@ -63,9 +63,11 @@ export async function fetchScanPdf({ scanId, includePhoto, analysis }: ScanPdfIn
     photoTiles,
   });
 
-  const blob = await pdf(
-    createElement(SkinReportDocument, { data, includePhotos: Boolean(photoTiles) }),
-  ).toBlob();
+  const element = createElement(SkinReportDocument, {
+    data,
+    includePhotos: Boolean(photoTiles),
+  }) as unknown as Parameters<typeof pdf>[0];
+  const blob = await pdf(element).toBlob();
 
   return new File([blob], "treatme-analysis.pdf", { type: "application/pdf" });
 }
