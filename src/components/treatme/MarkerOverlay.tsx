@@ -16,6 +16,26 @@ import type { MarkedRegion } from "@/lib/skinAnalysis";
  * pore, so everything stays soft and translucent. never a hard tight ring.
  */
 
+/**
+ * a few accents in the table are almost white, which reads as fog on a photo
+ * rather than a marking. deepen the very light ones so every indicator stays
+ * legible on skin while keeping its hue.
+ */
+function photoAccent(accent: string): string {
+  const hex = accent.replace("#", "");
+  if (hex.length !== 6) return accent;
+  const parts = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  const lum = (0.2126 * parts[0]! + 0.7152 * parts[1]! + 0.0722 * parts[2]!) / 255;
+  if (lum < 0.78) return accent;
+  const factor = 0.62;
+  return (
+    "#" +
+    parts
+      .map((v) => Math.round(v * factor).toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
 export function hasMarkers(regions: MarkedRegion[] | null | undefined): boolean {
   return Boolean(regions && regions.length > 0);
 }
@@ -169,7 +189,7 @@ function drawerFor(kind: string): { draw: Draw; blur: number } {
       };
     case "hatch":
       return {
-        draw: (m, i, a) => stroke(m, i, a, { len: 0.8, weight: 0.3, bow: 1.6 }),
+        draw: (m, i, a) => stroke(m, i, a, { len: 0.85, weight: 0.4, bow: 1.7 }),
         blur: 0.003,
       };
     case "strokes_long":
@@ -245,6 +265,7 @@ export function MarkerOverlay({
   if (!marks.length) return null;
 
   const { draw, blur } = drawerFor(overlayKind);
+  const ink = photoAccent(accent);
   const axis = overlayKind === "axis";
   const mid = axis ? marks.reduce((sum, m) => sum + m.x, 0) / marks.length : 0.5;
 
@@ -262,13 +283,13 @@ export function MarkerOverlay({
       </defs>
       {axis ? (
         // symmetry reads as the midline it is measured against
-        <g stroke={accent} strokeWidth={0.003} strokeDasharray="0.02 0.016" opacity={0.5}>
+        <g stroke={ink} strokeWidth={0.003} strokeDasharray="0.02 0.016" opacity={0.5}>
           <line x1={mid} y1={0.08} x2={mid} y2={0.95} />
           <line x1={0.08} y1={0.38} x2={0.92} y2={0.38} />
           <line x1={0.08} y1={0.62} x2={0.92} y2={0.62} />
         </g>
       ) : null}
-      <g filter={`url(#soft-${id})`}>{marks.map((m, i) => draw(m, i, accent))}</g>
+      <g filter={`url(#soft-${id})`}>{marks.map((m, i) => draw(m, i, ink))}</g>
     </svg>
   );
 }
