@@ -425,7 +425,7 @@ export function StorefrontPopover({
         <span className="text-[11px] text-ink-soft lowercase">
           {providerCount > 0
             ? `${providerCount} provider${providerCount === 1 ? "" : "s"}`
-            : `${selected.listed.length} treatment${selected.listed.length === 1 ? "" : "s"} listed`}
+            : `${storefront.listed.length} treatment${storefront.listed.length === 1 ? "" : "s"} listed`}
         </span>
         {isNew ? (
           <span className="rounded-pill bg-butter px-2 py-0.5 text-[10px] font-semibold lowercase">
