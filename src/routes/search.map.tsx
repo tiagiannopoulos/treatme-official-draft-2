@@ -33,6 +33,10 @@ export const Route = createFileRoute("/search/map")({
 
 function MapView() {
   const { data } = useSuspenseQuery(directoryQuery);
+  const { location: patientLocation } = usePatientLocation();
+  const mapCenter = patientLocation
+    ? { lat: patientLocation.lat, lng: patientLocation.lng }
+    : TORONTO_CENTROID;
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
   const [viewport, setViewport] = useState<{

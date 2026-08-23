@@ -243,7 +243,7 @@ function ClinicCard({ clinic, onBook }: { clinic: MatchClinic; onBook: () => voi
           {clinic.neighbourhood}
         </span>
         <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold lowercase">
-          {formatDistance(clinic.distanceKm)} away
+          {clinic.distanceKm !== null ? `${formatDistance(clinic.distanceKm)} away` : clinic.neighbourhood}
         </span>
         {clinic.priceFrom !== null && (
           <span className="rounded-full bg-ink/5 px-3 py-1 text-[12px] font-semibold lowercase">

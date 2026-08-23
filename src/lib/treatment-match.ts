@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 import { noDash } from "@/lib/treatment-detail";
-import { distanceKm, TORONTO_CENTROID, type LatLng } from "@/lib/search-data";
+import { distanceKm, type LatLng } from "@/lib/search-data";
 import type { Budget } from "@/lib/patient-store";
 
 /**
@@ -30,7 +30,7 @@ export interface MatchClinic {
   id: string;
   name: string;
   neighbourhood: string;
-  distanceKm: number;
+  distanceKm: number | null;
   priceFrom: number | null;
   claimed: boolean;
 }
@@ -52,7 +52,8 @@ export const BUDGET_CEILING: Record<Budget, number> = {
 export interface MatchInput {
   /** the patient's lowest scoring concerns, worst first, in ui words */
   concerns: string[];
-  center: LatLng;
+  /** null when we do not know where the patient is. distances stay hidden then. */
+  center: LatLng | null;
   radiusKm: number;
   budget: Budget | null;
 }
@@ -71,8 +72,8 @@ export const treatmentMatchQuery = (slug: string, input: MatchInput) =>
       "treatment-match",
       slug,
       input.concerns.join(","),
-      Math.round(input.center.lat * 1000),
-      Math.round(input.center.lng * 1000),
+      input.center ? Math.round(input.center.lat * 1000) : "nowhere",
+      input.center ? Math.round(input.center.lng * 1000) : "nowhere",
       input.radiusKm,
       input.budget,
     ],
@@ -176,7 +177,7 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     for (const l of links) {
       const shop = shops.get(l.storefront_id);
       if (!shop) continue;
-      const km = distanceKm(input.center, { lat: shop.lat, lng: shop.lng });
+      const km = input.center ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng }) : Number.POSITIVE_INFINITY;
       if (!best || km < best.km || (km === best.km && l.is_primary)) best = { shop, km };
     }
 
@@ -234,7 +235,7 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     if (!shop) continue;
     const price = priceByProvider.get(l.provider_id) ?? treatmentPriceFrom;
     const existing = clinicRank.get(shop.id);
-    const km = distanceKm(input.center, { lat: shop.lat, lng: shop.lng });
+    const km = input.center ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng }) : Number.POSITIVE_INFINITY;
     if (!existing) {
       clinicRank.set(shop.id, { shop, price, km });
     } else if (price !== null && (existing.price === null || price < existing.price)) {
@@ -254,15 +255,13 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
       id: c.shop.id,
       name: c.shop.name.toLowerCase(),
       neighbourhood: (c.shop.neighbourhood ?? c.shop.city).toLowerCase(),
-      distanceKm: c.km,
+      distanceKm: Number.isFinite(c.km) ? c.km : null,
       priceFrom: c.price,
       claimed: c.shop.claimed,
     }));
 
   return { treatmentName, treatmentPriceFrom, providers, clinics };
 }
-
-export const DEFAULT_MATCH_CENTER = TORONTO_CENTROID;
 
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
 
