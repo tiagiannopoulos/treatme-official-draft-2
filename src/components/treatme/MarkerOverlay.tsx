@@ -116,7 +116,7 @@ function crescent(m: MarkedRegion, i: number, accent: string, thickness: number)
       key={i}
       d={d}
       fill={accent}
-      opacity={Math.min(0.85, 0.4 + m.intensity * 0.4)}
+      opacity={Math.min(0.9, 0.5 + m.intensity * 0.4)}
     />
   );
 }
@@ -145,15 +145,15 @@ function drawerFor(kind: string): { draw: Draw; blur: number } {
     case "bloom":
       return { draw: (m, i, a) => blob(m, i, a, 1.9, 0.3), blur: 0.02 };
     case "cloud":
-      return { draw: (m, i, a) => blob(m, i, a, 2.2, 0.28), blur: 0.028 };
+      return { draw: (m, i, a) => blob(m, i, a, 1.8, 0.2), blur: 0.024 };
     case "patches":
       return { draw: (m, i, a) => blob(m, i, a, 1.35, 0.35), blur: 0.012 };
     case "patches_soft":
       return { draw: (m, i, a) => blob(m, i, a, 1.7, 0.26), blur: 0.022 };
     case "dots_dense":
-      return { draw: (m, i, a) => speck(m, i, a, 0.5), blur: 0.002 };
+      return { draw: (m, i, a) => speck(m, i, a, 0.28, 7), blur: 0.0015 };
     case "dots_scatter":
-      return { draw: (m, i, a) => speck(m, i, a, 0.62), blur: 0.003 };
+      return { draw: (m, i, a) => speck(m, i, a, 0.32, 5), blur: 0.002 };
     case "spots":
       return {
         draw: (m, i, a) => {
@@ -169,25 +169,25 @@ function drawerFor(kind: string): { draw: Draw; blur: number } {
       };
     case "hatch":
       return {
-        draw: (m, i, a) => stroke(m, i, a, { len: 0.9, weight: 0.22, bow: 1.4 }),
+        draw: (m, i, a) => stroke(m, i, a, { len: 0.8, weight: 0.3, bow: 1.6 }),
         blur: 0.003,
       };
     case "strokes_long":
       return {
         draw: (m, i, a) =>
-          stroke(m, i, a, { len: 2.4, weight: 0.16, bow: 0.5, angle: wobble(i, 5) * 16 - 8 }),
+          stroke(m, i, a, { len: 1.4, weight: 0.1, bow: 0.6, angle: wobble(i, 5) * 12 - 6 }),
         blur: 0.003,
       };
     case "strokes_short":
       return {
         draw: (m, i, a) =>
-          stroke(m, i, a, { len: 1.1, weight: 0.14, bow: 0.6, angle: wobble(i, 6) * 60 - 30 }),
+          stroke(m, i, a, { len: 0.9, weight: 0.1, bow: 0.7, angle: wobble(i, 6) * 60 - 30 }),
         blur: 0.002,
       };
     case "crescent":
-      return { draw: (m, i, a) => crescent(m, i, a, 0.5), blur: 0.008 };
+      return { draw: (m, i, a) => crescent(m, i, a, 0.5), blur: 0.005 };
     case "crescent_soft":
-      return { draw: (m, i, a) => crescent(m, i, a, 0.62), blur: 0.014 };
+      return { draw: (m, i, a) => crescent(m, i, a, 0.6), blur: 0.01 };
     case "crescent_thin":
       return {
         draw: (m, i, a) => stroke(m, i, a, { len: 2, weight: 0.12, bow: 1.1, angle: 0 }),
@@ -202,9 +202,10 @@ function drawerFor(kind: string): { draw: Draw; blur: number } {
       return {
         draw: (m, i, a) =>
           stroke(m, i, a, {
-            len: 1.6,
-            weight: 0.12,
-            bow: 1,
+            len: 1.8,
+            weight: 0.09,
+            bow: 0.9,
+            angle: 0,
             dash: "0.014 0.012",
           }),
         blur: 0.004,
