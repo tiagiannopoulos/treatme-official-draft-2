@@ -44,6 +44,7 @@ import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$sl
 import { Route as TreatmentSlugIndexRouteImport } from './routes/treatment.$slug.index'
 import { Route as TreatmentSlugStoryRouteImport } from './routes/treatment.$slug.story'
 import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$slug.reviews'
+import { Route as StorefrontIdRequestRouteImport } from './routes/storefront_.$id.request'
 import { Route as ScanConcernKeyRouteImport } from './routes/scan.concern.$key'
 import { Route as ReportScanIdPreviewRouteImport } from './routes/report.$scanId.preview'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
@@ -223,6 +224,11 @@ const TreatmentSlugReviewsRoute = TreatmentSlugReviewsRouteImport.update({
   path: '/treatment/$slug/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StorefrontIdRequestRoute = StorefrontIdRequestRouteImport.update({
+  id: '/storefront_/$id/request',
+  path: '/storefront/$id/request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScanConcernKeyRoute = ScanConcernKeyRouteImport.update({
   id: '/scan/concern/$key',
   path: '/scan/concern/$key',
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
+  '/storefront/$id/request': typeof StorefrontIdRequestRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
@@ -314,6 +321,7 @@ export interface FileRoutesByTo {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
+  '/storefront/$id/request': typeof StorefrontIdRequestRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatment/$slug': typeof TreatmentSlugIndexRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
   '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
+  '/storefront_/$id/request': typeof StorefrontIdRequestRoute
   '/treatment/$slug/reviews': typeof TreatmentSlugReviewsRoute
   '/treatment/$slug/story': typeof TreatmentSlugStoryRoute
   '/treatment/$slug/': typeof TreatmentSlugIndexRoute
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/report/$scanId/preview'
     | '/scan/concern/$key'
+    | '/storefront/$id/request'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatment/$slug/'
@@ -437,6 +447,7 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/report/$scanId/preview'
     | '/scan/concern/$key'
+    | '/storefront/$id/request'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatment/$slug'
@@ -477,6 +488,7 @@ export interface FileRouteTypes {
     | '/api/public/analyze'
     | '/report/$scanId/preview'
     | '/scan/concern/$key'
+    | '/storefront_/$id/request'
     | '/treatment/$slug/reviews'
     | '/treatment/$slug/story'
     | '/treatment/$slug/'
@@ -518,6 +530,7 @@ export interface RootRouteChildren {
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
   ReportScanIdPreviewRoute: typeof ReportScanIdPreviewRoute
   ScanConcernKeyRoute: typeof ScanConcernKeyRoute
+  StorefrontIdRequestRoute: typeof StorefrontIdRequestRoute
   TreatmentSlugReviewsRoute: typeof TreatmentSlugReviewsRoute
   TreatmentSlugStoryRoute: typeof TreatmentSlugStoryRoute
   TreatmentSlugIndexRoute: typeof TreatmentSlugIndexRoute
@@ -771,6 +784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TreatmentSlugReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/storefront_/$id/request': {
+      id: '/storefront_/$id/request'
+      path: '/storefront/$id/request'
+      fullPath: '/storefront/$id/request'
+      preLoaderRoute: typeof StorefrontIdRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scan/concern/$key': {
       id: '/scan/concern/$key'
       path: '/scan/concern/$key'
@@ -830,6 +850,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
   ReportScanIdPreviewRoute: ReportScanIdPreviewRoute,
   ScanConcernKeyRoute: ScanConcernKeyRoute,
+  StorefrontIdRequestRoute: StorefrontIdRequestRoute,
   TreatmentSlugReviewsRoute: TreatmentSlugReviewsRoute,
   TreatmentSlugStoryRoute: TreatmentSlugStoryRoute,
   TreatmentSlugIndexRoute: TreatmentSlugIndexRoute,
