@@ -24,14 +24,44 @@ import type { MarkedRegion } from "@/lib/skinAnalysis";
 function photoAccent(accent: string): string {
   const hex = accent.replace("#", "");
   if (hex.length !== 6) return accent;
-  const parts = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
-  const lum = (0.2126 * parts[0]! + 0.7152 * parts[1]! + 0.0722 * parts[2]!) / 255;
-  if (lum < 0.78) return accent;
-  const factor = 0.62;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [
+    number,
+    number,
+    number,
+  ];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  if (l < 0.78) return accent;
+
+  // keep the hue, deepen and enrich it so the marking reads on skin
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const sat = Math.max(d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1)), 0.45);
+  const lig = 0.56;
+  const c = (1 - Math.abs(2 * lig - 1)) * sat;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = lig - c / 2;
+  const seg = Math.floor(h / 60) % 6;
+  const rgb = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ][seg]!;
   return (
     "#" +
-    parts
-      .map((v) => Math.round(v * factor).toString(16).padStart(2, "0"))
+    rgb
+      .map((v) => Math.round((v + m) * 255).toString(16).padStart(2, "0"))
       .join("")
   );
 }
