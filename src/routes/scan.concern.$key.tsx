@@ -47,13 +47,13 @@ function useTreatmentNames(slugs: string[]) {
 function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
-  const { result } = useScan();
+  const { result, measured } = useScan();
   const photoSource = useScanPhotoSource();
   const { openTreatment } = useTreatmentSheet();
 
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
-  const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
+  const rows = useMemo(() => (result ? toConcernRows(result, measured) : []), [result, measured]);
   const row = rows.find((r) => indicatorKey(r.concern_key) === indicatorKey(key));
   const indicator = findIndicator(indicators, key);
   const label = indicator?.name ?? SCAN_CONCERN_LABEL[key] ?? key.replace(/_/g, " ");

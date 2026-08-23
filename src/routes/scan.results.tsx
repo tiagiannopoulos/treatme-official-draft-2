@@ -38,7 +38,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
-  const { result, analysis, scanId, photoQuality, hydrate, setResult } = useScan();
+  const { result, analysis, scanId, photoQuality, measured, hydrate, setResult } = useScan();
   const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
@@ -80,7 +80,7 @@ function ResultsPage() {
     };
   }, [requestedId, scanId, hydrate, setResult]);
 
-  const rows = useMemo(() => (result ? toConcernRows(result) : []), [result]);
+  const rows = useMemo(() => (result ? toConcernRows(result, measured) : []), [result, measured]);
   const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());

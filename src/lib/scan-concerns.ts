@@ -3,6 +3,8 @@
 
 import type { ScanResult } from "@/lib/skinAnalysis";
 import type { ConcernKey as EngineKey, MarkedRegion } from "@/lib/skinAnalysis";
+import type { Measured, MeasuredIndicator } from "@/lib/skin-measure";
+import type { ZoneKey } from "@/lib/face-zones";
 
 export const CONCERN_GROUPS = [
   {
@@ -82,6 +84,12 @@ export interface ScanConcernRow {
   region_scores: Record<string, number> | null;
   /** marked places on the patient photo. empty when the read found nothing to mark. */
   regions: MarkedRegion[];
+  /** severity 0 to 1 per landmark zone, from the pixel or geometry read */
+  zone_scores: Partial<Record<ZoneKey, number>> | null;
+  /** the raw measurement, kept so a read can be explained or re measured */
+  measured: MeasuredIndicator | null;
+  /** how this row's markers were placed */
+  mapping_method: "measured" | "landmarks" | "fallback_diagram";
 }
 
 /** which engine concerns carry the photo coordinates for each indicator */
@@ -121,7 +129,7 @@ function mergeRegions(lists: MarkedRegion[][]): MarkedRegion[] {
  * turns one engine result into the 16 canonical concern rows.
  * every row is always present, so a scan always writes 16 results.
  */
-export function toConcernRows(result: ScanResult): ScanConcernRow[] {
+export function toConcernRows(result: ScanResult, measured?: Measured | null): ScanConcernRow[] {
   const sev = (key: EngineKey) => result.concerns.find((c) => c.key === key)?.score ?? 0;
 
   const raw: Record<string, number> = {
@@ -191,17 +199,26 @@ export function toConcernRows(result: ScanResult): ScanConcernRow[] {
       ),
     );
 
-  return SCAN_CONCERN_KEYS.map((key) => ({
-    concern_key: key,
-    score: raw[key] ?? 0,
-    band: bandFor(raw[key] ?? 0),
-    sub_scores:
-      key === "lines"
-        ? { fine: health(sev("fineLines")), deep: health(sev("wrinkles")) }
-        : null,
-    region_scores: regions[key] ?? null,
-    regions: regionsFor(key),
-  }));
+  return SCAN_CONCERN_KEYS.map((key) => {
+    // a measured indicator always wins over the model. the pixels are the
+    // ground truth for these, and the markers come from real clusters.
+    const read = measured?.[key as keyof Measured] ?? null;
+    const score = read ? health(read.severity) : (raw[key] ?? 0);
+    const marks = read ? read.regions : regionsFor(key);
+
+    return {
+      concern_key: key,
+      score,
+      band: bandFor(score),
+      sub_scores:
+        key === "lines" ? { fine: health(sev("fineLines")), deep: health(sev("wrinkles")) } : null,
+      region_scores: regions[key] ?? null,
+      regions: marks,
+      zone_scores: read ? read.zones : null,
+      measured: read,
+      mapping_method: read ? "measured" : marks.length ? "landmarks" : "fallback_diagram",
+    } satisfies ScanConcernRow;
+  });
 }
 
 /** one overall score for the scan row */
