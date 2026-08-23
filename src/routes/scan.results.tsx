@@ -36,7 +36,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
-  const { result, analysis, scanId, hydrate, setResult } = useScan();
+  const { result, analysis, scanId, photoQuality, hydrate, setResult } = useScan();
   const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
@@ -137,6 +137,9 @@ function ResultsPage() {
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}
       >
         <h1 className="brand-display text-[26px] lowercase">analysis results</h1>
+        {photoQuality === "poor" && (
+          <p className="mt-1 text-[13px] lowercase text-ink/55">{LOW_QUALITY_NOTE}</p>
+        )}
         <button
           type="button"
           onClick={() => navigate({ to: "/scan/capture" })}
