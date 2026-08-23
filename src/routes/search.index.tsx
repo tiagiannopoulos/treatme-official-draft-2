@@ -518,9 +518,19 @@ function SearchPage() {
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">providers near you - coming soon</h2>
-                <span className="text-[12px] text-ink-mute lowercase">
-                  {providerResults.length} within {radius} km
-                </span>
+                {location ? (
+                  <span className="text-[12px] text-ink-mute lowercase">
+                    {providerResults.length} within {radius} km
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPickingLocation(true)}
+                    className="text-[12px] font-semibold text-hot lowercase"
+                  >
+                    set your location
+                  </button>
+                )}
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                 {nearbyProviders.map(({ p, shops, km, matches }) => (
@@ -558,9 +568,19 @@ function SearchPage() {
             <section className="mt-6">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">medspas near you</h2>
-                <span className="text-[12px] text-ink-mute lowercase">
-                  {medspaResults.length} within {radius} km
-                </span>
+                {location ? (
+                  <span className="text-[12px] text-ink-mute lowercase">
+                    {medspaResults.length} within {radius} km
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPickingLocation(true)}
+                    className="text-[12px] font-semibold text-hot lowercase"
+                  >
+                    set your location
+                  </button>
+                )}
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                 {(scope === "all" ? medspaResults.slice(0, 8) : medspaResults).map((s) => (
