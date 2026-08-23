@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { useId, useMemo } from "react";
 
 import type { MarkedRegion } from "@/lib/skinAnalysis";
@@ -30,7 +31,7 @@ function wobble(seed: number, salt: number): number {
   return v - Math.floor(v);
 }
 
-type Draw = (m: MarkedRegion, i: number, accent: string) => JSX.Element | null;
+type Draw = (m: MarkedRegion, i: number, accent: string) => ReactElement | null;
 
 /** soft filled blob, optionally stretched, used by blooms, clouds and patches */
 function blob(m: MarkedRegion, i: number, accent: string, spread: number, alpha: number) {
