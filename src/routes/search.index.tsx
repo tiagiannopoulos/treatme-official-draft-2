@@ -820,9 +820,16 @@ function MedspaCardCompact({
           {providers.slice(0, 3).map((p) => (
             <Avatar key={p.id} name={p.name} url={p.avatar_url} size="size-7" />
           ))}
-          <span className="text-[11px] text-ink-mute lowercase">
-            {providers.length} provider{providers.length === 1 ? "" : "s"}
-          </span>
+          {/* never advertise zero. fall back to what they list. */}
+          {providers.length > 0 ? (
+            <span className="text-[11px] text-ink-mute lowercase">
+              {providers.length} provider{providers.length === 1 ? "" : "s"}
+            </span>
+          ) : storefront.listed.length > 0 ? (
+            <span className="text-[11px] text-ink-mute lowercase">
+              {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
+            </span>
+          ) : null}
         </div>
         {viaWebsite && (
           <p className="mt-1.5 text-[11px] lowercase text-ink/45">listed on their website</p>
@@ -863,11 +870,17 @@ function FeaturedStorefrontCard({
           {storefront.name}
           {storefront.claimed && <BadgeCheck className="size-3.5 text-hot" />}
         </p>
-        <p className="text-[12px] text-ink-mute lowercase mt-0.5">{neighbourhood(storefront)}</p>
+        <p className="text-[12px] text-ink-mute lowercase mt-0.5">{areaLine(storefront)}</p>
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-[12px] text-ink-soft lowercase">
-            {providerCount} {providerCount === 1 ? "provider" : "providers"}
-          </span>
+          {providerCount > 0 ? (
+            <span className="text-[12px] text-ink-soft lowercase">
+              {providerCount} {providerCount === 1 ? "provider" : "providers"}
+            </span>
+          ) : storefront.listed.length > 0 ? (
+            <span className="text-[12px] text-ink-soft lowercase">
+              {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
+            </span>
+          ) : null}
           {storefront.review_count > 0 ? (
             <span className="inline-flex items-center gap-1 text-[12px] text-ink-soft">
               <Star className="size-3 fill-ink text-ink" />
