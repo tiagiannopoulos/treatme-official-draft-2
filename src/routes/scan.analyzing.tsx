@@ -8,6 +8,7 @@ import { getRecommendations } from "@/lib/recommendations";
 import { uploadScanPhoto, type StoredScanPhoto } from "@/lib/scan-photo";
 import { faceMapFromDataUrl } from "@/lib/facemesh";
 import type { FaceMap } from "@/lib/face-zones";
+import { measureSkin, type Measured } from "@/lib/skin-measure";
 import { saveScan } from "@/lib/scan-persist";
 import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
 import { updateProfile, type Fitzpatrick } from "@/lib/patient-store";
@@ -74,7 +75,7 @@ function useRotator(items: string[], active: boolean, everyMs: number) {
 
 function AnalyzingPage() {
   const navigate = useNavigate();
-  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta, setFaceMap, setScanId } = useScan();
+  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta, setFaceMap, setMeasured, setScanId } = useScan();
 
   const started = useRef(false);
   const [phase, setPhase] = useState<Phase>("working");
@@ -95,7 +96,7 @@ function AnalyzingPage() {
   }, [phase]);
 
   const finish = useCallback(
-    async (analysis: SkinAnalysis, photo: StoredScanPhoto, faceMap: FaceMap | null) => {
+    async (analysis: SkinAnalysis, photo: StoredScanPhoto, faceMap: FaceMap | null, measured: Measured | null) => {
       const result = resultFromAnalysis(analysis, crypto.randomUUID());
       const concerns = topConcerns(result);
       // write the read back into the patient profile so the rest of the app
@@ -111,6 +112,7 @@ function AnalyzingPage() {
         thumbPath: photo.thumbPath,
         storePhoto,
         faceMap,
+        measured,
         result,
         photoQuality: analysis.photoQuality,
         medicalFlag: analysis.medicalFlag,
@@ -119,13 +121,14 @@ function AnalyzingPage() {
 
       setScanId(scanId);
       setFaceMap(faceMap);
+      setMeasured(measured);
       setAnalysis(analysis);
       setScanMeta({ medicalFlag: analysis.medicalFlag, photoQuality: analysis.photoQuality });
       setProgress(100);
       setResult(result, scanDriven, goalDriven);
       navigate({ to: "/scan/results" });
     },
-    [goals, navigate, setAnalysis, setFaceMap, setResult, setScanMeta, setScanId, storePhoto],
+    [goals, navigate, setAnalysis, setFaceMap, setMeasured, setResult, setScanMeta, setScanId, storePhoto],
   );
 
   const run = useCallback(async () => {
@@ -179,6 +182,10 @@ function AnalyzingPage() {
       ]);
       setPhotoPath(photo.path);
 
+      // layers 2 and 3: measured straight from the pixels and the landmark
+      // geometry. runs alongside the model call, not after it.
+      const measuring = measureSkin(photoDataUrl, faceMap);
+
       let analysis: SkinAnalysis | null = null;
       let lastError: unknown = null;
 
@@ -199,18 +206,18 @@ function AnalyzingPage() {
       if (!analysis) throw lastError ?? new Error("analysis_failed");
 
       if (forceRef.current) {
-        await finish({ ...analysis, photoQuality: "poor" }, photo, faceMap);
+        await finish({ ...analysis, photoQuality: "poor" }, photo, faceMap, await measuring);
         return;
       }
 
       if (analysis.photoQuality === "poor") {
         pending.current = { analysis };
-        pendingMeta.current = { photo, faceMap };
+        pendingMeta.current = { photo, faceMap, measured: await measuring };
         setPhase("quality");
         return;
       }
 
-      await finish(analysis, photo, faceMap);
+      await finish(analysis, photo, faceMap, await measuring);
     } catch (err) {
       console.error("scan analysis failed", err);
       const withReasons = err as { photoReasons?: PhotoReason[] };
@@ -229,9 +236,10 @@ function AnalyzingPage() {
     }
   }, [finish, navigate, photoDataUrl, setPhotoPath, storePhoto]);
 
-  const pendingMeta = useRef<{ photo: StoredScanPhoto; faceMap: FaceMap | null }>({
+  const pendingMeta = useRef<{ photo: StoredScanPhoto; faceMap: FaceMap | null; measured: Measured | null }>({
     photo: { path: null, thumbPath: null },
     faceMap: null,
+    measured: null,
   });
 
   useEffect(() => {
@@ -244,7 +252,7 @@ function AnalyzingPage() {
     const held = pending.current;
     if (!held) return;
     setPhase("working");
-    void finish(held.analysis, pendingMeta.current.photo, pendingMeta.current.faceMap);
+    void finish(held.analysis, pendingMeta.current.photo, pendingMeta.current.faceMap, pendingMeta.current.measured);
   };
 
   const retake = () => navigate({ to: "/scan/capture" });

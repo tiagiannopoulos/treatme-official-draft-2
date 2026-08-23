@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { SkinAnalysis } from "@/lib/skin-analysis";
 import type { ScanResult } from "@/lib/skinAnalysis";
 import type { FaceMap, MappingMethod } from "@/lib/face-zones";
+import type { Measured } from "@/lib/skin-measure";
 import { overallScore, toConcernRows } from "@/lib/scan-concerns";
 
 export interface SaveScanInput {
@@ -10,6 +11,8 @@ export interface SaveScanInput {
   storePhoto: boolean;
   /** layer 1 output. null when no face was detected. */
   faceMap: FaceMap | null;
+  /** layers 2 and 3 output. null when the pixels could not be read. */
+  measured?: Measured | null;
   result: ScanResult;
   photoQuality: string | null;
   medicalFlag: string | null;
@@ -25,7 +28,7 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
   const userId = data.user?.id;
   if (!userId) return null;
 
-  const rows = toConcernRows(input.result);
+  const rows = toConcernRows(input.result, input.measured);
   // never place markers without a detected face.
   const mappingMethod: MappingMethod = input.faceMap ? "landmarks" : "fallback_diagram";
 
@@ -73,7 +76,9 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       sub_scores: r.sub_scores as unknown as never,
       region_scores: r.region_scores as unknown as never,
       regions: r.regions as unknown as never,
-      mapping_method: mappingMethod,
+      zone_scores: r.zone_scores as unknown as never,
+      measured: r.measured as unknown as never,
+      mapping_method: input.faceMap ? r.mapping_method : "fallback_diagram",
     })),
   );
   if (resultsError) console.warn("scan results insert failed", resultsError.message);

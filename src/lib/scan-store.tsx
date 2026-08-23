@@ -4,6 +4,7 @@ import type { ScanResult } from "./skinAnalysis";
 import type { Recommendation } from "./recommendations";
 import type { Landmark } from "./facemesh";
 import type { FaceMap } from "./face-zones";
+import type { Measured } from "./skin-measure";
 
 const STORAGE_KEY = "treatme.scan.v1";
 
@@ -22,6 +23,8 @@ export type ScanState = {
   photoQuality: string | null;
   landmarks: Landmark[] | null;
   faceMap: FaceMap | null;
+  /** layers 2 and 3: the measured reads, used to place markers */
+  measured: Measured | null;
 };
 
 type ScanContextValue = ScanState & {
@@ -33,6 +36,7 @@ type ScanContextValue = ScanState & {
   setStorePhoto: (v: boolean) => void;
   setLandmarks: (landmarks: Landmark[] | null) => void;
   setFaceMap: (faceMap: FaceMap | null) => void;
+  setMeasured: (measured: Measured | null) => void;
   setScanMeta: (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => void;
   setAnalysis: (analysis: SkinAnalysis) => void;
   setGoals: (goals: string[]) => void;
@@ -62,6 +66,7 @@ const EMPTY: ScanState = {
   photoQuality: null,
   landmarks: null,
   faceMap: null,
+  measured: null,
 };
 
 export function ScanProvider({ children }: { children: ReactNode }) {
@@ -115,6 +120,10 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, faceMap, landmarks: faceMap?.landmarks ?? null }));
   }, []);
 
+  const setMeasured = useCallback((measured: Measured | null) => {
+    setState((prev) => ({ ...prev, measured }));
+  }, []);
+
   const setLandmarks = useCallback((landmarks: Landmark[] | null) => {
     setState((prev) => ({ ...prev, landmarks }));
   }, []);
@@ -160,7 +169,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, sessionReady, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setFaceMap, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
+      value={{ ...state, sessionReady, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setFaceMap, setMeasured, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
     >
       {children}
     </ScanContext.Provider>
