@@ -712,7 +712,8 @@ function MedspaCard({
   onSelect,
 }: {
   storefront: Storefront;
-  km: number;
+  /** null when we do not know where the patient is. show the area instead. */
+  km: number | null;
   providers: Provider[];
   /** the clinic only matched because their website lists it. say so. */
   viaWebsite?: boolean;
@@ -738,7 +739,8 @@ function MedspaCard({
       <p className="text-[12px] text-ink-mute lowercase">{storefront.tagline}</p>
       <p className="mt-1 text-[12px] text-ink-soft lowercase inline-flex items-center gap-1">
         <MapPin className="size-3.5 text-hot" />
-        {storefront.address_line}, {storefront.city} {storefront.postcode.toLowerCase()} · {formatDistance(km)}
+        {addressLine(storefront)}, {storefront.city.toLowerCase()}
+        {km !== null && ` · ${formatDistance(km)}`}
       </p>
       <div className="mt-3 space-y-2 border-t border-line pt-3">
         <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
@@ -773,7 +775,8 @@ function MedspaCardCompact({
   onSelect,
 }: {
   storefront: Storefront;
-  km: number;
+  /** null when we do not know where the patient is. show the area instead. */
+  km: number | null;
   providers: Provider[];
   /** the clinic only matched because their website lists it. say so. */
   viaWebsite?: boolean;
@@ -811,7 +814,7 @@ function MedspaCardCompact({
         <p className="text-[11px] text-ink-mute lowercase mt-0.5 truncate">{storefront.tagline}</p>
         <p className="mt-1.5 text-[11px] text-ink-soft lowercase inline-flex items-center gap-1">
           <MapPin className="size-3 text-hot" />
-          {storefront.address_line}, {storefront.city} · {formatDistance(km)}
+          {km !== null ? `${areaLine(storefront)} · ${formatDistance(km)}` : areaLine(storefront)}
         </p>
         <div className="mt-2.5 flex items-center gap-2 border-t border-line pt-2">
           {providers.slice(0, 3).map((p) => (
