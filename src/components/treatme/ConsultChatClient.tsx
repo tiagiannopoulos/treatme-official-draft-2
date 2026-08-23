@@ -18,7 +18,8 @@ import { usePatient } from "@/lib/patient-store";
 import { toConcernRows, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { supabase } from "@/integrations/supabase/client";
 import { displayTreatmentName } from "@/lib/treatment-labels";
-import { DEFAULT_MATCH_CENTER, treatmentMatchQuery } from "@/lib/treatment-match";
+import { treatmentMatchQuery } from "@/lib/treatment-match";
+import { usePatientLocation } from "@/lib/patient-location";
 import {
   CONSULT_KEY_LABEL,
   EMPTY_EXTRACTED,
@@ -292,6 +293,7 @@ function SummaryCard({
   budget: ReturnType<typeof usePatient>["profile"]["budget"];
 }) {
   const navigate = useNavigate();
+  const { location } = usePatientLocation();
 
   const { data: treatments = [] } = useQuery({
     queryKey: ["consult-summary-treatments", slugs.join(",")],
@@ -310,7 +312,7 @@ function SummaryCard({
   const { data: match } = useQuery(
     treatmentMatchQuery(slugs[0] ?? "", {
       concerns: concerns.slice(0, 3),
-      center: DEFAULT_MATCH_CENTER,
+      center: location ? { lat: location.lat, lng: location.lng } : null,
       radiusKm: 25,
       budget,
     }),
