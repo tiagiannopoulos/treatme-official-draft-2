@@ -116,3 +116,13 @@ export async function landmarksFromDataUrl(dataUrl: string): Promise<Landmark[] 
     return null;
   }
 }
+
+/**
+ * layer 1 entry point. runs on the captured still immediately after capture and
+ * before the analysis call. returns null when there is no detectable face, and
+ * the caller then falls back to the stylised diagram rather than guessing.
+ */
+export async function faceMapFromDataUrl(dataUrl: string) {
+  const { buildFaceMap } = await import("@/lib/face-zones");
+  return buildFaceMap(await landmarksFromDataUrl(dataUrl));
+}

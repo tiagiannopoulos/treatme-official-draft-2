@@ -3,6 +3,7 @@ import type { SkinAnalysis } from "./skin-analysis";
 import type { ScanResult } from "./skinAnalysis";
 import type { Recommendation } from "./recommendations";
 import type { Landmark } from "./facemesh";
+import type { FaceMap } from "./face-zones";
 
 const STORAGE_KEY = "treatme.scan.v1";
 
@@ -20,6 +21,7 @@ export type ScanState = {
   medicalFlag: string | null;
   photoQuality: string | null;
   landmarks: Landmark[] | null;
+  faceMap: FaceMap | null;
 };
 
 type ScanContextValue = ScanState & {
@@ -30,6 +32,7 @@ type ScanContextValue = ScanState & {
   setScanId: (id: string | null) => void;
   setStorePhoto: (v: boolean) => void;
   setLandmarks: (landmarks: Landmark[] | null) => void;
+  setFaceMap: (faceMap: FaceMap | null) => void;
   setScanMeta: (meta: { medicalFlag?: string | null; photoQuality?: string | null }) => void;
   setAnalysis: (analysis: SkinAnalysis) => void;
   setGoals: (goals: string[]) => void;
@@ -58,6 +61,7 @@ const EMPTY: ScanState = {
   medicalFlag: null,
   photoQuality: null,
   landmarks: null,
+  faceMap: null,
 };
 
 export function ScanProvider({ children }: { children: ReactNode }) {
@@ -107,6 +111,10 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, storePhoto: v }));
   }, []);
 
+  const setFaceMap = useCallback((faceMap: FaceMap | null) => {
+    setState((prev) => ({ ...prev, faceMap, landmarks: faceMap?.landmarks ?? null }));
+  }, []);
+
   const setLandmarks = useCallback((landmarks: Landmark[] | null) => {
     setState((prev) => ({ ...prev, landmarks }));
   }, []);
@@ -152,7 +160,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
 
   return (
     <ScanContext.Provider
-      value={{ ...state, sessionReady, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
+      value={{ ...state, sessionReady, setPhoto, setPhotoPath, setScanId, setStorePhoto, setLandmarks, setFaceMap, setScanMeta, setAnalysis, setGoals, setResult, hydrate, reset }}
     >
       {children}
     </ScanContext.Provider>
