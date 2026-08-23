@@ -73,10 +73,26 @@ export const Route = createFileRoute("/scan/capture")({
 
 type ChipState = "adjust" | "good";
 
-const CHIP_COPY: Record<"lighting" | "position" | "still", Record<ChipState, string>> = {
-  lighting: { adjust: "find more light", good: "lighting good" },
-  position: { adjust: "line up your face", good: "face position good" },
+/** the same problems the photo check names, caught while framing. */
+type LightingHint = "good" | "too dark" | "too bright";
+type PositionHint = "good" | "no face" | "too far" | "too close" | "move into frame";
+
+const CHIP_COPY: Record<"still", Record<ChipState, string>> = {
   still: { adjust: "hold still", good: "holding still" },
+};
+
+const LIGHTING_LABEL: Record<LightingHint, string> = {
+  good: "lighting good",
+  "too dark": "too dark",
+  "too bright": "too bright",
+};
+
+const POSITION_LABEL: Record<PositionHint, string> = {
+  good: "face position good",
+  "no face": "no face yet",
+  "too far": "too far away",
+  "too close": "too close",
+  "move into frame": "fit your face in the oval",
 };
 
 function Chip({ label, state }: { label: string; state: ChipState }) {
@@ -105,8 +121,8 @@ function CapturePage() {
   const [camError, setCamError] = useState<CameraError | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [still, setStill] = useState<string | null>(null);
-  const [lighting, setLighting] = useState<ChipState>("adjust");
-  const [position, setPosition] = useState<ChipState>("adjust");
+  const [lighting, setLighting] = useState<LightingHint>("too dark");
+  const [position, setPosition] = useState<PositionHint>("no face");
   const [steady, setSteady] = useState<ChipState>("adjust");
   const [holdProgress, setHoldProgress] = useState(0);
   const holdingRef = useRef(false);
@@ -201,7 +217,7 @@ function CapturePage() {
         sum += 0.299 * frame[i] + 0.587 * frame[i + 1] + 0.114 * frame[i + 2];
       }
       const mean = sum / (frame.length / 4);
-      setLighting(mean > 72 && mean < 215 ? "good" : "adjust");
+      setLighting(mean <= 72 ? "too dark" : mean >= 215 ? "too bright" : "good");
 
       const prev = prevPixels.current;
       if (prev && prev.length === frame.length) {
@@ -218,7 +234,17 @@ function CapturePage() {
       if (meshAvailable) {
         const face = await detectVideoFrame(video, performance.now());
         const centred = Math.abs(face.cx - 0.5) < 0.14 && Math.abs(face.cy - 0.47) < 0.16;
-        setPosition(face.found && centred && face.size > 0.34 && face.size < 0.92 ? "good" : "adjust");
+        setPosition(
+          !face.found
+            ? "no face"
+            : face.size <= 0.34
+              ? "too far"
+              : face.size >= 0.92
+                ? "too close"
+                : centred
+                  ? "good"
+                  : "move into frame",
+        );
       } else {
         setPosition("good");
       }
@@ -392,8 +418,8 @@ function CapturePage() {
             </svg>
 
             <div className="absolute inset-x-0 top-3 flex justify-center gap-2 px-3">
-              <Chip label={CHIP_COPY.lighting[lighting]} state={lighting} />
-              <Chip label={CHIP_COPY.position[position]} state={position} />
+              <Chip label={LIGHTING_LABEL[lighting]} state={lighting === "good" ? "good" : "adjust"} />
+              <Chip label={POSITION_LABEL[position]} state={position === "good" ? "good" : "adjust"} />
               <Chip label={CHIP_COPY.still[steady]} state={steady} />
             </div>
 
