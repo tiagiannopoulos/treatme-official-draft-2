@@ -88,9 +88,20 @@ export const Route = createFileRoute("/api/generate-scan-pdf")({
 
         const { data: results } = await supabase
           .from("scan_results")
-          .select("concern_key, score, band")
+          .select("concern_key, score, band, regions")
           .eq("scan_id", scan_id);
         const rows = results ?? [];
+
+        // accents come from the indicator table, never hardcoded
+        const { data: indicatorRows } = await supabase
+          .from("skin_indicators")
+          .select("slug, accent, overlay_kind");
+        const accentFor = new Map(
+          (indicatorRows ?? []).map((i) => [
+            i.slug.replace(/-/g, "_"),
+            { accent: i.accent, kind: i.overlay_kind },
+          ]),
+        );
 
         const pdf = await PDFDocument.create();
         const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -112,6 +123,14 @@ export const Route = createFileRoute("/api/generate-scan-pdf")({
           if (y - needed < M) newPage();
         };
 
+        /** hex to pdf-lib rgb */
+        const hex = (value: string) => {
+          const m = /^#?([0-9a-f]{6})$/i.exec(value.trim());
+          if (!m) return HOT;
+          const n = parseInt(m[1], 16);
+          return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+        };
+
         page.drawText("treatme", { x: M, y: y - 22, size: 24, font: bold, color: INK });
         page.drawText(".", {
           x: M + bold.widthOfTextAtSize("treatme", 24),
@@ -127,13 +146,15 @@ export const Route = createFileRoute("/api/generate-scan-pdf")({
         page.drawText(dated, { x: M, y: y - 12, size: 11, font: body, color: MUTE });
         y -= 30;
 
-        // photo, only when the user asked for it
+        // photo, only when the user asked for it. embedded, never linked.
+        let faceImage: Awaited<ReturnType<typeof pdf.embedJpg>> | null = null;
         if (include_photo && scan.photo_path) {
           const { data: file } = await supabase.storage.from("scan-photos").download(scan.photo_path);
           if (file) {
             try {
               const bytes = new Uint8Array(await file.arrayBuffer());
               const img = await pdf.embedJpg(bytes);
+              faceImage = img;
               const w = 190;
               const h = (img.height / img.width) * w;
               room(h + 16);
@@ -180,22 +201,54 @@ export const Route = createFileRoute("/api/generate-scan-pdf")({
             .filter((r): r is (typeof rows)[number] => Boolean(r));
           if (groupRows.length === 0) continue;
 
-          room(30 + groupRows.length * 18);
+          room(30 + groupRows.length * (faceImage ? 54 : 18));
           page.drawText(group.label.toLowerCase(), { x: M, y: y - 12, size: 12, font: bold, color: INK });
           y -= 24;
           for (const row of groupRows) {
-            room(18);
+            const regions = Array.isArray(row.regions)
+              ? (row.regions as Array<{ x?: number; y?: number; r?: number; intensity?: number }>)
+              : [];
+            const meta = accentFor.get(row.concern_key);
+            const tile = faceImage && regions.length > 0 ? 46 : 0;
+            const rowHeight = tile ? tile + 8 : 18;
+            room(rowHeight);
             const label = (SCAN_CONCERN_LABEL[row.concern_key as keyof typeof SCAN_CONCERN_LABEL] ?? row.concern_key) as string;
-            page.drawText(label.toLowerCase(), { x: M, y: y - 10, size: 11, font: body, color: INK });
-            page.drawText(`${row.score}/100`, { x: W - M - 110, y: y - 10, size: 11, font: bold, color: INK });
+
+            if (tile && faceImage) {
+              // the patient's own photo, with the marked places drawn on top.
+              // soft translucent discs: approximately right, never claiming precision.
+              const top = y - 2;
+              page.drawImage(faceImage, { x: M, y: top - tile, width: tile, height: tile });
+              const colour = meta ? hex(meta.accent) : hex("#F8A1C6");
+              const strongest = [...regions]
+                .sort((a, b) => (b.intensity ?? 0) - (a.intensity ?? 0))
+                .slice(0, 10);
+              for (const mark of strongest) {
+                const mx = Math.min(1, Math.max(0, Number(mark.x ?? 0.5)));
+                const my = Math.min(1, Math.max(0, Number(mark.y ?? 0.5)));
+                const mr = Math.min(0.4, Math.max(0.02, Number(mark.r ?? 0.05)));
+                page.drawCircle({
+                  x: M + mx * tile,
+                  y: top - my * tile,
+                  size: mr * tile,
+                  color: colour,
+                  opacity: Math.min(0.9, 0.35 + (Number(mark.intensity ?? 0.6)) * 0.45),
+                });
+              }
+            }
+
+            const textX = tile ? M + tile + 12 : M;
+            const textY = tile ? y - tile / 2 - 4 : y - 10;
+            page.drawText(label.toLowerCase(), { x: textX, y: textY, size: 11, font: body, color: INK });
+            page.drawText(`${row.score}/100`, { x: W - M - 110, y: textY, size: 11, font: bold, color: INK });
             page.drawText(String(row.band ?? "").toLowerCase(), {
               x: W - M - 56,
-              y: y - 10,
+              y: textY,
               size: 10,
               font: body,
               color: MUTE,
             });
-            y -= 17;
+            y -= rowHeight;
           }
           y -= 10;
         }
