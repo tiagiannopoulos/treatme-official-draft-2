@@ -85,7 +85,7 @@ function MapView() {
         <ClientOnly fallback={<div className="size-full bg-muted" />}>
           <SearchMap
             storefronts={pinned}
-            center={location ? { lat: location.lat, lng: location.lng } : TORONTO_CENTROID}
+            center={mapCenter}
             selectedId={selected}
             onSelect={setSelected}
             providerCounts={providerCounts}

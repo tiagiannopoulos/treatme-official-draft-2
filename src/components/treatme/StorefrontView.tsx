@@ -663,7 +663,7 @@ function RosterEntry({
 }: {
   provider: Provider;
   storefrontId: string;
-  km: number;
+  km: number | null;
   accent: string;
   onAccent: string;
   matches: boolean;

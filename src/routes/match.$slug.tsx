@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { ArrowLeft, BadgeCheck, Star } from "lucide-react";
 
 import { useScan } from "@/lib/scan-store";
+import { usePatientLocation } from "@/lib/patient-location";
 import { usePatient } from "@/lib/patient-store";
 import { toConcernRows, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { formatDistance } from "@/lib/search-data";
@@ -40,6 +41,8 @@ function MatchScreen() {
   const navigate = useNavigate();
   const { result } = useScan();
   const { profile } = usePatient();
+  const { location } = usePatientLocation();
+  const matchCenter = location ? { lat: location.lat, lng: location.lng } : null;
 
   const radiusKm = profile.travelKm ?? 10;
 
