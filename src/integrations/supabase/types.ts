@@ -532,6 +532,11 @@ export type Database = {
           downtime_tolerance: string | null
           goals: string[] | null
           languages: string[] | null
+          lat: number | null
+          lng: number | null
+          location_label: string | null
+          location_set_at: string | null
+          location_source: string | null
           md_only: boolean | null
           needle_comfort: string | null
           preferred_provider_gender: string | null
@@ -546,6 +551,11 @@ export type Database = {
           downtime_tolerance?: string | null
           goals?: string[] | null
           languages?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          location_label?: string | null
+          location_set_at?: string | null
+          location_source?: string | null
           md_only?: boolean | null
           needle_comfort?: string | null
           preferred_provider_gender?: string | null
@@ -560,6 +570,11 @@ export type Database = {
           downtime_tolerance?: string | null
           goals?: string[] | null
           languages?: string[] | null
+          lat?: number | null
+          lng?: number | null
+          location_label?: string | null
+          location_set_at?: string | null
+          location_source?: string | null
           md_only?: boolean | null
           needle_comfort?: string | null
           preferred_provider_gender?: string | null
@@ -1985,6 +2000,10 @@ export type Database = {
     Functions: {
       generate_share_token: { Args: never; Returns: string }
       get_shared_report: { Args: { token: string }; Returns: Json }
+      km_between: {
+        Args: { lat1: number; lat2: number; lng1: number; lng2: number }
+        Returns: number
+      }
       owns_provider: { Args: { _provider_id: string }; Returns: boolean }
     }
     Enums: {
