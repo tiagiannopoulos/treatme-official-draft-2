@@ -510,6 +510,23 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
         </section>
       )}
 
+      {/* book here, a request and never a confirmed appointment */}
+      <section className="px-5 pt-8">
+        <h2 className="text-[20px] font-medium lowercase tracking-[-0.02em]">book here</h2>
+        <p className="mt-1.5 text-[13.5px] lowercase leading-relaxed text-ink/60">
+          tell us when suits you and we will arrange it with the clinic. you will hear back within one business day.
+        </p>
+        <Link
+          to="/storefront_/$id/request"
+          params={{ id: storefront.id }}
+          search={{ treatment: undefined }}
+          className="mt-3.5 block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
+          style={{ backgroundColor: accent, color: onAccent }}
+        >
+          request a time
+        </Link>
+      </section>
+
       {/* section 8, good to know */}
       {policies.length > 0 && (
         <section className="px-5 pt-8">
@@ -551,14 +568,15 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       {/* sticky bar, claimed only */}
       {claimed && (
         <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line bg-cream/95 px-5 py-3 backdrop-blur">
-          <button
-            type="button"
-            onClick={scrollToRoster}
+          <Link
+            to="/storefront_/$id/request"
+            params={{ id: storefront.id }}
+            search={{ treatment: undefined }}
             className="block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
             style={{ backgroundColor: accent, color: onAccent }}
           >
-            book here
-          </button>
+            request a time
+          </Link>
         </div>
       )}
 
