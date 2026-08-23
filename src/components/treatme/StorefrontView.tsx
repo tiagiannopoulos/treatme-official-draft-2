@@ -299,7 +299,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
           lat={storefront.lat}
           lng={storefront.lng}
           accent={accent}
-          distanceLabel={Number.isFinite(km) ? formatDistance(km) : null}
+          distanceLabel={km !== null ? formatDistance(km) : null}
           mapsHref={mapsHref}
           name={name}
         />
