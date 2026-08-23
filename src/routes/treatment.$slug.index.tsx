@@ -6,7 +6,8 @@ import { ArrowLeft, Check, Clock, Lock, Minus, Plus, Star } from "lucide-react";
 import { ClinicsOffering } from "@/components/treatme/ClinicsOffering";
 import { ProviderCard } from "@/components/treatme/ProviderCard";
 import { treatmentDetailQuery, type TreatmentDetail } from "@/lib/treatment-detail";
-import { directoryQuery, distanceKm, TORONTO_CENTROID } from "@/lib/search-data";
+import { directoryQuery } from "@/lib/search-data";
+import { useNearbyKm } from "@/lib/nearby";
 
 export const Route = createFileRoute("/treatment/$slug/")({
   head: ({ params }) => {
@@ -219,13 +220,9 @@ function TreatmentDetailPage() {
           <div className="mt-2.5 space-y-3">
             {providers.map((p) => {
               const shops = [...p.storefronts].sort(
-                (a, b) =>
-                  distanceKm(TORONTO_CENTROID, { lat: a.lat, lng: a.lng }) -
-                  distanceKm(TORONTO_CENTROID, { lat: b.lat, lng: b.lng }),
+                (a, b) => (near.kmFor(a.id) ?? Infinity) - (near.kmFor(b.id) ?? Infinity),
               );
-              const km = shops[0]
-                ? distanceKm(TORONTO_CENTROID, { lat: shops[0].lat, lng: shops[0].lng })
-                : Number.NaN;
+              const km = shops[0] ? near.kmFor(shops[0].id) : null;
               return <ProviderCard key={p.id} provider={p} km={km} shops={shops} />;
             })}
           </div>

@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, MapPin } from "lucide-react";
 
-import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/lib/search-data";
+import { directoryQuery, formatDistance } from "@/lib/search-data";
+import { useNearbyKm } from "@/lib/nearby";
 
 /**
  * clinics that offer a treatment, read from the clinic's own listing rather than
@@ -10,6 +11,7 @@ import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/
  */
 export function ClinicsOffering({ slug, limit = 4 }: { slug: string; limit?: number }) {
   const { data } = useQuery(directoryQuery);
+  const near = useNearbyKm();
 
   const rows = (data?.storefronts ?? [])
     .map((s) => {
@@ -20,14 +22,14 @@ export function ClinicsOffering({ slug, limit = 4 }: { slug: string; limit?: num
       if (!offer && !roster) return null;
       return {
         s,
-        km: distanceKm(TORONTO_CENTROID, { lat: s.lat, lng: s.lng }),
+        km: near.kmFor(s.id),
         from: offer?.price_from ?? null,
         viaWebsite: Boolean(offer) && !offer?.verified && !roster,
         evidenceUrl: offer?.verified ? null : (offer?.evidence_url ?? null),
       };
     })
     .filter((r): r is NonNullable<typeof r> => Boolean(r))
-    .sort((a, b) => a.km - b.km)
+    .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity))
     .slice(0, limit);
 
   if (rows.length === 0) return null;
@@ -48,7 +50,8 @@ export function ClinicsOffering({ slug, limit = 4 }: { slug: string; limit?: num
               <span className="block truncate text-[14px] lowercase">{r.s.name.toLowerCase()}</span>
               <span className="mt-0.5 flex items-center gap-1 text-[11.5px] lowercase text-ink/55">
                 <MapPin className="size-3" />
-                {r.s.city.toLowerCase()} · {formatDistance(r.km)}
+                {r.s.city.toLowerCase()}
+                {r.km !== null && ` · ${formatDistance(r.km)}`}
               </span>
               {r.viaWebsite && (
                 <span className="mt-1 block text-[11px] lowercase text-ink/45">

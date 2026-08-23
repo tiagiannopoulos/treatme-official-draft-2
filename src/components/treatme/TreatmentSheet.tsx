@@ -7,7 +7,8 @@ import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
 import { ClinicsOffering } from "@/components/treatme/ClinicsOffering";
 import { ProviderCard } from "@/components/treatme/ProviderCard";
 import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
-import { directoryQuery, distanceKm, TORONTO_CENTROID } from "@/lib/search-data";
+import { directoryQuery } from "@/lib/search-data";
+import { useNearbyKm } from "@/lib/nearby";
 
 /** bottom sheet version of a treatment. the short read, with one door to the story. */
 export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () => void }) {
@@ -123,14 +124,7 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
                     <ProviderCard
                       key={p.id}
                       provider={p}
-                      km={
-                        p.storefronts[0]
-                          ? distanceKm(TORONTO_CENTROID, {
-                              lat: p.storefronts[0].lat,
-                              lng: p.storefronts[0].lng,
-                            })
-                          : NaN
-                      }
+                      km={p.storefronts[0] ? near.kmFor(p.storefronts[0].id) : null}
                       shops={p.storefronts}
                     />
                   ))

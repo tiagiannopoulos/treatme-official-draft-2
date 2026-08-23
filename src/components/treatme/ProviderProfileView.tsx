@@ -16,7 +16,8 @@ import {
   Zap,
 } from "lucide-react";
 
-import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/lib/search-data";
+import { directoryQuery, formatDistance } from "@/lib/search-data";
+import { useNearbyKm } from "@/lib/nearby";
 import {
   providerResultsQuery,
   providerReviewsQuery,
@@ -83,9 +84,8 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
   const resultCount = results.length;
   const treatmentCount = provider.treatments.length;
   const hasRating = provider.review_count >= 3;
-  const away = sortedStores[0]
-    ? formatDistance(distanceKm(TORONTO_CENTROID, { lat: sortedStores[0].lat, lng: sortedStores[0].lng }))
-    : null;
+  const nearestKm = sortedStores[0] ? near.kmFor(sortedStores[0].id) : null;
+  const away = nearestKm !== null ? formatDistance(nearestKm) : null;
 
   const nameFor = (slug: string) =>
     provider.treatments.find((t) => t.treatment_slug === slug)?.name ?? slug.replace(/-/g, " ");
