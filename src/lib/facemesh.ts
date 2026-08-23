@@ -88,17 +88,22 @@ export async function facemeshReady(): Promise<boolean> {
   return (await load("VIDEO")) !== null;
 }
 
+/** decode a data url into an image element */
+export async function decodeImage(dataUrl: string): Promise<HTMLImageElement> {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("decode_failed"));
+    el.src = dataUrl;
+  });
+}
+
 /** final landmark pass on the captured still */
 export async function landmarksFromDataUrl(dataUrl: string): Promise<Landmark[] | null> {
   const model = await load("IMAGE");
   if (!model) return null;
   try {
-    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-      const el = new Image();
-      el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("decode_failed"));
-      el.src = dataUrl;
-    });
+    const img = await decodeImage(dataUrl);
     const res = model.detect(img);
     const points = res.faceLandmarks?.[0];
     if (!points?.length) return null;
@@ -110,4 +115,14 @@ export async function landmarksFromDataUrl(dataUrl: string): Promise<Landmark[] 
   } catch {
     return null;
   }
+}
+
+/**
+ * layer 1 entry point. runs on the captured still immediately after capture and
+ * before the analysis call. returns null when there is no detectable face, and
+ * the caller then falls back to the stylised diagram rather than guessing.
+ */
+export async function faceMapFromDataUrl(dataUrl: string) {
+  const { buildFaceMap } = await import("@/lib/face-zones");
+  return buildFaceMap(await landmarksFromDataUrl(dataUrl));
 }

@@ -6,7 +6,8 @@ import { topConcerns } from "@/lib/skinAnalysis";
 import { resultFromAnalysis } from "@/lib/skinAnalysis/fromAnalysis";
 import { getRecommendations } from "@/lib/recommendations";
 import { uploadScanPhoto, type StoredScanPhoto } from "@/lib/scan-photo";
-import { landmarksFromDataUrl } from "@/lib/facemesh";
+import { faceMapFromDataUrl } from "@/lib/facemesh";
+import type { FaceMap } from "@/lib/face-zones";
 import { saveScan } from "@/lib/scan-persist";
 import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
 import { updateProfile, type Fitzpatrick } from "@/lib/patient-store";
@@ -73,7 +74,7 @@ function useRotator(items: string[], active: boolean, everyMs: number) {
 
 function AnalyzingPage() {
   const navigate = useNavigate();
-  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta, setLandmarks, setScanId } = useScan();
+  const { photoDataUrl, goals, storePhoto, setResult, setAnalysis, setPhotoPath, setScanMeta, setFaceMap, setScanId } = useScan();
 
   const started = useRef(false);
   const [phase, setPhase] = useState<Phase>("working");
@@ -94,7 +95,7 @@ function AnalyzingPage() {
   }, [phase]);
 
   const finish = useCallback(
-    async (analysis: SkinAnalysis, photo: StoredScanPhoto, landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>>) => {
+    async (analysis: SkinAnalysis, photo: StoredScanPhoto, faceMap: FaceMap | null) => {
       const result = resultFromAnalysis(analysis, crypto.randomUUID());
       const concerns = topConcerns(result);
       // write the read back into the patient profile so the rest of the app
@@ -109,7 +110,7 @@ function AnalyzingPage() {
         photoPath: photo.path,
         thumbPath: photo.thumbPath,
         storePhoto,
-        landmarks,
+        faceMap,
         result,
         photoQuality: analysis.photoQuality,
         medicalFlag: analysis.medicalFlag,
@@ -117,14 +118,14 @@ function AnalyzingPage() {
       });
 
       setScanId(scanId);
-      setLandmarks(landmarks);
+      setFaceMap(faceMap);
       setAnalysis(analysis);
       setScanMeta({ medicalFlag: analysis.medicalFlag, photoQuality: analysis.photoQuality });
       setProgress(100);
       setResult(result, scanDriven, goalDriven);
       navigate({ to: "/scan/results" });
     },
-    [goals, navigate, setAnalysis, setLandmarks, setResult, setScanMeta, setScanId, storePhoto],
+    [goals, navigate, setAnalysis, setFaceMap, setResult, setScanMeta, setScanId, storePhoto],
   );
 
   const run = useCallback(async () => {
@@ -168,8 +169,10 @@ function AnalyzingPage() {
     };
 
     try {
-      const [landmarks, photo] = await Promise.all([
-        landmarksFromDataUrl(photoDataUrl),
+      // layer 1 runs on the still before the analysis call. everything that
+      // places a marker depends on it.
+      const [faceMap, photo] = await Promise.all([
+        faceMapFromDataUrl(photoDataUrl),
         storePhoto
           ? uploadScanPhoto(photoDataUrl).catch<StoredScanPhoto>(() => ({ path: null, thumbPath: null }))
           : Promise.resolve<StoredScanPhoto>({ path: null, thumbPath: null }),
@@ -196,18 +199,18 @@ function AnalyzingPage() {
       if (!analysis) throw lastError ?? new Error("analysis_failed");
 
       if (forceRef.current) {
-        await finish({ ...analysis, photoQuality: "poor" }, photo, landmarks);
+        await finish({ ...analysis, photoQuality: "poor" }, photo, faceMap);
         return;
       }
 
       if (analysis.photoQuality === "poor") {
         pending.current = { analysis };
-        pendingMeta.current = { photo, landmarks };
+        pendingMeta.current = { photo, faceMap };
         setPhase("quality");
         return;
       }
 
-      await finish(analysis, photo, landmarks);
+      await finish(analysis, photo, faceMap);
     } catch (err) {
       console.error("scan analysis failed", err);
       const withReasons = err as { photoReasons?: PhotoReason[] };
@@ -226,9 +229,9 @@ function AnalyzingPage() {
     }
   }, [finish, navigate, photoDataUrl, setPhotoPath, storePhoto]);
 
-  const pendingMeta = useRef<{ photo: StoredScanPhoto; landmarks: Awaited<ReturnType<typeof landmarksFromDataUrl>> }>({
+  const pendingMeta = useRef<{ photo: StoredScanPhoto; faceMap: FaceMap | null }>({
     photo: { path: null, thumbPath: null },
-    landmarks: null,
+    faceMap: null,
   });
 
   useEffect(() => {
@@ -241,7 +244,7 @@ function AnalyzingPage() {
     const held = pending.current;
     if (!held) return;
     setPhase("working");
-    void finish(held.analysis, pendingMeta.current.photo, pendingMeta.current.landmarks);
+    void finish(held.analysis, pendingMeta.current.photo, pendingMeta.current.faceMap);
   };
 
   const retake = () => navigate({ to: "/scan/capture" });

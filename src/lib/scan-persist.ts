@@ -1,14 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SkinAnalysis } from "@/lib/skin-analysis";
 import type { ScanResult } from "@/lib/skinAnalysis";
-import type { Landmark } from "@/lib/facemesh";
+import type { FaceMap, MappingMethod } from "@/lib/face-zones";
 import { overallScore, toConcernRows } from "@/lib/scan-concerns";
 
 export interface SaveScanInput {
   photoPath: string | null;
   thumbPath?: string | null;
   storePhoto: boolean;
-  landmarks: Landmark[] | null;
+  /** layer 1 output. null when no face was detected. */
+  faceMap: FaceMap | null;
   result: ScanResult;
   photoQuality: string | null;
   medicalFlag: string | null;
@@ -25,6 +26,8 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
   if (!userId) return null;
 
   const rows = toConcernRows(input.result);
+  // never place markers without a detected face.
+  const mappingMethod: MappingMethod = input.faceMap ? "landmarks" : "fallback_diagram";
 
   const { data: scan, error } = await supabase
     .from("scans")
@@ -33,7 +36,16 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       photo_path: input.storePhoto ? input.photoPath : null,
       thumb_path: input.storePhoto ? (input.thumbPath ?? null) : null,
       store_photo: input.storePhoto,
-      landmarks: input.landmarks ? (input.landmarks as unknown as never) : null,
+      landmarks: input.faceMap ? (input.faceMap.landmarks as unknown as never) : null,
+      face_zones: input.faceMap
+        ? ({
+            zones: input.faceMap.zones,
+            masks: input.faceMap.masks,
+            bounds: input.faceMap.bounds,
+            midline: input.faceMap.midline,
+          } as unknown as never)
+        : null,
+      mapping_method: mappingMethod,
       overall_score: overallScore(rows),
       engine: input.result.model_version,
       status: "complete",
@@ -61,6 +73,7 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       sub_scores: r.sub_scores as unknown as never,
       region_scores: r.region_scores as unknown as never,
       regions: r.regions as unknown as never,
+      mapping_method: mappingMethod,
     })),
   );
   if (resultsError) console.warn("scan results insert failed", resultsError.message);
