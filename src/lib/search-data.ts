@@ -65,8 +65,72 @@ export function neighbourhood(s: Storefront): string {
   return tail || s.city;
 }
 
-/** hardcoded home centroid used to order nearby providers before gps. */
+/**
+ * the area line for a card. when there is no neighbourhood we say the city
+ * once, never "toronto, toronto".
+ */
+export function areaLine(s: Storefront): string {
+  const area = neighbourhood(s);
+  const city = s.city.toLowerCase();
+  if (!area || area === city) return city;
+  return `${area}, ${city}`;
+}
+
+/**
+ * street address with the trailing repeats stripped. crawled addresses arrive
+ * as "211 yonge st, toronto, on m5b 2h1, canada" and then get the city bolted
+ * on again by the card.
+ */
+export function addressLine(s: Storefront): string {
+  const city = s.city.trim().toLowerCase();
+  const drop = new Set([city, "canada", "on", "ontario", s.postcode.trim().toLowerCase()]);
+  const parts = s.address_line
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const kept: string[] = [];
+  for (const part of parts) {
+    const norm = part.toLowerCase();
+    if (drop.has(norm)) continue;
+    // "on m5b 2h1" style tails
+    if (/^[a-z]{2}\s+[a-z]\d[a-z]\s*\d[a-z]\d$/i.test(norm)) continue;
+    if (kept.some((k) => k.toLowerCase() === norm)) continue;
+    kept.push(part);
+  }
+  const line = (kept.length ? kept.join(", ") : parts[0] ?? s.address_line).toLowerCase();
+  return line.replace(/\s*,\s*$/, "");
+}
+
+/** map centre used only to frame the map before anyone has told us where they are. */
 export const TORONTO_CENTROID: LatLng = { lat: 43.6532, lng: -79.3832 };
+
+/**
+ * distance measured in postgres, not the browser. returns km per storefront id
+ * within the radius, nearest first.
+ */
+export function nearbyStorefrontsQuery(point: LatLng | null, radiusKm: number) {
+  return queryOptions({
+    queryKey: ["storefronts-near", point?.lat ?? null, point?.lng ?? null, radiusKm],
+    enabled: Boolean(point),
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Array<{ id: string; km: number }>> => {
+      if (!point) return [];
+      const { data, error } = await supabase.rpc("storefronts_near", {
+        _lat: point.lat,
+        _lng: point.lng,
+        _radius_km: radiusKm,
+        _limit: 400,
+      });
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as Array<{ id: string; km: number | string }>).map((r) => ({
+        id: r.id,
+        km: Number(r.km),
+      }));
+    },
+  });
+}
+
+
 
 
 export interface ProviderTreatment {
