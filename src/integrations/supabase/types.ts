@@ -2008,6 +2008,18 @@ export type Database = {
         Returns: number
       }
       owns_provider: { Args: { _provider_id: string }; Returns: boolean }
+      storefronts_near: {
+        Args: {
+          _lat: number
+          _limit?: number
+          _lng: number
+          _radius_km?: number
+        }
+        Returns: {
+          id: string
+          km: number
+        }[]
+      }
     }
     Enums: {
       education_slide_type:
