@@ -1,4 +1,5 @@
-import { Document, Image, Link, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Circle, Document, Image, Link, Page, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import { Link as PdfLink } from "@react-pdf/renderer";
 import {
   BAND_BAR,
   BAND_COLOR,
@@ -142,9 +143,28 @@ function money(n: number | null) {
 function Tile({ indicator, includePhotos }: { indicator: ReportIndicator; includePhotos: boolean }) {
   const tint = BAND_COLOR[indicator.band];
   if (includePhotos && indicator.photoUrl) {
+    // the photo with the same marked places as the app. soft translucent discs.
+    const marks = [...indicator.regions].sort((a, b) => b.intensity - a.intensity).slice(0, 10);
     return (
-      <View style={[s.tile, { backgroundColor: tint }]}>
+      <View style={[s.tile, { backgroundColor: tint, position: "relative" }]}>
         <Image src={indicator.photoUrl} style={{ width: 72, height: 72, objectFit: "cover" }} />
+        {marks.length > 0 && (
+          <Svg
+            viewBox="0 0 1 1"
+            style={{ position: "absolute", top: 0, left: 0, width: 72, height: 72 }}
+          >
+            {marks.map((m, i) => (
+              <Circle
+                key={i}
+                cx={m.x}
+                cy={m.y}
+                r={Math.max(0.02, m.r)}
+                fill={indicator.accent}
+                fillOpacity={Math.min(0.9, 0.35 + m.intensity * 0.45)}
+              />
+            ))}
+          </Svg>
+        )}
       </View>
     );
   }
