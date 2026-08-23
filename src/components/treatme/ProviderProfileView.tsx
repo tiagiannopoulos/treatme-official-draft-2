@@ -16,7 +16,8 @@ import {
   Zap,
 } from "lucide-react";
 
-import { directoryQuery, distanceKm, formatDistance, TORONTO_CENTROID } from "@/lib/search-data";
+import { directoryQuery, formatDistance } from "@/lib/search-data";
+import { useNearbyKm } from "@/lib/nearby";
 import {
   providerResultsQuery,
   providerReviewsQuery,
@@ -58,6 +59,7 @@ function useSavedProviders() {
 export function ProviderProfileView({ match }: { match: (p: Provider) => boolean }) {
   const router = useRouter();
   const { data } = useSuspenseQuery(directoryQuery);
+  const near = useNearbyKm();
   const provider = data.providers.find(match);
   if (!provider) throw notFound();
 
@@ -83,9 +85,8 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
   const resultCount = results.length;
   const treatmentCount = provider.treatments.length;
   const hasRating = provider.review_count >= 3;
-  const away = sortedStores[0]
-    ? formatDistance(distanceKm(TORONTO_CENTROID, { lat: sortedStores[0].lat, lng: sortedStores[0].lng }))
-    : null;
+  const nearestKm = sortedStores[0] ? near.kmFor(sortedStores[0].id) : null;
+  const away = nearestKm !== null ? formatDistance(nearestKm) : null;
 
   const nameFor = (slug: string) =>
     provider.treatments.find((t) => t.treatment_slug === slug)?.name ?? slug.replace(/-/g, " ");
@@ -181,7 +182,8 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
           </p>
         )}
         <p className="mt-1 text-[12px] text-ink-mute lowercase">
-          speaks {provider.languages.length > 0 ? provider.languages.join(", ").toLowerCase() : "english"}
+          speaks{" "}
+          {provider.languages.length > 0 ? provider.languages.join(", ").toLowerCase() : "english"}
         </p>
       </section>
 
@@ -327,9 +329,7 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
           ) : results.length < 3 ? (
             <div className="px-6 mt-4">
               <div className="rounded-2xl border border-line bg-cream p-5">
-                <p className="text-[13px] lowercase text-ink-soft">
-                  no results posted yet
-                </p>
+                <p className="text-[13px] lowercase text-ink-soft">no results posted yet</p>
                 <p className="text-[12px] lowercase text-ink-mute mt-1">
                   this provider has not published before and afters on treatme
                 </p>
@@ -350,7 +350,9 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
               {reviews.map((r) => (
                 <div key={r.id} className="border-b border-line pb-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-medium lowercase">{initialName(r.reviewer_name)}</p>
+                    <p className="text-[13px] font-medium lowercase">
+                      {initialName(r.reviewer_name)}
+                    </p>
                     <span className="inline-flex items-center gap-1 text-[12px] text-ink-soft">
                       <Star className="size-3.5 fill-ink text-ink" />
                       {r.rating.toFixed(1)}
@@ -359,7 +361,9 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
                   <p className="text-[11px] text-ink-mute lowercase mt-0.5">
                     {r.treatment_name.toLowerCase()} · {reviewDate(r.reviewed_at)}
                   </p>
-                  <p className="text-[13px] text-ink-soft lowercase leading-relaxed mt-1.5">{r.body}</p>
+                  <p className="text-[13px] text-ink-soft lowercase leading-relaxed mt-1.5">
+                    {r.body}
+                  </p>
                 </div>
               ))}
             </div>
@@ -373,7 +377,13 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
           <div className="rounded-2xl border border-line p-4 space-y-2">
             {fit.map((f) => {
               const Icon =
-                f.icon === "language" ? Languages : f.icon === "device" ? Zap : f.icon === "treats" ? Sparkles : Droplet;
+                f.icon === "language"
+                  ? Languages
+                  : f.icon === "device"
+                    ? Zap
+                    : f.icon === "treats"
+                      ? Sparkles
+                      : Droplet;
               return (
                 <div
                   key={f.id}
@@ -430,9 +440,9 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
       </section>
 
       <p className="px-6 mt-7 text-[11px] text-ink-mute lowercase leading-relaxed">
-        provider details are supplied by the clinic. your provider confirms what is right for you at consult.
+        provider details are supplied by the clinic. your provider confirms what is right for you at
+        consult.
       </p>
-
 
       {viewerIndex !== null && (
         <ResultViewer
@@ -462,7 +472,11 @@ function Avatar({ provider }: { provider: Provider }) {
     .toUpperCase();
 
   return provider.avatar_url ? (
-    <img src={provider.avatar_url} alt={provider.name} className="size-[84px] rounded-full object-cover" />
+    <img
+      src={provider.avatar_url}
+      alt={provider.name}
+      className="size-[84px] rounded-full object-cover"
+    />
   ) : (
     <span className="size-[84px] rounded-full bg-bubblegum/40 grid place-items-center text-[28px] font-medium">
       {initials}
@@ -470,15 +484,7 @@ function Avatar({ provider }: { provider: Provider }) {
   );
 }
 
-function Stat({
-  count,
-  label,
-  value,
-}: {
-  count?: number;
-  label: string;
-  value?: string;
-}) {
+function Stat({ count, label, value }: { count?: number; label: string; value?: string }) {
   return (
     <div className="text-center">
       <p className="text-[18px] font-medium lowercase">{value !== undefined ? value : count}</p>
@@ -489,7 +495,15 @@ function Stat({
 
 function SplitIcon() {
   return (
-    <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      className="size-3.5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="12" r="10" />
       <path d="M12 2v20" />
     </svg>
@@ -518,6 +532,10 @@ function initialName(full: string): string {
   return `${first.toLowerCase()} ${last ? last[0].toUpperCase() + "." : ""}`.trim();
 }
 
-function neighbourhood(s: { neighbourhood: string | null; city: string; postcode: string }): string {
+function neighbourhood(s: {
+  neighbourhood: string | null;
+  city: string;
+  postcode: string;
+}): string {
   return (s.neighbourhood || s.city || s.postcode).toLowerCase();
 }

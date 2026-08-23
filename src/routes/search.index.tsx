@@ -9,7 +9,6 @@ import {
   ArrowRight,
   BadgeCheck,
   ChevronRight,
-
 } from "lucide-react";
 
 import {
@@ -22,8 +21,11 @@ import {
   matchStorefront,
   matchStorefrontVia,
   providerFromPrice,
-  LOCATION_PRESETS,
+  nearbyStorefrontsQuery,
   neighbourhood,
+  areaLine,
+  addressLine,
+  TORONTO_CENTROID,
   RADIUS_OPTIONS,
   type LatLng,
   type Provider,
@@ -33,11 +35,12 @@ import {
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
 import { usePatient } from "@/lib/patient-store";
+import { usePatientLocation } from "@/lib/patient-location";
+import { LocationCard, LocationChip } from "@/components/treatme/LocationCard";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const FITZ_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
-
-
 
 export const Route = createFileRoute("/search/")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -49,12 +52,14 @@ export const Route = createFileRoute("/search/")({
       { title: "find a provider · treatme" },
       {
         name: "description",
-        content: "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+        content:
+          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
       },
       { property: "og:title", content: "find a provider · treatme" },
       {
         property: "og:description",
-        content: "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+        content:
+          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -79,11 +84,9 @@ type Scope = "all" | "providers" | "medspas" | "treatments";
 const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
 
 function SearchPage() {
-
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const patient = usePatient();
-
 
   const { q: initialQ = "", scope: initialScope } = Route.useSearch();
   const [q, setQ] = useState(initialQ);
@@ -96,9 +99,21 @@ function SearchPage() {
         : "all",
   );
   const [radius, setRadius] = useState<number>(10);
-  const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
-  const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
+  const { location, ready: locationReady } = usePatientLocation();
+  const [pickingLocation, setPickingLocation] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+
+  /** map framing only. distances never come from this. */
+  const center: LatLng = location ? { lat: location.lat, lng: location.lng } : TORONTO_CENTROID;
+  const locLabel = location?.label ?? "your area";
+
+  /** distance is computed in postgres, per storefront id. */
+  const { data: near } = useQuery(nearbyStorefrontsQuery(location ? center : null, radius));
+  const kmById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const row of near ?? []) m.set(row.id, row.km);
+    return m;
+  }, [near]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -114,20 +129,27 @@ function SearchPage() {
   /** typing ahead of the debounce -> show skeletons, never a spinner. */
   const pending = searching && q.trim() !== needle;
 
-  const storefrontsInRange = useMemo(
-    () =>
-      data.storefronts
-        .map((s) => ({ ...s, km: distanceKm(center, { lat: s.lat, lng: s.lng }) }))
-        .filter((s) => s.km <= radius)
-        .sort((a, b) => a.km - b.km),
-    [data.storefronts, center, radius],
-  );
+  /**
+   * with a location: only what postgres returned, ordered by its distance.
+   * without one: everything, alphabetical, and no distance is shown anywhere.
+   */
+  const storefrontsInRange = useMemo(() => {
+    if (!location) return data.storefronts.map((s) => ({ ...s, km: null as number | null }));
+    return data.storefronts
+      .filter((s) => kmById.has(s.id))
+      .map((s) => ({ ...s, km: kmById.get(s.id) as number | null }))
+      .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  }, [data.storefronts, location, kmById]);
 
-  const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
+  const inRangeIds = useMemo(
+    () => new Set(storefrontsInRange.map((s) => s.id)),
+    [storefrontsInRange],
+  );
 
   const providerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const p of data.providers) for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
+    for (const p of data.providers)
+      for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
     return counts;
   }, [data.providers]);
 
@@ -137,30 +159,24 @@ function SearchPage() {
     [data.storefronts],
   );
 
-
-
-
   const providerResults = useMemo(() => {
     return data.providers
       .map((p) => {
         const { hit, via } = matchProvider(p, needle);
         const shops = p.storefronts.filter((s) => inRangeIds.has(s.id));
         const ranked = [...shops].sort(
-          (a, b) =>
-            distanceKm(center, { lat: a.lat, lng: a.lng }) - distanceKm(center, { lat: b.lat, lng: b.lng }),
+          (a, b) => (kmById.get(a.id) ?? Infinity) - (kmById.get(b.id) ?? Infinity),
         );
-        const km = ranked.length
-          ? distanceKm(center, { lat: ranked[0].lat, lng: ranked[0].lng })
-          : Infinity;
+        const km = ranked.length ? (kmById.get(ranked[0].id) ?? null) : null;
         return { p, hit, via, shops: ranked, km };
       })
       .filter((r) => r.hit && r.shops.length > 0)
-      .sort((a, b) => a.km - b.km);
-  }, [data.providers, needle, inRangeIds, center]);
+      .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  }, [data.providers, needle, inRangeIds, kmById]);
 
   /** five nearest providers, skin type matches first, for the explore row. */
   const nearbyProviders = useMemo(() => {
-    const fitz = patient.profile.skinType ? FITZ_NUMBER[patient.profile.skinType] ?? null : null;
+    const fitz = patient.profile.skinType ? (FITZ_NUMBER[patient.profile.skinType] ?? null) : null;
     const withMatch = providerResults.map((r) => ({
       ...r,
       matches:
@@ -170,12 +186,8 @@ function SearchPage() {
         fitz >= r.p.fitzpatrick_min &&
         fitz <= r.p.fitzpatrick_max,
     }));
-    return [...withMatch]
-      .sort((a, b) => Number(b.matches) - Number(a.matches))
-      .slice(0, 5);
+    return [...withMatch].sort((a, b) => Number(b.matches) - Number(a.matches)).slice(0, 5);
   }, [providerResults, patient.profile.skinType]);
-
-
 
   // a clinic counts as a match when their own website lists the treatment, even
   // when we have nobody on their roster yet.
@@ -223,13 +235,23 @@ function SearchPage() {
     if (showMedspas) for (const s of medspaResults) ids.add(s.id);
     const picked = data.storefronts.filter((s) => ids.has(s.id));
     return picked.length ? picked : storefrontsInRange;
-  }, [showProviders, showMedspas, providerResults, medspaResults, data.storefronts, storefrontsInRange]);
+  }, [
+    showProviders,
+    showMedspas,
+    providerResults,
+    medspaResults,
+    data.storefronts,
+    storefrontsInRange,
+  ]);
 
   const countLine = (() => {
     const where = ` in ${locLabel}`;
-    if (scope === "providers") return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "medspas") return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "treatments") return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
+    if (scope === "providers")
+      return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
+    if (scope === "medspas")
+      return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
+    if (scope === "treatments")
+      return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
     return `${totalResults} result${totalResults === 1 ? "" : "s"}${where}`;
   })();
 
@@ -291,7 +313,9 @@ function SearchPage() {
         <div className="px-6">
           {/* map stays pinned at the top, pins filtered to the results */}
           <div className="mt-1">
-            <ClientOnly fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}>
+            <ClientOnly
+              fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}
+            >
               <SearchMap
                 storefronts={resultStorefronts}
                 center={center}
@@ -334,13 +358,18 @@ function SearchPage() {
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                     {(scope === "all" ? providerResults.slice(0, 6) : providerResults).map(
                       ({ p, via, shops, km }) => (
-                        <ProviderCardCompact key={p.id} provider={p} via={via} km={km} shops={shops} />
+                        <ProviderCardCompact
+                          key={p.id}
+                          provider={p}
+                          via={via}
+                          km={km}
+                          shops={shops}
+                        />
                       ),
                     )}
                   </div>
                 </section>
               )}
-
 
               {showMedspas && medspaResults.length > 0 && (
                 <section className="mt-6">
@@ -364,7 +393,9 @@ function SearchPage() {
                         key={s.id}
                         storefront={s}
                         km={s.km}
-                        providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                        providers={data.providers.filter((p) =>
+                          p.storefronts.some((x) => x.id === s.id),
+                        )}
                         viaWebsite={s.viaWebsite}
                         active={selected === s.id}
                         onSelect={() => setSelected(s.id)}
@@ -373,7 +404,6 @@ function SearchPage() {
                   </div>
                 </section>
               )}
-
 
               {showTreatments && treatmentResults.length > 0 && (
                 <section className="mt-6">
@@ -392,92 +422,90 @@ function SearchPage() {
                     </div>
                   )}
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(({ t }) => (
-                      <TreatmentCardCompact
-                        key={t.slug}
-                        treatment={t}
-                        providerCount={treatmentProviderCounts[t.slug] ?? 0}
-                        onClick={() => {
-                          setQ(t.name.toLowerCase());
-                          setScope("providers");
-                        }}
-                      />
-                    ))}
+                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(
+                      ({ t }) => (
+                        <TreatmentCardCompact
+                          key={t.slug}
+                          treatment={t}
+                          providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                          onClick={() => {
+                            setQ(t.name.toLowerCase());
+                            setScope("providers");
+                          }}
+                        />
+                      ),
+                    )}
                   </div>
                 </section>
               )}
-
 
               {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
             </>
           )}
         </div>
       ) : (
-
         /* ---------- explore state ---------- */
         <div className="px-6">
           {/* a) map card */}
           <div className="mt-5 flex items-center justify-between gap-2">
             <h2 className="brand-eyebrow">near you</h2>
-            <span className="inline-flex items-center gap-1 rounded-pill border border-[rgba(17,17,17,0.10)] px-2.5 py-1 text-[11px] text-ink-mute lowercase">
-              <MapPin className="size-3" />
-              toronto, on
-            </span>
+            <LocationChip onClick={() => setPickingLocation(true)} />
           </div>
 
-          <div className="mt-2">
-            <ClientOnly fallback={<div className="h-[220px] rounded-[20px] border border-line bg-muted" />}>
-              <SearchMap
-                storefronts={storefrontsInRange}
-                center={center}
-                radiusKm={radius}
-                selectedId={selected}
-                onSelect={setSelected}
-                providerCounts={providerCounts}
-                height="h-[220px]"
-                expandable
-              />
-            </ClientOnly>
-          </div>
+          {locationReady && (!location || pickingLocation) ? (
+            <div className="mt-2">
+              <LocationCard onDone={() => setPickingLocation(false)} />
+              {location && pickingLocation && (
+                <button
+                  type="button"
+                  onClick={() => setPickingLocation(false)}
+                  className="mt-3 text-[12px] text-ink/60 lowercase underline"
+                >
+                  keep {location.label}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="mt-2">
+                <ClientOnly
+                  fallback={
+                    <div className="h-[220px] rounded-[20px] border border-line bg-muted" />
+                  }
+                >
+                  <SearchMap
+                    storefronts={storefrontsInRange}
+                    center={center}
+                    radiusKm={radius}
+                    selectedId={selected}
+                    onSelect={setSelected}
+                    providerCounts={providerCounts}
+                    height="h-[220px]"
+                    expandable
+                  />
+                </ClientOnly>
+              </div>
 
+              <div className="mt-3 flex gap-2">
+                {RADIUS_OPTIONS.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRadius(r)}
+                    className={cn(
+                      "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
+                      radius === r
+                        ? "border-ink bg-ink text-cream font-semibold"
+                        : "border-line text-ink-mute",
+                    )}
+                  >
+                    {r} km
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-
-
-
-          <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
-            {LOCATION_PRESETS.map((l) => (
-              <button
-                key={l.label}
-                type="button"
-                onClick={() => {
-                  setCenter(l.point);
-                  setLocLabel(l.label);
-                }}
-                className={cn(
-                  "shrink-0 rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                  locLabel === l.label ? "border-hot bg-hot/10 text-ink font-semibold" : "border-line text-ink-mute",
-                )}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-2 flex gap-2">
-            {RADIUS_OPTIONS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRadius(r)}
-                className={cn(
-                  "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                  radius === r ? "border-ink bg-ink text-cream font-semibold" : "border-line text-ink-mute",
-                )}
-              >
-                {r} km
-              </button>
-            ))}
-          </div>
           {/* c) featured storefronts row */}
           {featuredStorefronts.length > 0 && (
             <section className="mt-7">
@@ -508,9 +536,19 @@ function SearchPage() {
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">providers near you - coming soon</h2>
-                <span className="text-[12px] text-ink-mute lowercase">
-                  {providerResults.length} within {radius} km
-                </span>
+                {location ? (
+                  <span className="text-[12px] text-ink-mute lowercase">
+                    {providerResults.length} within {radius} km
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPickingLocation(true)}
+                    className="text-[12px] font-semibold text-hot lowercase"
+                  >
+                    set your location
+                  </button>
+                )}
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                 {nearbyProviders.map(({ p, shops, km, matches }) => (
@@ -534,7 +572,9 @@ function SearchPage() {
                   <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
                     <ChevronRight className="size-5 text-ink" />
                   </span>
-                  <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">see all providers</p>
+                  <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">
+                    see all providers
+                  </p>
                   <p className="text-[12px] text-ink/60 lowercase">
                     browse everyone within {radius} km
                   </p>
@@ -543,14 +583,23 @@ function SearchPage() {
             </section>
           )}
 
-
           {showMedspas && (
             <section className="mt-6">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">medspas near you</h2>
-                <span className="text-[12px] text-ink-mute lowercase">
-                  {medspaResults.length} within {radius} km
-                </span>
+                {location ? (
+                  <span className="text-[12px] text-ink-mute lowercase">
+                    {medspaResults.length} within {radius} km
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPickingLocation(true)}
+                    className="text-[12px] font-semibold text-hot lowercase"
+                  >
+                    set your location
+                  </button>
+                )}
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
                 {(scope === "all" ? medspaResults.slice(0, 8) : medspaResults).map((s) => (
@@ -558,7 +607,9 @@ function SearchPage() {
                     key={s.id}
                     storefront={s}
                     km={s.km}
-                    providers={data.providers.filter((p) => p.storefronts.some((x) => x.id === s.id))}
+                    providers={data.providers.filter((p) =>
+                      p.storefronts.some((x) => x.id === s.id),
+                    )}
                     viaWebsite={s.viaWebsite}
                     active={selected === s.id}
                     onSelect={() => setSelected(s.id)}
@@ -576,17 +627,17 @@ function SearchPage() {
                     <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
                       <ChevronRight className="size-5 text-ink" />
                     </span>
-                    <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">see all medspas</p>
+                    <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">
+                      see all medspas
+                    </p>
                     <p className="text-[12px] text-ink/60 lowercase">
                       browse all {medspaResults.length} within {radius} km
                     </p>
                   </button>
                 )}
               </div>
-
             </section>
           )}
-
 
           {showTreatments && (
             <section className="mt-6">
@@ -607,8 +658,8 @@ function SearchPage() {
             </section>
           )}
 
-
-          {((showProviders && providerResults.length === 0) || (showMedspas && medspaResults.length === 0)) && (
+          {((showProviders && providerResults.length === 0) ||
+            (showMedspas && medspaResults.length === 0)) && (
             <div className="mt-6 rounded-2xl border border-line p-5 text-center">
               <p className="brand-display text-[20px]">nothing within {radius} km.</p>
               <p className="text-[13px] text-ink-mute mt-1 lowercase">
@@ -628,7 +679,6 @@ function SearchPage() {
     </div>
   );
 }
-
 
 /** compact horizontal-rail card for treatments. */
 function TreatmentCardCompact({
@@ -654,7 +704,9 @@ function TreatmentCardCompact({
           {treatment.name.slice(0, 2).toLowerCase()}
         </span>
       )}
-      <p className="mt-2.5 text-[14px] font-semibold lowercase leading-tight truncate">{treatment.name}</p>
+      <p className="mt-2.5 text-[14px] font-semibold lowercase leading-tight truncate">
+        {treatment.name}
+      </p>
       <p className="text-[11px] text-ink-mute lowercase truncate">
         {treatment.descriptor || treatment.category || treatment.family}
       </p>
@@ -692,7 +744,6 @@ function TreatmentCardCompact({
   );
 }
 
-
 function MedspaCard({
   storefront,
   km,
@@ -702,21 +753,18 @@ function MedspaCard({
   onSelect,
 }: {
   storefront: Storefront;
-  km: number;
+  /** null when we do not know where the patient is. show the area instead. */
+  km: number | null;
   providers: Provider[];
   /** the clinic only matched because their website lists it. say so. */
   viaWebsite?: boolean;
   active: boolean;
   onSelect: () => void;
 }) {
-
   return (
     <div
       onClick={onSelect}
-      className={cn(
-        "rounded-2xl border p-4 bg-white",
-        active ? "border-hot" : "border-line",
-      )}
+      className={cn("rounded-2xl border p-4 bg-white", active ? "border-hot" : "border-line")}
     >
       <div className="flex items-baseline justify-between gap-2">
         <p className="brand-display text-[18px]">{storefront.name}</p>
@@ -728,7 +776,8 @@ function MedspaCard({
       <p className="text-[12px] text-ink-mute lowercase">{storefront.tagline}</p>
       <p className="mt-1 text-[12px] text-ink-soft lowercase inline-flex items-center gap-1">
         <MapPin className="size-3.5 text-hot" />
-        {storefront.address_line}, {storefront.city} {storefront.postcode.toLowerCase()} · {formatDistance(km)}
+        {addressLine(storefront)}, {storefront.city.toLowerCase()}
+        {km !== null && ` · ${formatDistance(km)}`}
       </p>
       <div className="mt-3 space-y-2 border-t border-line pt-3">
         <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
@@ -743,7 +792,9 @@ function MedspaCard({
           >
             <Avatar name={p.name} url={p.avatar_url} size="size-9" />
             <span className="min-w-0">
-              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">{p.name}</span>
+              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">
+                {p.name}
+              </span>
               <span className="block text-[11px] text-ink-mute lowercase truncate">{p.title}</span>
             </span>
           </Link>
@@ -763,7 +814,8 @@ function MedspaCardCompact({
   onSelect,
 }: {
   storefront: Storefront;
-  km: number;
+  /** null when we do not know where the patient is. show the area instead. */
+  km: number | null;
   providers: Provider[];
   /** the clinic only matched because their website lists it. say so. */
   viaWebsite?: boolean;
@@ -780,7 +832,6 @@ function MedspaCardCompact({
         active ? "border-hot" : "border-line",
       )}
     >
-
       {storefront.hero_image_url ? (
         <img
           src={storefront.hero_image_url}
@@ -801,22 +852,28 @@ function MedspaCardCompact({
         <p className="text-[11px] text-ink-mute lowercase mt-0.5 truncate">{storefront.tagline}</p>
         <p className="mt-1.5 text-[11px] text-ink-soft lowercase inline-flex items-center gap-1">
           <MapPin className="size-3 text-hot" />
-          {storefront.address_line}, {storefront.city} · {formatDistance(km)}
+          {km !== null ? `${areaLine(storefront)} · ${formatDistance(km)}` : areaLine(storefront)}
         </p>
         <div className="mt-2.5 flex items-center gap-2 border-t border-line pt-2">
           {providers.slice(0, 3).map((p) => (
             <Avatar key={p.id} name={p.name} url={p.avatar_url} size="size-7" />
           ))}
-          <span className="text-[11px] text-ink-mute lowercase">
-            {providers.length} provider{providers.length === 1 ? "" : "s"}
-          </span>
+          {/* never advertise zero. fall back to what they list. */}
+          {providers.length > 0 ? (
+            <span className="text-[11px] text-ink-mute lowercase">
+              {providers.length} provider{providers.length === 1 ? "" : "s"}
+            </span>
+          ) : storefront.listed.length > 0 ? (
+            <span className="text-[11px] text-ink-mute lowercase">
+              {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
+            </span>
+          ) : null}
         </div>
         {viaWebsite && (
           <p className="mt-1.5 text-[11px] lowercase text-ink/45">listed on their website</p>
         )}
       </div>
     </Link>
-
   );
 }
 
@@ -850,11 +907,17 @@ function FeaturedStorefrontCard({
           {storefront.name}
           {storefront.claimed && <BadgeCheck className="size-3.5 text-hot" />}
         </p>
-        <p className="text-[12px] text-ink-mute lowercase mt-0.5">{neighbourhood(storefront)}</p>
+        <p className="text-[12px] text-ink-mute lowercase mt-0.5">{areaLine(storefront)}</p>
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-[12px] text-ink-soft lowercase">
-            {providerCount} {providerCount === 1 ? "provider" : "providers"}
-          </span>
+          {providerCount > 0 ? (
+            <span className="text-[12px] text-ink-soft lowercase">
+              {providerCount} {providerCount === 1 ? "provider" : "providers"}
+            </span>
+          ) : storefront.listed.length > 0 ? (
+            <span className="text-[12px] text-ink-soft lowercase">
+              {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
+            </span>
+          ) : null}
           {storefront.review_count > 0 ? (
             <span className="inline-flex items-center gap-1 text-[12px] text-ink-soft">
               <Star className="size-3 fill-ink text-ink" />

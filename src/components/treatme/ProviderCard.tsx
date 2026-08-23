@@ -37,7 +37,8 @@ export function ProviderCard({
 }: {
   provider: Provider;
   via?: string;
-  km: number;
+  /** null when we do not know where the patient is. no invented distances. */
+  km: number | null;
   shops: Array<Storefront & { is_primary: boolean }>;
 }) {
   const navigate = useNavigate();
@@ -62,8 +63,8 @@ export function ProviderCard({
             <p className="text-[16px] font-semibold text-ink lowercase leading-tight line-clamp-2 break-words">{provider.name}</p>
             <p className="text-[13px] text-ink/60 lowercase truncate">{provider.title}</p>
           </div>
-          {Number.isFinite(km) && (
-            <span className="shrink-0 text-[12px] text-ink/50 lowercase">{formatDistance(km)}</span>
+          {(km !== null && Number.isFinite(km)) && (
+            <span className="shrink-0 text-[12px] text-ink/50 lowercase">{formatDistance(km as number)}</span>
           )}
         </div>
 
@@ -145,7 +146,8 @@ export function ProviderCardCompact({
 }: {
   provider: Provider;
   via?: string;
-  km: number;
+  /** null when we do not know where the patient is. no invented distances. */
+  km: number | null;
   shops: Array<Storefront & { is_primary: boolean }>;
   widthClass?: string;
   matchesSkinType?: boolean;
@@ -174,8 +176,8 @@ export function ProviderCardCompact({
       <p className="mt-3 text-[14px] font-semibold lowercase leading-tight line-clamp-2 break-words">{provider.name}</p>
       <p className="text-[12px] text-ink/60 lowercase truncate">{provider.title}</p>
       <div className="mt-2 flex items-center gap-1.5 text-[11px] text-ink/70 lowercase">
-        {Number.isFinite(km) && <span>{formatDistance(km)}</span>}
-        {Number.isFinite(km) && nearest && <span className="text-ink/30">·</span>}
+        {(km !== null && Number.isFinite(km)) && <span>{formatDistance(km as number)}</span>}
+        {(km !== null && Number.isFinite(km)) && nearest && <span className="text-ink/30">·</span>}
         {nearest && (
           <span
             role="link"

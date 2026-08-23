@@ -65,8 +65,72 @@ export function neighbourhood(s: Storefront): string {
   return tail || s.city;
 }
 
-/** hardcoded home centroid used to order nearby providers before gps. */
+/**
+ * the area line for a card. when there is no neighbourhood we say the city
+ * once, never "toronto, toronto".
+ */
+export function areaLine(s: Storefront): string {
+  const area = neighbourhood(s);
+  const city = s.city.toLowerCase();
+  if (!area || area === city) return city;
+  return `${area}, ${city}`;
+}
+
+/**
+ * street address with the trailing repeats stripped. crawled addresses arrive
+ * as "211 yonge st, toronto, on m5b 2h1, canada" and then get the city bolted
+ * on again by the card.
+ */
+export function addressLine(s: Storefront): string {
+  const city = s.city.trim().toLowerCase();
+  const drop = new Set([city, "canada", "on", "ontario", s.postcode.trim().toLowerCase()]);
+  const parts = s.address_line
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const kept: string[] = [];
+  for (const part of parts) {
+    const norm = part.toLowerCase();
+    if (drop.has(norm)) continue;
+    // "on m5b 2h1" style tails
+    if (/^[a-z]{2}\s+[a-z]\d[a-z]\s*\d[a-z]\d$/i.test(norm)) continue;
+    if (kept.some((k) => k.toLowerCase() === norm)) continue;
+    kept.push(part);
+  }
+  const line = (kept.length ? kept.join(", ") : parts[0] ?? s.address_line).toLowerCase();
+  return line.replace(/\s*,\s*$/, "");
+}
+
+/** map centre used only to frame the map before anyone has told us where they are. */
 export const TORONTO_CENTROID: LatLng = { lat: 43.6532, lng: -79.3832 };
+
+/**
+ * distance measured in postgres, not the browser. returns km per storefront id
+ * within the radius, nearest first.
+ */
+export function nearbyStorefrontsQuery(point: LatLng | null, radiusKm: number) {
+  return queryOptions({
+    queryKey: ["storefronts-near", point?.lat ?? null, point?.lng ?? null, radiusKm],
+    enabled: Boolean(point),
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<Array<{ id: string; km: number }>> => {
+      if (!point) return [];
+      const { data, error } = await supabase.rpc("storefronts_near", {
+        _lat: point.lat,
+        _lng: point.lng,
+        _radius_km: radiusKm,
+        _limit: 400,
+      });
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as Array<{ id: string; km: number | string }>).map((r) => ({
+        id: r.id,
+        km: Number(r.km),
+      }));
+    },
+  });
+}
+
+
 
 
 export interface ProviderTreatment {
@@ -114,17 +178,6 @@ export interface LatLng {
   lng: number;
 }
 
-/** manual location presets so a patient can search without granting gps. greater toronto area. */
-export const LOCATION_PRESETS: Array<{ label: string; point: LatLng }> = [
-  { label: "downtown toronto", point: TORONTO_CENTROID },
-  { label: "yorkville", point: { lat: 43.6709, lng: -79.3933 } },
-  { label: "queen west", point: { lat: 43.6465, lng: -79.4025 } },
-  { label: "north york", point: { lat: 43.7615, lng: -79.4111 } },
-  { label: "etobicoke", point: { lat: 43.6205, lng: -79.5132 } },
-  { label: "scarborough", point: { lat: 43.7764, lng: -79.2318 } },
-  { label: "mississauga", point: { lat: 43.589, lng: -79.6441 } },
-  { label: "vaughan", point: { lat: 43.8361, lng: -79.4983 } },
-];
 
 export const RADIUS_OPTIONS = [2, 5, 10, 25, 50] as const;
 
@@ -141,8 +194,10 @@ export function distanceKm(a: LatLng, b: LatLng): number {
 }
 
 export function formatDistance(km: number): string {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+  if (km < 1) return `${Math.round((km * 1000) / 10) * 10} m`;
+  return `${km.toFixed(1)} km`;
 }
+
 
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
   const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes, listedRes] = await Promise.all([

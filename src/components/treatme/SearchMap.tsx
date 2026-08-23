@@ -423,7 +423,9 @@ export function StorefrontPopover({
       <p className="text-[11px] text-ink-mute lowercase truncate">{storefront.city.toLowerCase()}</p>
       <div className="mt-1.5 flex items-center gap-2">
         <span className="text-[11px] text-ink-soft lowercase">
-          {providerCount} provider{providerCount === 1 ? "" : "s"}
+          {providerCount > 0
+            ? `${providerCount} provider${providerCount === 1 ? "" : "s"}`
+            : `${storefront.listed.length} treatment${storefront.listed.length === 1 ? "" : "s"} listed`}
         </span>
         {isNew ? (
           <span className="rounded-pill bg-butter px-2 py-0.5 text-[10px] font-semibold lowercase">
