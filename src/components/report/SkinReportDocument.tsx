@@ -1,5 +1,4 @@
 import { Circle, Document, Image, Link, Page, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
-import { Link as PdfLink } from "@react-pdf/renderer";
 import {
   BAND_BAR,
   BAND_COLOR,

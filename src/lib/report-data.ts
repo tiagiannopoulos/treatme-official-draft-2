@@ -158,6 +158,13 @@ export async function buildReportData(input: {
   const rows = toConcernRows(input.result);
   const overall = overallScore(rows);
 
+  const { data: indicatorRows } = await supabase
+    .from("skin_indicators")
+    .select("slug, accent, overlay_kind");
+  const styleFor = new Map(
+    (indicatorRows ?? []).map((i) => [i.slug.replace(/-/g, "_"), { accent: i.accent, kind: i.overlay_kind }]),
+  );
+
   const { data } = await supabase
     .from("treatments")
     .select("slug, name, price_from, downtime, downtime_days, improves");
@@ -189,8 +196,8 @@ export async function buildReportData(input: {
     treatments: row.score >= 80 ? [] : matchFor(row.concern_key),
     photoUrl: input.photoTiles?.[row.concern_key] ?? null,
     regions: row.regions ?? [],
-    accent: "#F8A1C6",
-    overlayKind: "patches_soft",
+    accent: styleFor.get(row.concern_key)?.accent ?? "#F8A1C6",
+    overlayKind: styleFor.get(row.concern_key)?.kind ?? "patches_soft",
   });
 
   const indicators = rows.map(indicatorFor);
