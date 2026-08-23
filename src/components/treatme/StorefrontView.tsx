@@ -517,7 +517,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
           tell us when suits you and we will arrange it with the clinic. you will hear back within one business day.
         </p>
         <Link
-          to="/storefront_/$id/request"
+          to="/storefront/$id/request"
           params={{ id: storefront.id }}
           search={{ treatment: undefined }}
           className="mt-3.5 block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
@@ -569,7 +569,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       {claimed && (
         <div className="fixed inset-x-0 bottom-[62px] z-40 border-t border-line bg-cream/95 px-5 py-3 backdrop-blur">
           <Link
-            to="/storefront_/$id/request"
+            to="/storefront/$id/request"
             params={{ id: storefront.id }}
             search={{ treatment: undefined }}
             className="block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
