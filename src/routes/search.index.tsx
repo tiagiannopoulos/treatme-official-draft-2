@@ -437,65 +437,57 @@ function SearchPage() {
           {/* a) map card */}
           <div className="mt-5 flex items-center justify-between gap-2">
             <h2 className="brand-eyebrow">near you</h2>
-            <span className="inline-flex items-center gap-1 rounded-pill border border-[rgba(17,17,17,0.10)] px-2.5 py-1 text-[11px] text-ink-mute lowercase">
-              <MapPin className="size-3" />
-              toronto, on
-            </span>
+            <LocationChip onClick={() => setPickingLocation(true)} />
           </div>
 
-          <div className="mt-2">
-            <ClientOnly fallback={<div className="h-[220px] rounded-[20px] border border-line bg-muted" />}>
-              <SearchMap
-                storefronts={storefrontsInRange}
-                center={center}
-                radiusKm={radius}
-                selectedId={selected}
-                onSelect={setSelected}
-                providerCounts={providerCounts}
-                height="h-[220px]"
-                expandable
-              />
-            </ClientOnly>
-          </div>
+          {locationReady && (!location || pickingLocation) ? (
+            <div className="mt-2">
+              <LocationCard onDone={() => setPickingLocation(false)} />
+              {location && pickingLocation && (
+                <button
+                  type="button"
+                  onClick={() => setPickingLocation(false)}
+                  className="mt-3 text-[12px] text-ink/60 lowercase underline"
+                >
+                  keep {location.label}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="mt-2">
+                <ClientOnly fallback={<div className="h-[220px] rounded-[20px] border border-line bg-muted" />}>
+                  <SearchMap
+                    storefronts={storefrontsInRange}
+                    center={center}
+                    radiusKm={radius}
+                    selectedId={selected}
+                    onSelect={setSelected}
+                    providerCounts={providerCounts}
+                    height="h-[220px]"
+                    expandable
+                  />
+                </ClientOnly>
+              </div>
 
+              <div className="mt-3 flex gap-2">
+                {RADIUS_OPTIONS.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRadius(r)}
+                    className={cn(
+                      "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
+                      radius === r ? "border-ink bg-ink text-cream font-semibold" : "border-line text-ink-mute",
+                    )}
+                  >
+                    {r} km
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-
-
-
-          <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar -mx-6 px-6">
-            {LOCATION_PRESETS.map((l) => (
-              <button
-                key={l.label}
-                type="button"
-                onClick={() => {
-                  setCenter(l.point);
-                  setLocLabel(l.label);
-                }}
-                className={cn(
-                  "shrink-0 rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                  locLabel === l.label ? "border-hot bg-hot/10 text-ink font-semibold" : "border-line text-ink-mute",
-                )}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-2 flex gap-2">
-            {RADIUS_OPTIONS.map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRadius(r)}
-                className={cn(
-                  "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                  radius === r ? "border-ink bg-ink text-cream font-semibold" : "border-line text-ink-mute",
-                )}
-              >
-                {r} km
-              </button>
-            ))}
-          </div>
           {/* c) featured storefronts row */}
           {featuredStorefronts.length > 0 && (
             <section className="mt-7">
