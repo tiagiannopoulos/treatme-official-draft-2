@@ -1190,8 +1190,10 @@ export type Database = {
           analysis: Json | null
           created_at: string
           engine: string
+          face_zones: Json | null
           id: string
           landmarks: Json | null
+          mapping_method: string
           medical_flag: string | null
           overall_score: number | null
           photo_path: string | null
@@ -1208,8 +1210,10 @@ export type Database = {
           analysis?: Json | null
           created_at?: string
           engine?: string
+          face_zones?: Json | null
           id?: string
           landmarks?: Json | null
+          mapping_method?: string
           medical_flag?: string | null
           overall_score?: number | null
           photo_path?: string | null
@@ -1226,8 +1230,10 @@ export type Database = {
           analysis?: Json | null
           created_at?: string
           engine?: string
+          face_zones?: Json | null
           id?: string
           landmarks?: Json | null
+          mapping_method?: string
           medical_flag?: string | null
           overall_score?: number | null
           photo_path?: string | null
