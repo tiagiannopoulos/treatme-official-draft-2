@@ -1,5 +1,12 @@
+import { pdf } from "@react-pdf/renderer";
+
+import { SkinReportDocument } from "@/components/report/SkinReportDocument";
 import { supabase } from "@/integrations/supabase/client";
+import { buildReportData } from "@/lib/report-data";
+import { fetchSavedScan } from "@/lib/scan-history";
+import { scanPhotoSignedUrl } from "@/lib/scan-photo";
 import type { SkinAnalysis } from "@/lib/skin-analysis";
+import { createElement } from "react";
 
 export interface ScanPdfInput {
   scanId: string;
@@ -7,31 +14,61 @@ export interface ScanPdfInput {
   analysis: SkinAnalysis | null;
 }
 
-/** asks the server for the pdf of one scan and hands back the file */
-export async function fetchScanPdf({ scanId, includePhoto, analysis }: ScanPdfInput): Promise<File> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error("signed out");
+/** react-pdf needs the bytes, not a short lived url */
+async function asDataUrl(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
-  const res = await fetch("/api/generate-scan-pdf", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      scan_id: scanId,
-      include_photo: includePhoto,
-      analysis: analysis
-        ? {
-            skinType: analysis.skinType,
-            fitzpatrick: analysis.fitzpatrick,
-            skinAge: analysis.skinAge,
-            blurb: analysis.blurb,
-          }
-        : undefined,
-    }),
+/**
+ * builds the eight page report in the browser, so the file a person downloads is
+ * the same document the preview shows, with the same photo markings as the app.
+ */
+export async function fetchScanPdf({ scanId, includePhoto, analysis }: ScanPdfInput): Promise<File> {
+  const { data: session } = await supabase.auth.getSession();
+  if (!session.session) throw new Error("signed out");
+
+  const scan = await fetchSavedScan(scanId);
+  if (!scan?.result) throw new Error("that scan could not be loaded");
+
+  const { data: profile } = await supabase.from("profiles").select("first_name").maybeSingle();
+
+  // one photo, every indicator: the marks differ, the photo does not
+  let photoTiles: Record<string, string | null> | undefined;
+  if (includePhoto && scan.photoPath) {
+    const { url } = await scanPhotoSignedUrl(scan.photoPath);
+    const dataUrl = url ? await asDataUrl(url) : null;
+    if (dataUrl) {
+      photoTiles = {};
+      for (const row of scan.result.concerns ?? []) photoTiles[row.key] = dataUrl;
+    }
+  }
+
+  const data = await buildReportData({
+    result: scan.result,
+    analysis: analysis ?? scan.analysis,
+    createdAt: scan.createdAt,
+    firstName: profile?.first_name ?? null,
+    photoTiles,
   });
 
-  if (!res.ok) throw new Error(`pdf failed (${res.status})`);
-  const blob = await res.blob();
+  const element = createElement(SkinReportDocument, {
+    data,
+    includePhotos: Boolean(photoTiles),
+  }) as unknown as Parameters<typeof pdf>[0];
+  const blob = await pdf(element).toBlob();
+
   return new File([blob], "treatme-analysis.pdf", { type: "application/pdf" });
 }
 

@@ -37,7 +37,6 @@ import { Route as DevFacemapsRouteImport } from './routes/dev.facemaps'
 import { Route as DevCrawlRouteImport } from './routes/dev.crawl'
 import { Route as ClaimIdRouteImport } from './routes/claim.$id'
 import { Route as BookConsultRouteImport } from './routes/book.consult'
-import { Route as ApiGenerateScanPdfRouteImport } from './routes/api/generate-scan-pdf'
 import { Route as ApiConsultChatRouteImport } from './routes/api/consult-chat'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as TreatmentsSlugIndexRouteImport } from './routes/treatments.$slug.index'
@@ -189,11 +188,6 @@ const BookConsultRoute = BookConsultRouteImport.update({
   path: '/book/consult',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiGenerateScanPdfRoute = ApiGenerateScanPdfRouteImport.update({
-  id: '/api/generate-scan-pdf',
-  path: '/api/generate-scan-pdf',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiConsultChatRoute = ApiConsultChatRouteImport.update({
   id: '/api/consult-chat',
   path: '/api/consult-chat',
@@ -255,7 +249,6 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
-  '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
   '/dev/crawl': typeof DevCrawlRoute
@@ -296,7 +289,6 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
-  '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
   '/dev/crawl': typeof DevCrawlRoute
@@ -338,7 +330,6 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/api/chat': typeof ApiChatRoute
   '/api/consult-chat': typeof ApiConsultChatRoute
-  '/api/generate-scan-pdf': typeof ApiGenerateScanPdfRoute
   '/book/consult': typeof BookConsultRoute
   '/claim/$id': typeof ClaimIdRoute
   '/dev/crawl': typeof DevCrawlRoute
@@ -381,7 +372,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/chat'
     | '/api/consult-chat'
-    | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/claim/$id'
     | '/dev/crawl'
@@ -422,7 +412,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/chat'
     | '/api/consult-chat'
-    | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/claim/$id'
     | '/dev/crawl'
@@ -463,7 +452,6 @@ export interface FileRouteTypes {
     | '/terms'
     | '/api/chat'
     | '/api/consult-chat'
-    | '/api/generate-scan-pdf'
     | '/book/consult'
     | '/claim/$id'
     | '/dev/crawl'
@@ -505,7 +493,6 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiConsultChatRoute: typeof ApiConsultChatRoute
-  ApiGenerateScanPdfRoute: typeof ApiGenerateScanPdfRoute
   BookConsultRoute: typeof BookConsultRoute
   ClaimIdRoute: typeof ClaimIdRoute
   DevCrawlRoute: typeof DevCrawlRoute
@@ -735,13 +722,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookConsultRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/generate-scan-pdf': {
-      id: '/api/generate-scan-pdf'
-      path: '/api/generate-scan-pdf'
-      fullPath: '/api/generate-scan-pdf'
-      preLoaderRoute: typeof ApiGenerateScanPdfRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/consult-chat': {
       id: '/api/consult-chat'
       path: '/api/consult-chat'
@@ -825,7 +805,6 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ApiChatRoute: ApiChatRoute,
   ApiConsultChatRoute: ApiConsultChatRoute,
-  ApiGenerateScanPdfRoute: ApiGenerateScanPdfRoute,
   BookConsultRoute: BookConsultRoute,
   ClaimIdRoute: ClaimIdRoute,
   DevCrawlRoute: DevCrawlRoute,
