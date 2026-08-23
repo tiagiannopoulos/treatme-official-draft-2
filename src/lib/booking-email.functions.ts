@@ -42,7 +42,8 @@ export const sendBookingRequestEmail = createServerFn({ method: "POST" })
       `request row: ${rowLink}`,
     ];
 
-    const from = data.verifiedDomain ? "bookings@treatmeapp.com" : "onboarding@resend.dev";
+    const from = (await domainVerified(key)) ? "bookings@treatmeapp.com" : "onboarding@resend.dev";
+    const inbox = process.env["TREATME_BOOKINGS_INBOX"] ?? "bookings@treatmeapp.com";
 
     try {
       const res = await fetch("https://api.resend.com/emails", {
@@ -50,7 +51,7 @@ export const sendBookingRequestEmail = createServerFn({ method: "POST" })
         headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
         body: JSON.stringify({
           from: `treatme bookings <${from}>`,
-          to: [data.inbox],
+          to: [inbox],
           reply_to: data.patientEmail,
           subject: `booking request · ${data.treatmentName} · ${data.storefrontName}`,
           text: lines.join("\n"),
@@ -67,6 +68,29 @@ export const sendBookingRequestEmail = createServerFn({ method: "POST" })
     }
   });
 
+/** asks resend once per worker whether our own domain can send yet. */
+let verifiedCache: boolean | null = null;
+async function domainVerified(key: string): Promise<boolean> {
+  if (verifiedCache !== null) return verifiedCache;
+  try {
+    const res = await fetch("https://api.resend.com/domains", {
+      headers: { authorization: `Bearer ${key}` },
+    });
+    if (!res.ok) {
+      verifiedCache = false;
+      return false;
+    }
+    const body = (await res.json()) as { data?: Array<{ name?: string; status?: string }> };
+    verifiedCache = (body.data ?? []).some(
+      (d) => d.name === "treatmeapp.com" && d.status === "verified",
+    );
+    return verifiedCache;
+  } catch {
+    verifiedCache = false;
+    return false;
+  }
+}
+
 export interface BookingEmailInput {
   requestId: string;
   patientName: string;
@@ -81,8 +105,4 @@ export interface BookingEmailInput {
   flexibility: string;
   isFirstTime: boolean | null;
   notes: string | null;
-  /** the treatme inbox that picks up the phone. */
-  inbox: string;
-  /** true once treatmeapp.com is verified in resend. */
-  verifiedDomain: boolean;
 }
