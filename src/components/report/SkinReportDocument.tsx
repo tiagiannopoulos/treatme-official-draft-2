@@ -1,4 +1,18 @@
-import { Circle, Document, Image, Link, Page, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
+import React from "react";
+import {
+  Circle,
+  Document,
+  Image,
+  Line,
+  Link,
+  Page,
+  Path,
+  StyleSheet,
+  Svg,
+  Text,
+  View,
+} from "@react-pdf/renderer";
+import { markerDrawing } from "@/lib/marker-shapes";
 import {
   BAND_BAR,
   BAND_COLOR,
@@ -139,31 +153,100 @@ function money(n: number | null) {
   return n === null ? "price varies" : `from $${n.toLocaleString("en-CA")}`;
 }
 
+/** photo tiles keep the capture's 3:4 shape so normalised marks map straight on */
+const TILE_W = 72;
+const TILE_H = 96;
+
+/**
+ * the same markings as the app, drawn with @react-pdf primitives. there is no
+ * blur filter in a pdf, so softness comes from translucency and a wider, fainter
+ * copy of each mark underneath.
+ */
+function ReportMarkers({
+  indicator,
+  limit = 10,
+}: {
+  indicator: ReportIndicator;
+  limit?: number;
+}) {
+  const { shapes } = markerDrawing({
+    regions: indicator.regions,
+    accent: indicator.accent,
+    overlayKind: indicator.overlayKind,
+    limit,
+  });
+  if (!shapes.length) return null;
+
+  return (
+    <Svg
+      viewBox="0 0 1 1"
+      style={{ position: "absolute", top: 0, left: 0, width: TILE_W, height: TILE_H }}
+    >
+      {shapes.map((shape, i) => {
+        if (shape.kind === "circle") {
+          return (
+            <React.Fragment key={i}>
+              <Circle
+                cx={shape.cx}
+                cy={shape.cy}
+                r={shape.r * 1.9}
+                fill={shape.fill}
+                fillOpacity={shape.opacity * 0.35}
+              />
+              <Circle
+                cx={shape.cx}
+                cy={shape.cy}
+                r={shape.r}
+                fill={shape.fill}
+                fillOpacity={shape.opacity}
+              />
+            </React.Fragment>
+          );
+        }
+        if (shape.kind === "line") {
+          return (
+            <Line
+              key={i}
+              x1={shape.x1}
+              y1={shape.y1}
+              x2={shape.x2}
+              y2={shape.y2}
+              strokeWidth={shape.strokeWidth}
+              stroke={shape.stroke}
+              strokeOpacity={shape.opacity}
+            />
+          );
+        }
+        return (
+          <Path
+            key={i}
+            d={shape.d}
+            fill={shape.fill ?? "none"}
+            fillOpacity={shape.fill ? shape.opacity : 0}
+            stroke={shape.stroke}
+            strokeWidth={shape.strokeWidth}
+            strokeOpacity={shape.stroke ? shape.opacity : 0}
+            strokeLinecap="round"
+          />
+        );
+      })}
+    </Svg>
+  );
+}
+
 function Tile({ indicator, includePhotos }: { indicator: ReportIndicator; includePhotos: boolean }) {
   const tint = BAND_COLOR[indicator.band];
   if (includePhotos && indicator.photoUrl) {
-    // the photo with the same marked places as the app. soft translucent discs.
-    const marks = [...indicator.regions].sort((a, b) => b.intensity - a.intensity).slice(0, 10);
+    // the patient's own photo with the marked places, the same as on screen
     return (
-      <View style={[s.tile, { backgroundColor: tint, position: "relative" }]}>
-        <Image src={indicator.photoUrl} style={{ width: 72, height: 72, objectFit: "cover" }} />
-        {marks.length > 0 && (
-          <Svg
-            viewBox="0 0 1 1"
-            style={{ position: "absolute", top: 0, left: 0, width: 72, height: 72 }}
-          >
-            {marks.map((m, i) => (
-              <Circle
-                key={i}
-                cx={m.x}
-                cy={m.y}
-                r={Math.max(0.02, m.r)}
-                fill={indicator.accent}
-                fillOpacity={Math.min(0.9, 0.35 + m.intensity * 0.45)}
-              />
-            ))}
-          </Svg>
-        )}
+      <View
+        style={[
+          s.tile,
+          { width: TILE_W, height: TILE_H, backgroundColor: tint, position: "relative" },
+        ]}
+      >
+        <Image src={indicator.photoUrl} style={{ width: TILE_W, height: TILE_H, objectFit: "cover" }} />
+        <ReportMarkers indicator={indicator} />
       </View>
     );
   }
