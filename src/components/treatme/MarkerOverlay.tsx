@@ -52,20 +52,32 @@ function blob(m: MarkedRegion, i: number, accent: string, spread: number, alpha:
   );
 }
 
-/** small solid speckle, used by pores and oiliness */
-function speck(m: MarkedRegion, i: number, accent: string, scale: number) {
-  const r = Math.max(0.004, m.r * scale);
+/**
+ * speckle, used by pores and oiliness. each measured tile scatters a handful of
+ * small dots inside its radius so a cluster reads as skin texture rather than
+ * one flat disc.
+ */
+function speck(m: MarkedRegion, i: number, accent: string, scale: number, count: number) {
+  const r = Math.max(0.0035, m.r * scale);
+  const opacity = Math.min(0.9, 0.45 + m.intensity * 0.45);
   return (
-    <circle
-      key={i}
-      cx={m.x}
-      cy={m.y}
-      r={r}
-      fill={accent}
-      opacity={Math.min(0.9, 0.45 + m.intensity * 0.45)}
-    />
+    <g key={i} fill={accent} opacity={opacity}>
+      {Array.from({ length: count }, (_, k) => {
+        const ang = wobble(i, k + 10) * Math.PI * 2;
+        const dist = wobble(i, k + 30) * m.r * 0.9;
+        return (
+          <circle
+            key={k}
+            cx={m.x + Math.cos(ang) * dist}
+            cy={m.y + Math.sin(ang) * dist}
+            r={r * (0.7 + wobble(i, k + 50) * 0.6)}
+          />
+        );
+      })}
+    </g>
   );
 }
+
 
 /** a short curved stroke through the mark, angle varied per mark */
 function stroke(
