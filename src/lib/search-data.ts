@@ -205,8 +205,10 @@ export function distanceKm(a: LatLng, b: LatLng): number {
 }
 
 export function formatDistance(km: number): string {
-  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+  if (km < 1) return `${Math.round((km * 1000) / 10) * 10} m`;
+  return `${km.toFixed(1)} km`;
 }
+
 
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
   const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes, listedRes] = await Promise.all([
