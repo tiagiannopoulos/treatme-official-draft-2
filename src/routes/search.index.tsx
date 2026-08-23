@@ -22,8 +22,11 @@ import {
   matchStorefront,
   matchStorefrontVia,
   providerFromPrice,
-  LOCATION_PRESETS,
+  nearbyStorefrontsQuery,
   neighbourhood,
+  areaLine,
+  addressLine,
+  TORONTO_CENTROID,
   RADIUS_OPTIONS,
   type LatLng,
   type Provider,
@@ -33,6 +36,9 @@ import {
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
 import { usePatient } from "@/lib/patient-store";
+import { usePatientLocation } from "@/lib/patient-location";
+import { LocationCard, LocationChip } from "@/components/treatme/LocationCard";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 const FITZ_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
@@ -96,9 +102,21 @@ function SearchPage() {
         : "all",
   );
   const [radius, setRadius] = useState<number>(10);
-  const [locLabel, setLocLabel] = useState<string>(LOCATION_PRESETS[0].label);
-  const [center, setCenter] = useState<LatLng>(LOCATION_PRESETS[0].point);
+  const { location, ready: locationReady } = usePatientLocation();
+  const [pickingLocation, setPickingLocation] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+
+  /** map framing only. distances never come from this. */
+  const center: LatLng = location ? { lat: location.lat, lng: location.lng } : TORONTO_CENTROID;
+  const locLabel = location?.label ?? "your area";
+
+  /** distance is computed in postgres, per storefront id. */
+  const { data: near } = useQuery(nearbyStorefrontsQuery(location ? center : null, radius));
+  const kmById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const row of near ?? []) m.set(row.id, row.km);
+    return m;
+  }, [near]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -114,14 +132,17 @@ function SearchPage() {
   /** typing ahead of the debounce -> show skeletons, never a spinner. */
   const pending = searching && q.trim() !== needle;
 
-  const storefrontsInRange = useMemo(
-    () =>
-      data.storefronts
-        .map((s) => ({ ...s, km: distanceKm(center, { lat: s.lat, lng: s.lng }) }))
-        .filter((s) => s.km <= radius)
-        .sort((a, b) => a.km - b.km),
-    [data.storefronts, center, radius],
-  );
+  /**
+   * with a location: only what postgres returned, ordered by its distance.
+   * without one: everything, alphabetical, and no distance is shown anywhere.
+   */
+  const storefrontsInRange = useMemo(() => {
+    if (!location) return data.storefronts.map((s) => ({ ...s, km: null as number | null }));
+    return data.storefronts
+      .filter((s) => kmById.has(s.id))
+      .map((s) => ({ ...s, km: kmById.get(s.id) as number | null }))
+      .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  }, [data.storefronts, location, kmById]);
 
   const inRangeIds = useMemo(() => new Set(storefrontsInRange.map((s) => s.id)), [storefrontsInRange]);
 
@@ -146,17 +167,14 @@ function SearchPage() {
         const { hit, via } = matchProvider(p, needle);
         const shops = p.storefronts.filter((s) => inRangeIds.has(s.id));
         const ranked = [...shops].sort(
-          (a, b) =>
-            distanceKm(center, { lat: a.lat, lng: a.lng }) - distanceKm(center, { lat: b.lat, lng: b.lng }),
+          (a, b) => (kmById.get(a.id) ?? Infinity) - (kmById.get(b.id) ?? Infinity),
         );
-        const km = ranked.length
-          ? distanceKm(center, { lat: ranked[0].lat, lng: ranked[0].lng })
-          : Infinity;
+        const km = ranked.length ? kmById.get(ranked[0].id) ?? null : null;
         return { p, hit, via, shops: ranked, km };
       })
       .filter((r) => r.hit && r.shops.length > 0)
-      .sort((a, b) => a.km - b.km);
-  }, [data.providers, needle, inRangeIds, center]);
+      .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+  }, [data.providers, needle, inRangeIds, kmById]);
 
   /** five nearest providers, skin type matches first, for the explore row. */
   const nearbyProviders = useMemo(() => {
