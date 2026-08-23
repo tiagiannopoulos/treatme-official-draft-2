@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ArrowLeft, MapPin, Star } from "lucide-react";
 import { directoryQuery, TORONTO_CENTROID } from "@/lib/search-data";
+import { usePatientLocation } from "@/lib/patient-location";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
 
@@ -84,7 +85,7 @@ function MapView() {
         <ClientOnly fallback={<div className="size-full bg-muted" />}>
           <SearchMap
             storefronts={pinned}
-            center={TORONTO_CENTROID}
+            center={location ? { lat: location.lat, lng: location.lng } : TORONTO_CENTROID}
             selectedId={selected}
             onSelect={setSelected}
             providerCounts={providerCounts}

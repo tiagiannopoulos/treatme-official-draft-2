@@ -59,6 +59,7 @@ function useSavedProviders() {
 export function ProviderProfileView({ match }: { match: (p: Provider) => boolean }) {
   const router = useRouter();
   const { data } = useSuspenseQuery(directoryQuery);
+  const near = useNearbyKm();
   const provider = data.providers.find(match);
   if (!provider) throw notFound();
 

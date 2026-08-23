@@ -178,17 +178,6 @@ export interface LatLng {
   lng: number;
 }
 
-/** manual location presets so a patient can search without granting gps. greater toronto area. */
-export const LOCATION_PRESETS: Array<{ label: string; point: LatLng }> = [
-  { label: "downtown toronto", point: TORONTO_CENTROID },
-  { label: "yorkville", point: { lat: 43.6709, lng: -79.3933 } },
-  { label: "queen west", point: { lat: 43.6465, lng: -79.4025 } },
-  { label: "north york", point: { lat: 43.7615, lng: -79.4111 } },
-  { label: "etobicoke", point: { lat: 43.6205, lng: -79.5132 } },
-  { label: "scarborough", point: { lat: 43.7764, lng: -79.2318 } },
-  { label: "mississauga", point: { lat: 43.589, lng: -79.6441 } },
-  { label: "vaughan", point: { lat: 43.8361, lng: -79.4983 } },
-];
 
 export const RADIUS_OPTIONS = [2, 5, 10, 25, 50] as const;
 

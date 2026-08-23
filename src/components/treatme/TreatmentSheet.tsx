@@ -15,6 +15,7 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
   const navigate = useNavigate();
   const { data: catalog = [] } = useQuery(treatmentCatalogQuery);
   const { data: directory } = useQuery(directoryQuery);
+  const near = useNearbyKm();
   const treatment = catalog.find((t) => t.slug === slug);
 
   const [full, setFull] = useState(false);

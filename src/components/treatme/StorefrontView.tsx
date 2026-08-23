@@ -22,10 +22,8 @@ import { ProviderCard } from "@/components/treatme/ProviderCard";
 import { StorefrontMapStrip } from "@/components/treatme/StorefrontMapStrip";
 import {
   directoryQuery,
-  distanceKm,
   formatDistance,
   neighbourhood,
-  TORONTO_CENTROID,
   type LatLng,
   type Provider,
   type Storefront,
@@ -45,6 +43,7 @@ import {
   weekHours,
 } from "@/lib/storefront-brand";
 import { usePatient } from "@/lib/patient-store";
+import { useNearbyKm } from "@/lib/nearby";
 import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 
 /** the clinic's own branded store inside treatme. accent and logo carry the identity. */
@@ -58,26 +57,8 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [filterSlug, setFilterSlug] = useState<string | null>(null);
-  const [here, setHere] = useState<LatLng>(TORONTO_CENTROID);
+  const near = useNearbyKm();
   const rosterRef = useRef<HTMLDivElement>(null);
-
-  // only read gps when the patient already granted it, never prompt from this page.
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation || !navigator.permissions) return;
-    let cancelled = false;
-    navigator.permissions
-      .query({ name: "geolocation" as PermissionName })
-      .then((status) => {
-        if (cancelled || status.state !== "granted") return;
-        navigator.geolocation.getCurrentPosition((pos) => {
-          if (!cancelled) setHere({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        });
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const { data: photos = [] } = useQuery({
     ...storefrontMediaQuery(storefront?.id ?? ""),
@@ -175,7 +156,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
     .join(" ");
   const fullAddress = noDash(extras ? `${line}, ${extras}` : line);
   const mapsHref = `https://maps.google.com/?q=${encodeURIComponent(`${storefront.name} ${fullAddress}`)}`;
-  const km = distanceKm(here, { lat: storefront.lat, lng: storefront.lng });
+  const km = near.kmFor(storefront.id);
 
   const week = weekHours(storefront.hours);
   const status = openStatus(week);

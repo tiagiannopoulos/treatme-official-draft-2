@@ -47,6 +47,7 @@ function TreatmentDetailPage() {
   const { slug } = Route.useParams();
   const { data: treatment, isLoading } = useQuery(treatmentDetailQuery(slug));
   const { data: directory } = useQuery(directoryQuery);
+  const near = useNearbyKm();
   const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   const providers = useMemo(() => {

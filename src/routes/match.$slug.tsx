@@ -8,7 +8,6 @@ import { usePatient } from "@/lib/patient-store";
 import { toConcernRows, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { formatDistance } from "@/lib/search-data";
 import {
-  DEFAULT_MATCH_CENTER,
   matchSubline,
   treatmentMatchQuery,
   type MatchClinic,
@@ -55,7 +54,7 @@ function MatchScreen() {
   const { data, isLoading } = useQuery(
     treatmentMatchQuery(slug, {
       concerns,
-      center: DEFAULT_MATCH_CENTER,
+      center: matchCenter,
       radiusKm,
       budget: profile.budget,
     }),
