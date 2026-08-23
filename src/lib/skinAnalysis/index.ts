@@ -4,7 +4,7 @@ import { apiProvider } from "./apiProvider";
 import { CONCERN_KEYS, type ConcernKey, type ScanImage, type ScanResult } from "./types";
 
 export { CONCERN_KEYS, CONCERN_LABEL } from "./types";
-export type { ConcernKey, ConcernResult, ScanImage, ScanResult, ImageQuality } from "./types";
+export type { ConcernKey, ConcernResult, MarkedRegion, ScanImage, ScanResult, ImageQuality } from "./types";
 export { ANALYSIS_MIN_MS } from "./config";
 
 const provider = ANALYSIS_PROVIDER === "api" ? apiProvider : mockProvider;

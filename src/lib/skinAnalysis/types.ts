@@ -38,11 +38,21 @@ export const CONCERN_LABEL: Record<ConcernKey, string> = {
   symmetry: "symmetry",
 };
 
+/** one marked place on the patient photo, in normalised image coordinates */
+export interface MarkedRegion {
+  x: number;
+  y: number;
+  r: number;
+  intensity: number;
+}
+
 export interface ConcernResult {
   key: ConcernKey;
   score: number;
   confidence: number;
   assessable: boolean;
+  /** where this shows up on the photo. empty when the read found nothing to mark. */
+  regions?: MarkedRegion[];
 }
 
 export interface ImageQuality {
