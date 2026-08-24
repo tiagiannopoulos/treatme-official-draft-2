@@ -31,6 +31,16 @@ export const CONCERN_GROUPS = [
 
 export const SCAN_CONCERN_KEYS = CONCERN_GROUPS.flatMap((g) => g.concerns as readonly string[]);
 
+/**
+ * measured from landmark geometry rather than read as one of the four groups.
+ * it is not a grid tile, but it is persisted like every other indicator so it
+ * has a score and marker geometry to render from.
+ */
+export const EXTRA_CONCERN_KEYS = ["symmetry"] as const;
+
+/** every concern written to scan_results, one row each */
+export const PERSISTED_CONCERN_KEYS = [...SCAN_CONCERN_KEYS, ...EXTRA_CONCERN_KEYS];
+
 export const SCAN_CONCERN_LABEL: Record<string, string> = {
   pores: "pores",
   breakouts: "breakouts",
@@ -48,6 +58,7 @@ export const SCAN_CONCERN_LABEL: Record<string, string> = {
   under_eye_puffiness: "under eye puffiness",
   tear_trough: "tear trough",
   eyelid_heaviness: "eyelid heaviness",
+  symmetry: "symmetry",
 };
 
 export type Band = "great" | "good" | "average" | "focus here";
@@ -110,6 +121,7 @@ const REGION_SOURCES: Record<string, EngineKey[]> = {
   under_eye_puffiness: ["underEyes"],
   tear_trough: ["underEyes"],
   eyelid_heaviness: ["laxity"],
+  symmetry: ["symmetry"],
 };
 
 /** dedupes near identical spots so a merged indicator does not double up markers */
@@ -126,8 +138,9 @@ function mergeRegions(lists: MarkedRegion[][]): MarkedRegion[] {
 }
 
 /**
- * turns one engine result into the 16 canonical concern rows.
- * every row is always present, so a scan always writes 16 results.
+ * turns one engine result into the canonical concern rows: the 16 grid
+ * indicators plus symmetry. every row is always present, so a scan always
+ * writes the full set.
  */
 export function toConcernRows(result: ScanResult, measured?: Measured | null): ScanConcernRow[] {
   const sev = (key: EngineKey) => result.concerns.find((c) => c.key === key)?.score ?? 0;
@@ -149,6 +162,7 @@ export function toConcernRows(result: ScanResult, measured?: Measured | null): S
     under_eye_puffiness: health(avg(sev("underEyes"), sev("hydration"))),
     tear_trough: health(avg(sev("underEyes"), sev("volumeLoss"))),
     eyelid_heaviness: health(avg(sev("laxity"), sev("underEyes"))),
+    symmetry: health(sev("symmetry")),
   };
 
   // per-region reads, so the overlay can paint one patch heavier than another
@@ -190,6 +204,7 @@ export function toConcernRows(result: ScanResult, measured?: Measured | null): S
     under_eye_puffiness: { under_eye: raw.under_eye_puffiness },
     tear_trough: { tear_trough: raw.tear_trough },
     eyelid_heaviness: { upper_lid: raw.eyelid_heaviness },
+    symmetry: { full_face: raw.symmetry },
   };
 
   const regionsFor = (key: string): MarkedRegion[] =>
@@ -199,7 +214,7 @@ export function toConcernRows(result: ScanResult, measured?: Measured | null): S
       ),
     );
 
-  return SCAN_CONCERN_KEYS.map((key) => {
+  return PERSISTED_CONCERN_KEYS.map((key) => {
     // a measured indicator always wins over the model. the pixels are the
     // ground truth for these, and the markers come from real clusters.
     const read = measured?.[key as keyof Measured] ?? null;
@@ -223,5 +238,7 @@ export function toConcernRows(result: ScanResult, measured?: Measured | null): S
 
 /** one overall score for the scan row */
 export function overallScore(rows: ScanConcernRow[]): number {
-  return clamp(avg(...rows.map((r) => r.score)));
+  // the four groups only. symmetry is persisted but not part of the headline.
+  const grid = rows.filter((r) => SCAN_CONCERN_KEYS.includes(r.concern_key));
+  return clamp(avg(...(grid.length ? grid : rows).map((r) => r.score)));
 }
