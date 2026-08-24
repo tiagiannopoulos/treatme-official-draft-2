@@ -1,6 +1,7 @@
 import { useId, useMemo } from "react";
 
-import { markerDrawing, type MarkerShape } from "@/lib/marker-shapes";
+import { markerDrawing, type MarkerDrawing, type MarkerShape } from "@/lib/marker-shapes";
+import type { Landmark } from "@/lib/facemesh";
 import type { MarkedRegion } from "@/lib/skinAnalysis";
 
 export { hasMarkers, strongest } from "@/lib/marker-shapes";
@@ -63,6 +64,10 @@ export function MarkerOverlay({
   accent,
   overlayKind = "patches_soft",
   limit,
+  score,
+  landmarks,
+  seed,
+  drawing,
   className = "",
 }: {
   regions: MarkedRegion[];
@@ -70,17 +75,28 @@ export function MarkerOverlay({
   overlayKind?: string;
   /** cap the marker count, used by the small thumbnails */
   limit?: number;
+  /** health score, drives density */
+  score?: number;
+  /** layer 1 landmarks: markers are clipped to the detected face */
+  landmarks?: Landmark[] | null;
+  /** scan id, so placement is deterministic */
+  seed?: string | null;
+  /** already computed positions, straight from scan_results.marker_positions */
+  drawing?: MarkerDrawing | null;
   className?: string;
 }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const { shapes, blur } = useMemo(
-    () => markerDrawing({ regions, accent, overlayKind, limit }),
-    [regions, accent, overlayKind, limit],
+  const computed = useMemo(
+    () =>
+      drawing ??
+      markerDrawing({ regions, accent, overlayKind, limit, score, landmarks, seed }),
+    [drawing, regions, accent, overlayKind, limit, score, landmarks, seed],
   );
+  const { shapes, blur, clipPath } = computed;
 
   if (!shapes.length) return null;
 
-  // the dashed axis lines stay crisp, the markings themselves stay soft
+  // the dashed reference lines stay crisp, the markings themselves stay soft
   const lines = shapes.filter((s) => s.kind === "line");
   const marks = shapes.filter((s) => s.kind !== "line");
 
@@ -95,14 +111,21 @@ export function MarkerOverlay({
         <filter id={`soft-${id}`} x="-30%" y="-30%" width="160%" height="160%">
           <feGaussianBlur stdDeviation={blur} />
         </filter>
+        {clipPath && (
+          <clipPath id={`face-${id}`} clipPathUnits="userSpaceOnUse">
+            <path d={clipPath} />
+          </clipPath>
+        )}
       </defs>
-      {lines.map((s, i) => (
-        <Shape key={`l${i}`} shape={s} index={i} />
-      ))}
-      <g filter={`url(#soft-${id})`}>
-        {marks.map((s, i) => (
-          <Shape key={i} shape={s} index={i} />
+      <g clipPath={clipPath ? `url(#face-${id})` : undefined}>
+        {lines.map((s, i) => (
+          <Shape key={`l${i}`} shape={s} index={i} />
         ))}
+        <g filter={`url(#soft-${id})`}>
+          {marks.map((s, i) => (
+            <Shape key={i} shape={s} index={i} />
+          ))}
+        </g>
       </g>
     </svg>
   );
