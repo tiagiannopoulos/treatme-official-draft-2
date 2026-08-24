@@ -1,6 +1,11 @@
 // mediapipe facemesh, loaded lazily in the browser only.
 // used twice: live coaching while the camera is open, and one final
 // landmark pass on the still we keep.
+//
+// nothing here fails silently: every load or detection failure is logged with
+// its reason and written to scan_errors.
+
+import { reportScanIssue } from "@/lib/scan-errors";
 
 type Landmarker = import("@mediapipe/tasks-vision").FaceLandmarker;
 
@@ -25,7 +30,11 @@ async function load(mode: "IMAGE" | "VIDEO"): Promise<Landmarker | null> {
         numFaces: 1,
       });
     } catch (e) {
-      console.warn("facemesh unavailable", e);
+      reportScanIssue({
+        stage: "facemesh_load",
+        reason: "model_load_failed",
+        detail: { mode, message: e instanceof Error ? e.message : String(e) },
+      });
       return null;
     }
   })();
@@ -33,6 +42,7 @@ async function load(mode: "IMAGE" | "VIDEO"): Promise<Landmarker | null> {
   cache.set(mode, promise);
   return promise;
 }
+
 
 export type Landmark = { x: number; y: number; z: number };
 
