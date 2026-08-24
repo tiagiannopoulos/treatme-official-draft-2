@@ -1,13 +1,33 @@
 import type { MarkedRegion } from "@/lib/skinAnalysis";
+import type { Landmark } from "@/lib/facemesh";
+import {
+  chevronsAlong,
+  faceGuides,
+  inwardArrow,
+  markable,
+  polylinePath,
+  type FaceGuides,
+  type Polyline,
+} from "@/lib/marker-paths";
 
 /**
- * THE one place marker geometry is decided. both the app overlay and the pdf
- * report render from this, so a person sees the same markings on screen and in
- * the file they download.
+ * THE one place marker geometry is decided. the app overlay, the results
+ * thumbnails and the pdf report all render from this, so a person sees the same
+ * markings on screen and in the file they download.
  *
  * everything is normalised 0..1 against the photo, so a renderer only needs a
  * "0 0 1 1" viewbox and no maths of its own. shapes are emitted as plain paths,
  * circles and lines: primitives both svg and @react-pdf/renderer understand.
+ *
+ * the rules that hold for all eighteen indicators:
+ *   · every marker is clipped to the detected face, never hair, background,
+ *     clothing, eyes, nostrils or lips
+ *   · a zone measured at nothing gets no markers at all
+ *   · density scales with severity: 90 reads nearly clear, 40 reads clearly marked
+ *   · placement is deterministic from the scan id, so a scan renders identically
+ *     every time
+ *   · soft translucent shapes in the indicator's accent, never a hard outline:
+ *     we are showing an area, not claiming a pixel
  */
 
 export interface ShapePath {
@@ -48,6 +68,10 @@ export interface MarkerDrawing {
   shapes: MarkerShape[];
   /** how soft the edges should be, in the same normalised units */
   blur: number;
+  /** closed path of the detected face. markers are clipped to it. */
+  clipPath?: string;
+  /** how these positions were arrived at, copied from skin_indicators */
+  placementMethod?: string;
 }
 
 export function hasMarkers(regions: MarkedRegion[] | null | undefined): boolean {
@@ -63,6 +87,17 @@ export function strongest(regions: MarkedRegion[], limit: number): MarkedRegion[
 export function wobble(seed: number, salt: number): number {
   const v = Math.sin((seed + 1) * 12.9898 + salt * 78.233) * 43758.5453;
   return v - Math.floor(v);
+}
+
+/** a stable number from the scan id, so model placed marks never move */
+export function seedFrom(seed: string | null | undefined): number {
+  if (!seed) return 7;
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h % 100000);
 }
 
 /**
@@ -107,12 +142,25 @@ export function photoAccent(accent: string): string {
     [c, 0, x],
   ][seg]!;
   return (
-    "#" +
-    rgbTriple.map((v) => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("")
+    "#" + rgbTriple.map((v) => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("")
   );
 }
 
 const round = (n: number) => Math.round(n * 10000) / 10000;
+const clamp01 = (n: number) => (n < 0 ? 0 : n > 1 ? 1 : n);
+
+/** health score to severity. 90 is nearly clear, 40 is clearly marked. */
+function severityOf(score: number | undefined): number {
+  if (score === undefined) return 0.5;
+  return clamp01((100 - score) / 100);
+}
+
+/** how many marks to keep for this severity, capped by what was measured */
+function densityCap(count: number, severity: number, max: number): number {
+  if (count === 0) return 0;
+  const wanted = Math.round(max * (0.18 + severity * 1.25));
+  return Math.max(1, Math.min(count, Math.min(max, wanted)));
+}
 
 /** a rotated ellipse written as two arcs, so no renderer needs transform support */
 function ellipsePath(cx: number, cy: number, rx: number, ry: number, deg: number): string {
@@ -128,12 +176,7 @@ function ellipsePath(cx: number, cy: number, rx: number, ry: number, deg: number
 }
 
 /** a curved stroke through the mark, rotation baked into the point maths */
-function strokePath(
-  m: MarkedRegion,
-  half: number,
-  bow: number,
-  deg: number,
-): string {
+function strokePath(m: MarkedRegion, half: number, bow: number, deg: number): string {
   const rad = (deg * Math.PI) / 180;
   const rot = (px: number, py: number): [number, number] => {
     const ox = px - m.x;
@@ -150,7 +193,13 @@ function strokePath(
 }
 
 /** soft filled blob, used by blooms, clouds and patches */
-function blob(m: MarkedRegion, i: number, accent: string, spread: number, alpha: number): MarkerShape {
+function blob(
+  m: MarkedRegion,
+  i: number,
+  accent: string,
+  spread: number,
+  alpha: number,
+): MarkerShape {
   const r = Math.max(0.02, m.r * spread);
   const rx = r * (0.85 + wobble(i, 1) * 0.5);
   const ry = r * (0.8 + wobble(i, 2) * 0.55);
@@ -169,21 +218,27 @@ function speck(
   accent: string,
   scale: number,
   count: number,
+  guides: FaceGuides | null,
 ): MarkerShape[] {
   const r = Math.max(0.0035, m.r * scale);
   const opacity = Math.min(0.9, 0.45 + m.intensity * 0.45);
-  return Array.from({ length: count }, (_, k): MarkerShape => {
+  const out: MarkerShape[] = [];
+  for (let k = 0; k < count; k++) {
     const ang = wobble(i, k + 10) * Math.PI * 2;
     const dist = wobble(i, k + 30) * m.r * 0.9;
-    return {
+    const cx = round(m.x + Math.cos(ang) * dist);
+    const cy = round(m.y + Math.sin(ang) * dist);
+    if (guides && !markable({ x: cx, y: cy }, guides)) continue;
+    out.push({
       kind: "circle",
-      cx: round(m.x + Math.cos(ang) * dist),
-      cy: round(m.y + Math.sin(ang) * dist),
+      cx,
+      cy,
       r: round(r * (0.7 + wobble(i, k + 50) * 0.6)),
       fill: accent,
       opacity,
-    };
-  });
+    });
+  }
+  return out;
 }
 
 function stroke(
@@ -205,146 +260,315 @@ function stroke(
 }
 
 /** a filled crescent sitting under the mark, used by the under eye reads */
-function crescent(m: MarkedRegion, accent: string, thickness: number): MarkerShape {
-  const w = Math.max(0.02, m.r * 2.2);
+function crescentAt(
+  p: { x: number; y: number },
+  width: number,
+  thickness: number,
+  accent: string,
+  opacity: number,
+): MarkerShape {
+  const w = Math.max(0.02, width);
   const t = w * thickness;
   const d =
-    `M ${round(m.x - w)} ${round(m.y - t * 0.3)} Q ${round(m.x)} ${round(m.y + t * 1.6)} ${round(m.x + w)} ${round(m.y - t * 0.3)}` +
-    ` Q ${round(m.x)} ${round(m.y + t * 0.5)} ${round(m.x - w)} ${round(m.y - t * 0.3)} Z`;
-  return {
-    kind: "path",
-    d,
-    fill: accent,
-    opacity: Math.min(0.9, 0.5 + m.intensity * 0.4),
-  };
+    `M ${round(p.x - w)} ${round(p.y - t * 0.3)} Q ${round(p.x)} ${round(p.y + t * 1.6)} ${round(p.x + w)} ${round(p.y - t * 0.3)}` +
+    ` Q ${round(p.x)} ${round(p.y + t * 0.5)} ${round(p.x - w)} ${round(p.y - t * 0.3)} Z`;
+  return { kind: "path", d, fill: accent, opacity };
 }
 
-/** soft disc plus a dashed edge, used by volume loss */
-function deflate(m: MarkedRegion, accent: string): MarkerShape[] {
-  const r = Math.max(0.03, m.r * 1.2);
-  const outer = Math.min(0.85, 0.45 + m.intensity * 0.35);
+/** breakouts: filled centre at 40 percent with a ring at full accent */
+function spot(m: MarkedRegion, accent: string): MarkerShape[] {
+  const r = Math.max(0.009, m.r * 0.9);
+  const base = Math.min(0.95, 0.55 + m.intensity * 0.4);
   return [
-    { kind: "circle", cx: m.x, cy: m.y, r, fill: accent, opacity: outer * 0.18 },
+    { kind: "circle", cx: round(m.x), cy: round(m.y), r: round(r), fill: accent, opacity: 0.4 },
     {
       kind: "path",
-      d: ellipsePath(m.x, m.y, r, r, 0),
+      d: ellipsePath(m.x, m.y, r * 1.35, r * 1.35, 0),
       stroke: accent,
-      strokeWidth: 0.004,
-      dash: "0.012 0.012",
-      opacity: outer,
+      strokeWidth: 0.0035,
+      opacity: base,
     },
   ];
 }
 
-function spots(m: MarkedRegion, accent: string): MarkerShape[] {
-  const r = Math.max(0.008, m.r * 0.8);
-  const base = Math.min(0.9, 0.5 + m.intensity * 0.4);
+/** a soft disc with a dashed edge, used by volume loss */
+function deflate(p: { x: number; y: number }, r: number, accent: string, alpha: number): MarkerShape[] {
   return [
-    { kind: "circle", cx: m.x, cy: m.y, r: r * 1.9, fill: accent, opacity: base * 0.22 },
-    { kind: "circle", cx: m.x, cy: m.y, r, fill: accent, opacity: base * 0.55 },
+    { kind: "circle", cx: round(p.x), cy: round(p.y), r: round(r), fill: accent, opacity: alpha * 0.2 },
+    {
+      kind: "path",
+      d: ellipsePath(p.x, p.y, r, r * 0.78, 0),
+      stroke: accent,
+      strokeWidth: 0.004,
+      dash: "0.012 0.012",
+      opacity: alpha,
+    },
   ];
 }
 
-function drawerFor(kind: string): {
-  draw: (m: MarkedRegion, i: number, accent: string) => MarkerShape | MarkerShape[];
-  blur: number;
-} {
-  switch (kind) {
-    case "bloom":
-      return { draw: (m, i, a) => blob(m, i, a, 1.9, 0.3), blur: 0.02 };
-    case "cloud":
-      return { draw: (m, i, a) => blob(m, i, a, 1.8, 0.13), blur: 0.026 };
-    case "patches":
-      return { draw: (m, i, a) => blob(m, i, a, 1.35, 0.35), blur: 0.012 };
-    case "patches_soft":
-      return { draw: (m, i, a) => blob(m, i, a, 1.7, 0.26), blur: 0.022 };
-    case "dots_dense":
-      return { draw: (m, i, a) => speck(m, i, a, 0.28, 7), blur: 0.0015 };
-    case "dots_scatter":
-      return { draw: (m, i, a) => speck(m, i, a, 0.32, 5), blur: 0.002 };
-    case "spots":
-      return { draw: (m, _i, a) => spots(m, a), blur: 0.004 };
-    case "hatch":
-      return { draw: (m, i, a) => stroke(m, i, a, { len: 0.85, weight: 0.4, bow: 1.7 }), blur: 0.003 };
-    case "strokes_long":
-      return {
-        draw: (m, i, a) =>
-          stroke(m, i, a, { len: 1.4, weight: 0.1, bow: 0.6, angle: wobble(i, 5) * 12 - 6 }),
-        blur: 0.003,
-      };
-    case "strokes_short":
-      return {
-        draw: (m, i, a) =>
-          stroke(m, i, a, { len: 0.9, weight: 0.1, bow: 0.7, angle: wobble(i, 6) * 60 - 30 }),
-        blur: 0.002,
-      };
-    case "crescent":
-      return { draw: (m, _i, a) => crescent(m, a, 0.62), blur: 0.005 };
-    case "crescent_soft":
-      return { draw: (m, _i, a) => crescent(m, a, 0.6), blur: 0.01 };
-    case "crescent_thin":
-      return {
-        draw: (m, i, a) => stroke(m, i, a, { len: 2, weight: 0.12, bow: 1.1, angle: 0 }),
-        blur: 0.004,
-      };
-    case "arc_upper":
-      return {
-        draw: (m, i, a) => stroke(m, i, a, { len: 2, weight: 0.16, bow: -1.2, angle: 0 }),
-        blur: 0.005,
-      };
-    case "contour":
-      return {
-        draw: (m, i, a) =>
-          stroke(m, i, a, { len: 1.8, weight: 0.09, bow: 0.9, angle: 0, dash: "0.014 0.012" }),
-        blur: 0.004,
-      };
-    case "deflate":
-      return { draw: (m, _i, a) => deflate(m, a), blur: 0.006 };
-    case "axis":
-      return { draw: (m, i, a) => blob(m, i, a, 1.3, 0.3), blur: 0.016 };
-    default:
-      return { draw: (m, i, a) => blob(m, i, a, 1.4, 0.32), blur: 0.014 };
-  }
+function pathShape(
+  d: string,
+  accent: string,
+  weight: number,
+  opacity: number,
+  dash?: string,
+): MarkerShape {
+  return { kind: "path", d, stroke: accent, strokeWidth: weight, dash, opacity };
+}
+
+export interface MarkerDrawInput {
+  regions: MarkedRegion[];
+  accent: string;
+  overlayKind?: string;
+  /** cap the marker count, used by the small thumbnails */
+  limit?: number;
+  /** health score 0..100, drives density */
+  score?: number;
+  /** layer 1 landmarks. without them we cannot mark a photo at all. */
+  landmarks?: Landmark[] | null;
+  /** scan id, so model placed marks are deterministic */
+  seed?: string | null;
+  placementMethod?: string;
 }
 
 /**
- * turns measured regions into the shapes to paint. same input, same output,
- * every time, in the app and in the report.
+ * turns measured regions and real landmark contours into the shapes to paint.
+ * same input, same output, every time, in the app and in the report.
  */
 export function markerDrawing({
   regions,
   accent,
   overlayKind = "patches_soft",
   limit,
-}: {
-  regions: MarkedRegion[];
-  accent: string;
-  overlayKind?: string;
-  limit?: number;
-}): MarkerDrawing {
-  const marks = limit ? strongest(regions, limit) : regions.slice(0, 40);
-  if (!marks.length) return { shapes: [], blur: 0 };
-
-  const { draw, blur } = drawerFor(overlayKind);
+  score,
+  landmarks,
+  seed,
+  placementMethod,
+}: MarkerDrawInput): MarkerDrawing {
+  const guides = faceGuides(landmarks);
   const ink = photoAccent(accent);
+  const severity = severityOf(score);
+  const seedNum = seedFrom(seed);
   const shapes: MarkerShape[] = [];
 
-  if (overlayKind === "axis") {
-    // symmetry reads as the midline it is measured against
-    const mid = marks.reduce((sum, m) => sum + m.x, 0) / marks.length;
-    const dash = "0.02 0.016";
-    shapes.push(
-      { kind: "line", x1: mid, y1: 0.08, x2: mid, y2: 0.95, stroke: ink, strokeWidth: 0.003, dash, opacity: 0.5 },
-      { kind: "line", x1: 0.08, y1: 0.38, x2: 0.92, y2: 0.38, stroke: ink, strokeWidth: 0.003, dash, opacity: 0.5 },
-      { kind: "line", x1: 0.08, y1: 0.62, x2: 0.92, y2: 0.62, stroke: ink, strokeWidth: 0.003, dash, opacity: 0.5 },
-    );
+  // nothing measured, nothing marked
+  const inside = (regions ?? []).filter(
+    (m) => m.intensity > 0 && (!guides || markable({ x: m.x, y: m.y }, guides)),
+  );
+  const ordered = [...inside].sort((a, b) => b.intensity - a.intensity);
+  const cap = limit ?? densityCap(ordered.length, severity, 34);
+  const marks = ordered.slice(0, Math.max(0, Math.min(cap, limit ?? cap)));
+
+  const finish = (blur: number): MarkerDrawing => ({
+    shapes,
+    blur,
+    clipPath: guides?.clipPath,
+    placementMethod,
+  });
+
+  const scale = guides ? guides.bounds.w : 0.6;
+  const alpha = Math.min(0.85, 0.4 + severity * 0.45);
+  const weight = Math.max(0.003, scale * 0.008);
+
+  /* ---------- contour led indicators: drawn on the real landmark paths ---------- */
+
+  if (overlayKind === "strokes_long" || overlayKind === "strokes_short") {
+    if (guides) {
+      const fine = overlayKind === "strokes_short";
+      const foreheadCount = Math.max(1, Math.round((fine ? 2 : 3) * (0.4 + severity)));
+      guides.forehead.slice(0, foreheadCount).forEach((curve: Polyline, i) => {
+        const trimmed = fine ? curve.slice(1, -1) : curve;
+        shapes.push(
+          pathShape(polylinePath(trimmed), ink, weight * (fine ? 0.6 : 1), alpha - i * 0.06),
+        );
+      });
+      const feet = Math.max(2, Math.round(guides.crowsFeet.length * (0.35 + severity * 0.65)));
+      guides.crowsFeet.slice(0, feet).forEach((f) => {
+        const short = fine ? [f[0]!, { x: (f[0]!.x + f[1]!.x) / 2, y: (f[0]!.y + f[1]!.y) / 2 }] : f;
+        shapes.push(pathShape(polylinePath(short), ink, weight * (fine ? 0.6 : 0.85), alpha));
+      });
+      return finish(fine ? 0.002 : 0.003);
+    }
   }
 
+  if (overlayKind === "arc_upper" && guides) {
+    guides.upperLids.forEach((lid) => {
+      shapes.push(pathShape(polylinePath(lid), ink, weight * 1.3, alpha));
+    });
+    return finish(0.004);
+  }
+
+  if (overlayKind === "crescent_thin" && guides) {
+    guides.tearTroughs.forEach((lid) => {
+      // inner corner outward, the first half of the lower lid contour
+      shapes.push(pathShape(polylinePath(lid.slice(0, Math.ceil(lid.length * 0.7))), ink, weight, alpha));
+    });
+    return finish(0.004);
+  }
+
+  if ((overlayKind === "crescent" || overlayKind === "crescent_soft") && guides) {
+    const soft = overlayKind === "crescent_soft";
+    guides.underEyes.forEach((p) => {
+      shapes.push(
+        crescentAt(
+          { x: p.x, y: p.y + guides.bounds.h * (soft ? 0.035 : 0.02) },
+          guides.bounds.w * 0.11,
+          soft ? 0.55 : 0.62,
+          ink,
+          alpha,
+        ),
+      );
+    });
+    return finish(soft ? 0.012 : 0.005);
+  }
+
+  if (overlayKind === "contour" && guides && guides.jawline.length > 3) {
+    shapes.push(pathShape(polylinePath(guides.jawline), ink, weight, alpha));
+    const count = Math.max(3, Math.round(9 * (0.3 + severity)));
+    for (const d of chevronsAlong(guides.jawline, count, scale * 0.022)) {
+      shapes.push(pathShape(d, ink, weight * 0.8, alpha * 0.9));
+    }
+    return finish(0.004);
+  }
+
+  if (overlayKind === "deflate" && guides) {
+    const spots = [...guides.temples, ...guides.midCheeks];
+    spots.forEach((p, i) => {
+      const r = scale * (i < guides.temples.length ? 0.085 : 0.11) * (0.7 + severity * 0.5);
+      shapes.push(...deflate(p, r, ink, alpha));
+      shapes.push(pathShape(inwardArrow(p, guides.midline, scale * 0.05), ink, weight * 0.8, alpha));
+    });
+    return finish(0.006);
+  }
+
+  if (overlayKind === "axis" && guides) {
+    const dash = "0.02 0.016";
+    const { x, w } = guides.bounds;
+    shapes.push(
+      {
+        kind: "line",
+        x1: guides.midline,
+        y1: round(guides.bounds.y),
+        x2: guides.midline,
+        y2: round(guides.bounds.y + guides.bounds.h),
+        stroke: ink,
+        strokeWidth: weight * 0.7,
+        dash,
+        opacity: 0.55,
+      },
+      {
+        kind: "line",
+        x1: round(x),
+        y1: guides.browY,
+        x2: round(x + w),
+        y2: guides.browY,
+        stroke: ink,
+        strokeWidth: weight * 0.7,
+        dash,
+        opacity: 0.5,
+      },
+      {
+        kind: "line",
+        x1: round(x),
+        y1: guides.mouthY,
+        x2: round(x + w),
+        y2: guides.mouthY,
+        stroke: ink,
+        strokeWidth: weight * 0.7,
+        dash,
+        opacity: 0.5,
+      },
+    );
+    // the two cheek circles are sized by the measured difference between sides
+    const sideMark = (leftSide: boolean) =>
+      inside.find((m) => (leftSide ? m.x > guides.midline : m.x <= guides.midline));
+    guides.cheeks.forEach((p) => {
+      const m = sideMark(p.x > guides.midline);
+      const diff = m ? m.intensity : severity;
+      const r = scale * (0.07 + diff * 0.1);
+      shapes.push({
+        kind: "circle",
+        cx: round(p.x),
+        cy: round(p.y),
+        r: round(r),
+        fill: ink,
+        opacity: Math.min(0.6, 0.2 + diff * 0.35),
+      });
+    });
+    return finish(0.016);
+  }
+
+  /* ---------- measured indicators: drawn where the pixels actually read ---------- */
+
+  if (!marks.length) return finish(0);
+
+  const drawMark = (m: MarkedRegion, i: number) => {
+    const salt = i + seedNum;
+    switch (overlayKind) {
+      case "bloom":
+        return blob(m, salt, ink, 2.1, 0.26);
+      case "cloud":
+        return blob(m, salt, ink, 2, 0.13);
+      case "patches":
+        // irregular blotches of varied size
+        return blob(m, salt, ink, 1.1 + wobble(salt, 9) * 1.1, 0.32);
+      case "patches_soft":
+        return blob(m, salt, ink, 1.8, 0.24);
+      case "dots_dense":
+        return speck(m, salt, ink, 0.24, 9, guides);
+      case "dots_scatter":
+        return speck(m, salt, ink, 0.3, 6, guides);
+      case "spots":
+        return spot(m, ink);
+      case "hatch":
+        return stroke(m, salt, ink, { len: 0.8, weight: 0.38, bow: 1.7 });
+      case "strokes_long":
+        return stroke(m, salt, ink, { len: 1.4, weight: 0.1, bow: 0.6, angle: wobble(salt, 5) * 12 - 6 });
+      case "strokes_short":
+        return stroke(m, salt, ink, { len: 0.9, weight: 0.1, bow: 0.7, angle: wobble(salt, 6) * 60 - 30 });
+      case "crescent":
+      case "crescent_soft":
+        return crescentAt({ x: m.x, y: m.y }, m.r * 2.2, 0.6, ink, Math.min(0.9, 0.5 + m.intensity * 0.4));
+      case "crescent_thin":
+        return stroke(m, salt, ink, { len: 2, weight: 0.12, bow: 1.1, angle: 0 });
+      case "arc_upper":
+        return stroke(m, salt, ink, { len: 2, weight: 0.16, bow: -1.2, angle: 0 });
+      case "contour":
+        return stroke(m, salt, ink, { len: 1.8, weight: 0.09, bow: 0.9, angle: 0, dash: "0.014 0.012" });
+      case "deflate":
+        return deflate({ x: m.x, y: m.y }, Math.max(0.03, m.r * 1.2), ink, Math.min(0.8, 0.45 + m.intensity * 0.35));
+      case "axis":
+        return blob(m, salt, ink, 1.3, 0.28);
+      default:
+        return blob(m, salt, ink, 1.4, 0.3);
+    }
+  };
+
+  const BLUR: Record<string, number> = {
+    bloom: 0.026,
+    cloud: 0.03,
+    patches: 0.014,
+    patches_soft: 0.024,
+    dots_dense: 0.0015,
+    dots_scatter: 0.002,
+    spots: 0.003,
+    hatch: 0.003,
+    strokes_long: 0.003,
+    strokes_short: 0.002,
+    crescent: 0.005,
+    crescent_soft: 0.012,
+    crescent_thin: 0.004,
+    arc_upper: 0.005,
+    contour: 0.004,
+    deflate: 0.006,
+    axis: 0.016,
+  };
+
   marks.forEach((m, i) => {
-    const out = draw(m, i, ink);
+    const out = drawMark(m, i);
     if (Array.isArray(out)) shapes.push(...out);
     else shapes.push(out);
   });
 
-  return { shapes, blur };
+  return finish(BLUR[overlayKind] ?? 0.014);
 }

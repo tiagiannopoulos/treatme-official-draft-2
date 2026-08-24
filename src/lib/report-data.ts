@@ -1,6 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 import { CONCERN_ABOUT } from "@/lib/concern-copy";
 import type { MarkedRegion } from "@/lib/skinAnalysis";
+import type { Landmark } from "@/lib/facemesh";
+import { markerDrawing, type MarkerDrawing } from "@/lib/marker-shapes";
 import {
   CONCERN_GROUPS,
   SCAN_CONCERN_LABEL,
@@ -40,6 +42,8 @@ export interface ReportIndicator {
   /** accent + draw style, so the pdf overlay matches the app */
   accent: string;
   overlayKind: string;
+  /** the exact positions the app drew, from scan_results.marker_positions */
+  drawing: MarkerDrawing | null;
 }
 
 export interface ReportGroup {
@@ -154,15 +158,22 @@ export async function buildReportData(input: {
   createdAt: string;
   firstName: string | null;
   photoTiles?: Record<string, string | null>;
+  /** stored marker positions per concern key, so the pdf never recomputes */
+  markerPositions?: Record<string, MarkerDrawing | null>;
+  landmarks?: Landmark[] | null;
+  scanId?: string | null;
 }): Promise<ReportData> {
   const rows = toConcernRows(input.result);
   const overall = overallScore(rows);
 
   const { data: indicatorRows } = await supabase
     .from("skin_indicators")
-    .select("slug, accent, overlay_kind");
+    .select("slug, accent, overlay_kind, placement_method");
   const styleFor = new Map(
-    (indicatorRows ?? []).map((i) => [i.slug.replace(/-/g, "_"), { accent: i.accent, kind: i.overlay_kind }]),
+    (indicatorRows ?? []).map((i) => [
+      i.slug.replace(/-/g, "_"),
+      { accent: i.accent, kind: i.overlay_kind, placement: i.placement_method ?? "model_zone" },
+    ]),
   );
 
   const { data } = await supabase
@@ -198,6 +209,17 @@ export async function buildReportData(input: {
     regions: row.regions ?? [],
     accent: styleFor.get(row.concern_key)?.accent ?? "#F8A1C6",
     overlayKind: styleFor.get(row.concern_key)?.kind ?? "patches_soft",
+    drawing:
+      input.markerPositions?.[row.concern_key] ??
+      markerDrawing({
+        regions: row.regions ?? [],
+        accent: styleFor.get(row.concern_key)?.accent ?? "#F8A1C6",
+        overlayKind: styleFor.get(row.concern_key)?.kind ?? "patches_soft",
+        score: row.score,
+        landmarks: input.landmarks ?? null,
+        seed: input.scanId ?? null,
+        placementMethod: styleFor.get(row.concern_key)?.placement,
+      }),
   });
 
   const indicators = rows.map(indicatorFor);
@@ -307,6 +329,7 @@ export function mockReportData(): ReportData {
     treatments: score >= 80 ? [] : (tx.default ?? []).slice(0, score < 50 ? 3 : 2),
     photoUrl: null,
     regions: [],
+    drawing: null,
     accent: "#F8A1C6",
     overlayKind: "patches_soft",
   }));

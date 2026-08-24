@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { buildReportData } from "@/lib/report-data";
 import { fetchSavedScan } from "@/lib/scan-history";
 import { scanPhotoSignedUrl } from "@/lib/scan-photo";
+import { storedMarkerPositions } from "@/lib/report-markers";
 import type { SkinAnalysis } from "@/lib/skin-analysis";
 import { createElement } from "react";
 
@@ -61,6 +62,9 @@ export async function fetchScanPdf({ scanId, includePhoto, analysis }: ScanPdfIn
     createdAt: scan.createdAt,
     firstName: profile?.first_name ?? null,
     photoTiles,
+    markerPositions: await storedMarkerPositions(scanId),
+    landmarks: scan.landmarks,
+    scanId,
   });
 
   const element = createElement(SkinReportDocument, {

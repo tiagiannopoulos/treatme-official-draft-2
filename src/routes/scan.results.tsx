@@ -15,7 +15,8 @@ import { fetchSavedScan } from "@/lib/scan-history";
 import { getRecommendations } from "@/lib/recommendations";
 import { topConcerns } from "@/lib/skinAnalysis";
 import { FaceMap } from "@/components/treatme/FaceMap";
-import { MarkerOverlay, hasMarkers } from "@/components/treatme/MarkerOverlay";
+import { MarkerOverlay } from "@/components/treatme/MarkerOverlay";
+import { markerDrawing } from "@/lib/marker-shapes";
 import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
 
 
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
-  const { result, analysis, scanId, photoQuality, measured, hydrate, setResult } = useScan();
+  const { result, analysis, scanId, photoQuality, measured, landmarks, hydrate, setResult } = useScan();
   const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
@@ -85,20 +86,23 @@ function ResultsPage() {
   // of the headline ordering and the treatment matching.
   const ordered = useMemo(
     () =>
-      rows
-        .filter((r) => SCAN_CONCERN_KEYS.includes(r.concern_key))
-        .sort((a, b) => a.score - b.score),
+      [...rows].sort((a, b) => a.score - b.score),
     [rows],
   );
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
-  const worst = ordered[0];
+  // the four groups only: symmetry and fine lines render, but do not drive matching
+  const grid = useMemo(
+    () => ordered.filter((r) => SCAN_CONCERN_KEYS.includes(r.concern_key)),
+    [ordered],
+  );
+  const worst = grid[0];
 
   const { data: matches = [] } = useQuery({
-    queryKey: ["concern-treatments", ordered.map((r) => `${r.concern_key}:${r.score}`).join(",")],
-    queryFn: () => treatmentsForConcerns(ordered, 5),
-    enabled: ordered.length > 0,
+    queryKey: ["concern-treatments", grid.map((r) => `${r.concern_key}:${r.score}`).join(",")],
+    queryFn: () => treatmentsForConcerns(grid, 5),
+    enabled: grid.length > 0,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -215,6 +219,16 @@ function ResultsPage() {
           <div className="flex gap-3 px-6 pb-2">
             {ordered.map((row) => {
               const ind = findIndicator(indicators, row.concern_key);
+              // ten strongest only: more than that is mud at this size
+              const drawing = markerDrawing({
+                regions: row.regions,
+                accent: ind?.accent ?? "#F8A1C6",
+                overlayKind: ind?.overlayKind ?? "patches_soft",
+                score: row.score,
+                landmarks,
+                seed: scanId,
+                limit: 10,
+              });
               return (
                 <button
                   key={row.concern_key}
@@ -222,17 +236,17 @@ function ResultsPage() {
                   onClick={() => navigate({ to: "/scan/concern/$key", params: { key: ind?.slug ?? row.concern_key } })}
                   className="text-left shrink-0 w-[112px]"
                 >
-                  {hasMarkers(row.regions) && photoSource.url ? (
+                  {drawing.shapes.length > 0 && photoSource.url ? (
                     <ScanPhoto
                       source={photoSource}
                       alt={`your photo with ${ind?.name ?? row.concern_key} marked`}
-                      className="w-[112px] aspect-square rounded-2xl border border-ink/10"
+                      className="w-[112px] aspect-[3/4] rounded-2xl border border-ink/10"
                     >
                       <MarkerOverlay
                         regions={row.regions}
                         accent={ind?.accent ?? "#F8A1C6"}
                         overlayKind={ind?.overlayKind ?? "patches_soft"}
-                        limit={10}
+                        drawing={drawing}
                       />
                     </ScanPhoto>
                   ) : (

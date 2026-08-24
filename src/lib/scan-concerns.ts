@@ -36,7 +36,7 @@ export const SCAN_CONCERN_KEYS = CONCERN_GROUPS.flatMap((g) => g.concerns as rea
  * it is not a grid tile, but it is persisted like every other indicator so it
  * has a score and marker geometry to render from.
  */
-export const EXTRA_CONCERN_KEYS = ["symmetry"] as const;
+export const EXTRA_CONCERN_KEYS = ["symmetry", "fine_lines"] as const;
 
 /** every concern written to scan_results, one row each */
 export const PERSISTED_CONCERN_KEYS = [...SCAN_CONCERN_KEYS, ...EXTRA_CONCERN_KEYS];
@@ -59,6 +59,7 @@ export const SCAN_CONCERN_LABEL: Record<string, string> = {
   tear_trough: "tear trough",
   eyelid_heaviness: "eyelid heaviness",
   symmetry: "symmetry",
+  fine_lines: "fine lines",
 };
 
 export type Band = "great" | "good" | "average" | "focus here";
@@ -122,6 +123,7 @@ const REGION_SOURCES: Record<string, EngineKey[]> = {
   tear_trough: ["underEyes"],
   eyelid_heaviness: ["laxity"],
   symmetry: ["symmetry"],
+  fine_lines: ["fineLines"],
 };
 
 /** dedupes near identical spots so a merged indicator does not double up markers */
@@ -163,6 +165,7 @@ export function toConcernRows(result: ScanResult, measured?: Measured | null): S
     tear_trough: health(avg(sev("underEyes"), sev("volumeLoss"))),
     eyelid_heaviness: health(avg(sev("laxity"), sev("underEyes"))),
     symmetry: health(sev("symmetry")),
+    fine_lines: health(sev("fineLines")),
   };
 
   // per-region reads, so the overlay can paint one patch heavier than another
@@ -205,6 +208,7 @@ export function toConcernRows(result: ScanResult, measured?: Measured | null): S
     tear_trough: { tear_trough: raw.tear_trough },
     eyelid_heaviness: { upper_lid: raw.eyelid_heaviness },
     symmetry: { full_face: raw.symmetry },
+    fine_lines: { crowsfeet: health(sev("fineLines")), forehead: health(sev("fineLines") * 0.9) },
   };
 
   const regionsFor = (key: string): MarkedRegion[] =>

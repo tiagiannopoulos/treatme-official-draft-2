@@ -4,6 +4,8 @@ import type { ScanResult } from "@/lib/skinAnalysis";
 import type { FaceMap, MappingMethod } from "@/lib/face-zones";
 import type { Measured } from "@/lib/skin-measure";
 import { overallScore, toConcernRows } from "@/lib/scan-concerns";
+import { markerDrawing } from "@/lib/marker-shapes";
+import { indicatorKey } from "@/lib/skin-indicators";
 import { logScanIssue } from "@/lib/scan-errors";
 
 export interface SaveScanInput {
@@ -73,6 +75,32 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
     return null;
   }
 
+  // the drawing is decided once, here, and stored. the pdf renders these exact
+  // positions rather than recomputing them.
+  const { data: indicatorRows } = await supabase
+    .from("skin_indicators")
+    .select("slug, accent, overlay_kind, placement_method");
+  const styleFor = new Map(
+    (indicatorRows ?? []).map((i) => [
+      indicatorKey(i.slug),
+      { accent: i.accent, kind: i.overlay_kind, placement: i.placement_method ?? "model_zone" },
+    ]),
+  );
+
+  const markersFor = (concernKey: string, regions: typeof rows[number]["regions"], score: number) => {
+    if (!input.faceMap) return null;
+    const style = styleFor.get(concernKey);
+    return markerDrawing({
+      regions,
+      accent: style?.accent ?? "#F8A1C6",
+      overlayKind: style?.kind ?? "patches_soft",
+      score,
+      landmarks: input.faceMap.landmarks,
+      seed: scan.id,
+      placementMethod: style?.placement,
+    });
+  };
+
   const { error: resultsError } = await supabase.from("scan_results").insert(
     rows.map((r) => ({
       scan_id: scan.id,
@@ -85,6 +113,7 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       zone_scores: r.zone_scores as unknown as never,
       measured: r.measured as unknown as never,
       mapping_method: input.faceMap ? r.mapping_method : "fallback_diagram",
+      marker_positions: markersFor(r.concern_key, r.regions, r.score) as unknown as never,
     })),
   );
   if (resultsError) {

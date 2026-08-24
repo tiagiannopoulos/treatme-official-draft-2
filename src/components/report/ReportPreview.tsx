@@ -2,6 +2,7 @@ import { PDFViewer } from "@react-pdf/renderer";
 import { useEffect, useState } from "react";
 import { SkinReportDocument } from "@/components/report/SkinReportDocument";
 import { buildReportData, mockReportData, type ReportData } from "@/lib/report-data";
+import { storedMarkerPositions } from "@/lib/report-markers";
 import { fetchSavedScan } from "@/lib/scan-history";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,6 +35,9 @@ export default function ReportPreview({ scanId }: { scanId: string }) {
         analysis: scan.analysis,
         createdAt: scan.createdAt,
         firstName: profile?.first_name ?? null,
+        markerPositions: await storedMarkerPositions(scanId),
+        landmarks: scan.landmarks,
+        scanId,
       });
       if (alive) setData(built);
     })();

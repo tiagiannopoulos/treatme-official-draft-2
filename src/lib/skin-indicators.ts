@@ -11,6 +11,8 @@ export interface SkinIndicator {
   sortOrder: number;
   whatItMeans: string;
   whatHelps: string[];
+  /** pixel, geometry or model_zone. drives the line under the photo. */
+  placementMethod: string;
 }
 
 interface Row {
@@ -22,12 +24,13 @@ interface Row {
   sort_order: number;
   what_it_means: string | null;
   what_helps: string[] | null;
+  placement_method: string | null;
 }
 
 export async function fetchSkinIndicators(): Promise<SkinIndicator[]> {
   const { data, error } = await supabase
     .from("skin_indicators")
-    .select("slug, name, overlay_kind, accent, region, sort_order, what_it_means, what_helps")
+    .select("slug, name, overlay_kind, accent, region, sort_order, what_it_means, what_helps, placement_method")
     .order("sort_order");
   if (error) throw new Error(error.message);
   return ((data ?? []) as Row[]).map((r) => ({
@@ -39,6 +42,7 @@ export async function fetchSkinIndicators(): Promise<SkinIndicator[]> {
     sortOrder: r.sort_order,
     whatItMeans: r.what_it_means ?? "",
     whatHelps: r.what_helps ?? [],
+    placementMethod: r.placement_method ?? "model_zone",
   }));
 }
 
