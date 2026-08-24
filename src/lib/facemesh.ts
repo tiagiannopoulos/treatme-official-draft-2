@@ -5,7 +5,7 @@
 // nothing here fails silently: every load or detection failure is logged with
 // its reason and written to scan_errors.
 
-import { reportScanIssue } from "@/lib/scan-errors";
+import { logScanIssue, reportScanIssue } from "@/lib/scan-errors";
 
 type Landmarker = import("@mediapipe/tasks-vision").FaceLandmarker;
 
