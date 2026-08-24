@@ -111,18 +111,33 @@ export async function decodeImage(dataUrl: string): Promise<HTMLImageElement> {
 /** final landmark pass on the captured still */
 export async function landmarksFromDataUrl(dataUrl: string): Promise<Landmark[] | null> {
   const model = await load("IMAGE");
-  if (!model) return null;
+  if (!model) {
+    await logScanIssue({ stage: "face_detect", reason: "model_unavailable" });
+    return null;
+  }
   try {
     const img = await decodeImage(dataUrl);
     const res = model.detect(img);
     const points = res.faceLandmarks?.[0];
-    if (!points?.length) return null;
+    if (!points?.length) {
+      await logScanIssue({
+        stage: "face_detect",
+        reason: "no_face_found",
+        detail: { width: img.naturalWidth, height: img.naturalHeight },
+      });
+      return null;
+    }
     return (points as Landmark[]).map((p) => ({
       x: Math.round(p.x * 10000) / 10000,
       y: Math.round(p.y * 10000) / 10000,
       z: Math.round(p.z * 10000) / 10000,
     }));
-  } catch {
+  } catch (e) {
+    await logScanIssue({
+      stage: "face_detect",
+      reason: e instanceof Error && e.message === "decode_failed" ? "decode_failed" : "detect_threw",
+      detail: { message: e instanceof Error ? e.message : String(e) },
+    });
     return null;
   }
 }
@@ -134,5 +149,15 @@ export async function landmarksFromDataUrl(dataUrl: string): Promise<Landmark[] 
  */
 export async function faceMapFromDataUrl(dataUrl: string) {
   const { buildFaceMap } = await import("@/lib/face-zones");
-  return buildFaceMap(await landmarksFromDataUrl(dataUrl));
+  const landmarks = await landmarksFromDataUrl(dataUrl);
+  const map = buildFaceMap(landmarks);
+  if (!map) {
+    await logScanIssue({
+      stage: "face_zones",
+      reason: landmarks ? "zones_build_failed" : "no_landmarks",
+      detail: { landmarkCount: landmarks?.length ?? 0 },
+    });
+  }
+  return map;
 }
+
