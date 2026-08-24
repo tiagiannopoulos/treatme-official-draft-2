@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SCAN_CONCERN_LABEL, toConcernRows } from "@/lib/scan-concerns";
 import { findIndicator, indicatorKey, skinIndicatorsQuery } from "@/lib/skin-indicators";
 import { FaceMap } from "@/components/treatme/FaceMap";
-import { MarkerOverlay, hasMarkers } from "@/components/treatme/MarkerOverlay";
+import { MarkerOverlay } from "@/components/treatme/MarkerOverlay";
+import { markerDrawing } from "@/lib/marker-shapes";
 import { ScanPhoto } from "@/components/treatme/ScanPhoto";
 import { useScanPhotoSource } from "@/lib/scan-photo";
 import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
@@ -47,7 +48,7 @@ function useTreatmentNames(slugs: string[]) {
 function ConcernDetailPage() {
   const { key } = Route.useParams();
   const navigate = useNavigate();
-  const { result, measured } = useScan();
+  const { result, measured, landmarks, scanId } = useScan();
   const photoSource = useScanPhotoSource();
   const { openTreatment } = useTreatmentSheet();
 
@@ -77,6 +78,19 @@ function ConcernDetailPage() {
 
   const score = row.score;
   const accent = indicator?.accent ?? "#F8A1C6";
+  const drawing = markerDrawing({
+    regions: row.regions,
+    accent,
+    overlayKind: indicator?.overlayKind ?? "patches_soft",
+    score,
+    landmarks,
+    seed: scanId,
+  });
+  const placement = indicator?.placementMethod ?? "model_zone";
+  const placementLine =
+    placement === "pixel" || placement === "geometry"
+      ? "measured from your photo"
+      : "estimated from your photo";
 
   return (
     <div className="pt-4 pb-28">
@@ -122,16 +136,17 @@ function ConcernDetailPage() {
 
       {/* your own photo with this indicator marked. the diagram is the fallback. */}
       <div className="mt-4 mx-6">
-        {hasMarkers(row.regions) && photoSource.url ? (
+        {drawing.shapes.length > 0 && photoSource.url ? (
           <ScanPhoto
             source={photoSource}
             alt={`your photo with ${label} marked`}
-            className="w-full aspect-[4/5] rounded-2xl border border-ink/10"
+            className="w-full aspect-[3/4] rounded-2xl border border-ink/10"
           >
             <MarkerOverlay
               regions={row.regions}
               accent={accent}
               overlayKind={indicator?.overlayKind ?? "patches_soft"}
+              drawing={drawing}
             />
           </ScanPhoto>
         ) : (
@@ -142,6 +157,9 @@ function ConcernDetailPage() {
             score={score}
             className="w-full rounded-2xl"
           />
+        )}
+        {drawing.shapes.length > 0 && photoSource.url && (
+          <p className="mt-2 text-[11px] lowercase text-ink/45">{placementLine}</p>
         )}
         <div className="mt-3 h-1.5 rounded-full bg-ink/10 overflow-hidden">
           <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: accent }} />
