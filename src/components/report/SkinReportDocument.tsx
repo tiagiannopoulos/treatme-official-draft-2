@@ -169,12 +169,16 @@ function ReportMarkers({
   indicator: ReportIndicator;
   limit?: number;
 }) {
-  const { shapes } = markerDrawing({
-    regions: indicator.regions,
-    accent: indicator.accent,
-    overlayKind: indicator.overlayKind,
-    limit,
-  });
+  const drawing =
+    indicator.drawing ??
+    markerDrawing({
+      regions: indicator.regions,
+      accent: indicator.accent,
+      overlayKind: indicator.overlayKind,
+      score: indicator.score,
+      limit,
+    });
+  const shapes = drawing.shapes.slice(0, limit ? limit * 8 : undefined);
   if (!shapes.length) return null;
 
   return (
