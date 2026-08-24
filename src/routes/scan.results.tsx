@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Check } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { toConcernRows, overallScore, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { toConcernRows, overallScore, SCAN_CONCERN_LABEL, SCAN_CONCERN_KEYS } from "@/lib/scan-concerns";
 import { LOW_QUALITY_NOTE } from "@/lib/photo-check";
 import { treatmentsForConcerns, bestTreatmentByImproves } from "@/lib/concern-treatments";
 import { useScanPhotoSource } from "@/lib/scan-photo";
