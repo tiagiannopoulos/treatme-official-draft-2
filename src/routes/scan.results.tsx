@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Check } from "lucide-react";
 import { useScan } from "@/lib/scan-store";
-import { toConcernRows, overallScore, SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
+import { toConcernRows, overallScore, SCAN_CONCERN_LABEL, SCAN_CONCERN_KEYS } from "@/lib/scan-concerns";
 import { LOW_QUALITY_NOTE } from "@/lib/photo-check";
 import { treatmentsForConcerns, bestTreatmentByImproves } from "@/lib/concern-treatments";
 import { useScanPhotoSource } from "@/lib/scan-photo";
@@ -81,7 +81,15 @@ function ResultsPage() {
   }, [requestedId, scanId, hydrate, setResult]);
 
   const rows = useMemo(() => (result ? toConcernRows(result, measured) : []), [result, measured]);
-  const ordered = useMemo(() => [...rows].sort((a, b) => a.score - b.score), [rows]);
+  // symmetry is persisted but is not one of the four groups, so it stays out
+  // of the headline ordering and the treatment matching.
+  const ordered = useMemo(
+    () =>
+      rows
+        .filter((r) => SCAN_CONCERN_KEYS.includes(r.concern_key))
+        .sort((a, b) => a.score - b.score),
+    [rows],
+  );
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 

@@ -13,6 +13,7 @@
  */
 
 import { decodeImage } from "@/lib/facemesh";
+import { logScanIssue } from "@/lib/scan-errors";
 import {
   insetPolygon,
   pointInPolygon,
@@ -746,11 +747,21 @@ function zoneFallback(
  * cannot be read, and the caller keeps whatever the model said.
  */
 export async function measureSkin(dataUrl: string, map: FaceMap | null): Promise<Measured | null> {
-  if (!map || typeof document === "undefined") return null;
+  if (!map || typeof document === "undefined") {
+    if (!map) await logScanIssue({ stage: "measure", reason: "no_face_map" });
+    return null;
+  }
   try {
     const image = await decodeImage(dataUrl);
     const field = buildField(image, map);
-    if (!field) return null;
+    if (!field) {
+      await logScanIssue({
+        stage: "measure",
+        reason: "pixels_unreadable",
+        detail: { width: image.naturalWidth, height: image.naturalHeight },
+      });
+      return null;
+    }
 
     const measured: Measured = {
       redness: readRedness(field, map),
@@ -770,7 +781,11 @@ export async function measureSkin(dataUrl: string, map: FaceMap | null): Promise
     }
     return measured;
   } catch (e) {
-    console.warn("skin measurement failed", e);
+    await logScanIssue({
+      stage: "measure",
+      reason: "measure_threw",
+      detail: { message: e instanceof Error ? e.message : String(e) },
+    });
     return null;
   }
 }

@@ -4,6 +4,7 @@ import type { ScanResult } from "@/lib/skinAnalysis";
 import type { FaceMap, MappingMethod } from "@/lib/face-zones";
 import type { Measured } from "@/lib/skin-measure";
 import { overallScore, toConcernRows } from "@/lib/scan-concerns";
+import { logScanIssue } from "@/lib/scan-errors";
 
 export interface SaveScanInput {
   photoPath: string | null;
@@ -39,6 +40,7 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       photo_path: input.storePhoto ? input.photoPath : null,
       thumb_path: input.storePhoto ? (input.thumbPath ?? null) : null,
       store_photo: input.storePhoto,
+      // scans.landmarks is the one canonical home for landmarks.
       landmarks: input.faceMap ? (input.faceMap.landmarks as unknown as never) : null,
       face_zones: input.faceMap
         ? ({
@@ -63,7 +65,11 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
     .single();
 
   if (error || !scan) {
-    console.warn("scan insert failed", error?.message);
+    await logScanIssue({
+      stage: "persist",
+      reason: "scan_insert_failed",
+      detail: { message: error?.message ?? "no_row" },
+    });
     return null;
   }
 
@@ -81,7 +87,13 @@ export async function saveScan(input: SaveScanInput): Promise<string | null> {
       mapping_method: input.faceMap ? r.mapping_method : "fallback_diagram",
     })),
   );
-  if (resultsError) console.warn("scan results insert failed", resultsError.message);
+  if (resultsError) {
+    await logScanIssue({
+      stage: "persist",
+      reason: "scan_results_insert_failed",
+      detail: { message: resultsError.message, rows: rows.length },
+    });
+  }
 
   return scan.id;
 }

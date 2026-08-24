@@ -1049,28 +1049,34 @@ export type Database = {
       scan_errors: {
         Row: {
           created_at: string
+          detail: Json | null
           error_message: string | null
           id: string
           image_bytes: number | null
           media_type: string | null
+          stage: string | null
           status_code: number | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          detail?: Json | null
           error_message?: string | null
           id?: string
           image_bytes?: number | null
           media_type?: string | null
+          stage?: string | null
           status_code?: number | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          detail?: Json | null
           error_message?: string | null
           id?: string
           image_bytes?: number | null
           media_type?: string | null
+          stage?: string | null
           status_code?: number | null
           user_id?: string | null
         }
@@ -1131,7 +1137,6 @@ export type Database = {
           band: string
           concern_key: string
           id: string
-          landmarks: Json | null
           mapping_method: string | null
           marker_positions: Json | null
           measured: Json | null
@@ -1147,7 +1152,6 @@ export type Database = {
           band: string
           concern_key: string
           id?: string
-          landmarks?: Json | null
           mapping_method?: string | null
           marker_positions?: Json | null
           measured?: Json | null
@@ -1163,7 +1167,6 @@ export type Database = {
           band?: string
           concern_key?: string
           id?: string
-          landmarks?: Json | null
           mapping_method?: string | null
           marker_positions?: Json | null
           measured?: Json | null
