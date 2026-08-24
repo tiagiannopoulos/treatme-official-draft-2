@@ -92,12 +92,17 @@ function ResultsPage() {
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
-  const worst = ordered.find((r) => SCAN_CONCERN_KEYS.includes(r.concern_key));
+  // the four groups only: symmetry and fine lines render, but do not drive matching
+  const grid = useMemo(
+    () => ordered.filter((r) => SCAN_CONCERN_KEYS.includes(r.concern_key)),
+    [ordered],
+  );
+  const worst = grid[0];
 
   const { data: matches = [] } = useQuery({
-    queryKey: ["concern-treatments", ordered.map((r) => `${r.concern_key}:${r.score}`).join(",")],
-    queryFn: () => treatmentsForConcerns(ordered, 5),
-    enabled: ordered.length > 0,
+    queryKey: ["concern-treatments", grid.map((r) => `${r.concern_key}:${r.score}`).join(",")],
+    queryFn: () => treatmentsForConcerns(grid, 5),
+    enabled: grid.length > 0,
     staleTime: 5 * 60 * 1000,
   });
 
