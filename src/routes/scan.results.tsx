@@ -15,7 +15,8 @@ import { fetchSavedScan } from "@/lib/scan-history";
 import { getRecommendations } from "@/lib/recommendations";
 import { topConcerns } from "@/lib/skinAnalysis";
 import { FaceMap } from "@/components/treatme/FaceMap";
-import { MarkerOverlay, hasMarkers } from "@/components/treatme/MarkerOverlay";
+import { MarkerOverlay } from "@/components/treatme/MarkerOverlay";
+import { markerDrawing } from "@/lib/marker-shapes";
 import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
 
 
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/scan/results")({
 function ResultsPage() {
   const navigate = useNavigate();
   const { id: requestedId } = Route.useSearch();
-  const { result, analysis, scanId, photoQuality, measured, hydrate, setResult } = useScan();
+  const { result, analysis, scanId, photoQuality, measured, landmarks, hydrate, setResult } = useScan();
   const photoSource = useScanPhotoSource();
   const [shareOpen, setShareOpen] = useState(false);
   const [loading, setLoading] = useState(Boolean(requestedId && requestedId !== scanId));
@@ -85,15 +86,13 @@ function ResultsPage() {
   // of the headline ordering and the treatment matching.
   const ordered = useMemo(
     () =>
-      rows
-        .filter((r) => SCAN_CONCERN_KEYS.includes(r.concern_key))
-        .sort((a, b) => a.score - b.score),
+      [...rows].sort((a, b) => a.score - b.score),
     [rows],
   );
   const overall = useMemo(() => (rows.length ? overallScore(rows) : 0), [rows]);
   const { data: indicators = [] } = useQuery(skinIndicatorsQuery());
 
-  const worst = ordered[0];
+  const worst = ordered.find((r) => SCAN_CONCERN_KEYS.includes(r.concern_key));
 
   const { data: matches = [] } = useQuery({
     queryKey: ["concern-treatments", ordered.map((r) => `${r.concern_key}:${r.score}`).join(",")],
