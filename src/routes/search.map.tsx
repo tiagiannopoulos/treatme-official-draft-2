@@ -1,8 +1,15 @@
 import { ClientOnly, createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ArrowLeft, MapPin, Star } from "lucide-react";
-import { directoryQuery, TORONTO_CENTROID } from "@/lib/search-data";
+import {
+  directoryQuery,
+  nearbyStorefrontsQuery,
+  neighbourhood,
+  storefrontsInBoundsQuery,
+  TORONTO_CENTROID,
+  type MapBounds,
+} from "@/lib/search-data";
 import { usePatientLocation } from "@/lib/patient-location";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { cn } from "@/lib/utils";
@@ -45,17 +52,25 @@ function MapView() {
     : TORONTO_CENTROID;
   const router = useRouter();
   const [selected, setSelected] = useState<string | null>(null);
-  const [viewport, setViewport] = useState<{
-    minLat: number;
-    maxLat: number;
-    minLng: number;
-    maxLng: number;
-  } | null>(null);
+  const [viewport, setViewport] = useState<MapBounds | null>(null);
 
   const pinned = useMemo(
     () => data.storefronts.filter((s) => typeof s.lat === "number" && typeof s.lng === "number"),
     [data.storefronts],
   );
+  const { data: viewportData } = useQuery(storefrontsInBoundsQuery(viewport));
+  const { data: nearby } = useQuery(
+    nearbyStorefrontsQuery(patientLocation ? mapCenter : null, 500),
+  );
+  const kmById = useMemo(
+    () => new Map((nearby ?? []).map((row) => [row.id, row.km])),
+    [nearby],
+  );
+  const visiblePins = useMemo(() => {
+    if (!viewportData) return pinned.slice(0, 300);
+    const ids = new Set(viewportData.ids);
+    return pinned.filter((storefront) => ids.has(storefront.id));
+  }, [pinned, viewportData]);
 
   const providerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -64,26 +79,18 @@ function MapView() {
     return counts;
   }, [data.providers]);
 
-  // only the medspas inside the current map view, closest to the middle first.
+  // the bottom sheet uses the same database bounds result as the pins.
   const inView = useMemo(() => {
-    if (!viewport) return pinned;
+    if (!viewport) return visiblePins;
     const midLat = (viewport.minLat + viewport.maxLat) / 2;
     const midLng = (viewport.minLng + viewport.maxLng) / 2;
-    return pinned
-      .filter(
-        (s) =>
-          s.lat >= viewport.minLat &&
-          s.lat <= viewport.maxLat &&
-          s.lng >= viewport.minLng &&
-          s.lng <= viewport.maxLng,
-      )
-      .sort(
+    return [...visiblePins].sort(
         (a, b) =>
           (a.lat - midLat) ** 2 +
           (a.lng - midLng) ** 2 -
           ((b.lat - midLat) ** 2 + (b.lng - midLng) ** 2),
       );
-  }, [pinned, viewport]);
+  }, [visiblePins, viewport]);
 
   const areaLabel = useMemo(() => {
     const cities = new Set(inView.map((s) => s.city.toLowerCase()).filter(Boolean));
@@ -97,11 +104,12 @@ function MapView() {
       <div className="absolute inset-0">
         <ClientOnly fallback={<div className="size-full bg-muted" />}>
           <SearchMap
-            storefronts={pinned}
+            storefronts={visiblePins}
             center={mapCenter}
             selectedId={selected}
             onSelect={setSelected}
             providerCounts={providerCounts}
+            kmById={kmById}
             height="h-full"
             gestureHandling="greedy"
             onViewportChange={setViewport}
@@ -127,9 +135,14 @@ function MapView() {
         />
         <h1 className="brand-eyebrow">in this area</h1>
         <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-          {inView.length} medspa{inView.length === 1 ? "" : "s"} in {areaLabel} · move the map to
+          {viewportData?.total ?? inView.length} medspa{(viewportData?.total ?? inView.length) === 1 ? "" : "s"} in {areaLabel} · move the map to
           search elsewhere
         </p>
+        {viewportData?.capped && (
+          <p className="mt-1 text-[11px] font-semibold text-hot lowercase">
+            showing 300 pins · zoom in to see every medspa
+          </p>
+        )}
 
         <div className="mt-3 space-y-2">
           {inView.length === 0 && (
@@ -162,8 +175,8 @@ function MapView() {
               </div>
               <p className="text-[12px] text-ink-mute lowercase inline-flex items-center gap-1 mt-0.5">
                 <MapPin className="size-3.5 text-hot" />
-                {s.city.toLowerCase()} · {providerCounts[s.id] ?? 0} provider
-                {(providerCounts[s.id] ?? 0) === 1 ? "" : "s"}
+                {neighbourhood(s)} · {s.listed.length} treatment
+                {s.listed.length === 1 ? "" : "s"}
               </p>
               <Link
                 to="/storefront/$id"
