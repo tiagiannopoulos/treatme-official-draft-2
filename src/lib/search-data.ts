@@ -178,6 +178,53 @@ export interface LatLng {
   lng: number;
 }
 
+export interface MapBounds {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
+
+export interface StorefrontBoundsResult {
+  ids: string[];
+  total: number;
+  capped: boolean;
+}
+
+/** storefront ids currently visible on the map, with an exact count before the 300 pin cap. */
+export function storefrontsInBoundsQuery(bounds: MapBounds | null) {
+  return queryOptions({
+    queryKey: [
+      "storefronts-in-bounds",
+      bounds?.minLat ?? null,
+      bounds?.maxLat ?? null,
+      bounds?.minLng ?? null,
+      bounds?.maxLng ?? null,
+    ],
+    enabled: Boolean(bounds),
+    staleTime: 60_000,
+    queryFn: async (): Promise<StorefrontBoundsResult> => {
+      if (!bounds) return { ids: [], total: 0, capped: false };
+      const { data, error, count } = await supabase
+        .from("storefronts")
+        .select("id", { count: "exact" })
+        .gte("lat", bounds.minLat)
+        .lte("lat", bounds.maxLat)
+        .gte("lng", bounds.minLng)
+        .lte("lng", bounds.maxLng)
+        .order("id")
+        .limit(300);
+      if (error) throw new Error(error.message);
+      const total = count ?? data?.length ?? 0;
+      return {
+        ids: (data ?? []).map((row) => row.id),
+        total,
+        capped: total > 300,
+      };
+    },
+  });
+}
+
 
 export const RADIUS_OPTIONS = [2, 5, 10, 25, 50] as const;
 

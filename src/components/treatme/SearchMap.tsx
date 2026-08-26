@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
-import { Maximize2, Star } from "lucide-react";
+import { MarkerClusterer, SuperClusterAlgorithm } from "@googlemaps/markerclusterer";
+import { Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { LatLng, Storefront } from "@/lib/search-data";
+import { formatDistance, neighbourhood, type LatLng, type MapBounds, type Storefront } from "@/lib/search-data";
 import { loadGoogleMaps, resolveBrowserKey, resolveTrackingId } from "@/lib/google-maps-loader";
 
 
@@ -26,13 +26,17 @@ interface Props {
   onSelect: (id: string | null) => void;
   /** number of providers working at each storefront, keyed by storefront id. */
   providerCounts?: Record<string, number>;
+  /** postgres distances from the patient, keyed by storefront id. */
+  kmById?: Map<string, number>;
   /** when set, draws the search radius and frames the map to it. */
   radiusKm?: number;
   height?: string;
   /** shows the expand button that pushes to the full screen map. */
   expandable?: boolean;
   /** fires with the visible map bounds whenever panning or zooming settles. */
-  onViewportChange?: (bounds: { minLat: number; maxLat: number; minLng: number; maxLng: number } | null) => void;
+  onViewportChange?: (bounds: MapBounds | null) => void;
+  /** tells the parent that radius filtering should yield to the live viewport. */
+  onMapInteraction?: () => void;
   /** cooperative keeps the page scrolling inside the small card; greedy suits full screen. */
   gestureHandling?: "greedy" | "cooperative";
   className?: string;
@@ -44,11 +48,13 @@ export function SearchMap({
   selectedId,
   onSelect,
   providerCounts = {},
+  kmById,
   radiusKm,
   height = "h-[220px]",
   expandable = false,
   onViewportChange,
-  gestureHandling = "cooperative",
+  onMapInteraction,
+  gestureHandling = "greedy",
   className,
 }: Props) {
 
@@ -58,13 +64,18 @@ export function SearchMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clustererRef = useRef<MarkerClusterer | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
+  const idleTimerRef = useRef<number | null>(null);
+  const interactionRef = useRef(false);
 
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
 
   const onViewportChangeRef = useRef(onViewportChange);
   onViewportChangeRef.current = onViewportChange;
+  const onMapInteractionRef = useRef(onMapInteraction);
+  onMapInteractionRef.current = onMapInteraction;
 
   const selected = storefronts.find((s) => s.id === selectedId) ?? null;
 
@@ -99,14 +110,21 @@ export function SearchMap({
         mapRef.current = map;
 
         map.addListener("click", () => onSelect(null));
+        map.addListener("dragstart", () => {
+          interactionRef.current = true;
+          onMapInteractionRef.current?.();
+        });
 
         map.addListener("idle", () => {
-          const b = map.getBounds();
-          const cb = onViewportChangeRef.current;
-          if (!b || !cb) return;
-          const ne = b.getNorthEast();
-          const sw = b.getSouthWest();
-          cb({ minLat: sw.lat(), maxLat: ne.lat(), minLng: sw.lng(), maxLng: ne.lng() });
+          if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
+          idleTimerRef.current = window.setTimeout(() => {
+            const b = map.getBounds();
+            const cb = onViewportChangeRef.current;
+            if (!b || !cb) return;
+            const ne = b.getNorthEast();
+            const sw = b.getSouthWest();
+            cb({ minLat: sw.lat(), maxLat: ne.lat(), minLng: sw.lng(), maxLng: ne.lng() });
+          }, 300);
         });
 
         setReady(true);
@@ -125,11 +143,14 @@ export function SearchMap({
 
     return () => {
       cancelled = true;
+      if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
       markersRef.current.forEach((m) => m.setMap(null));
       markersRef.current = [];
       clustererRef.current?.clearMarkers();
       clustererRef.current?.setMap(null);
       clustererRef.current = null;
+      infoWindowRef.current?.close();
+      infoWindowRef.current = null;
       circleRef.current?.setMap(null);
       circleRef.current = null;
       mapRef.current = null;
@@ -165,9 +186,18 @@ export function SearchMap({
 
     const map = mapRef.current;
     const markers: google.maps.Marker[] = [];
+    const coordinateUses = new Map<string, number>();
     storefronts.forEach((s) => {
+      const coordinateKey = `${s.lat.toFixed(6)},${s.lng.toFixed(6)}`;
+      const useIndex = coordinateUses.get(coordinateKey) ?? 0;
+      coordinateUses.set(coordinateKey, useIndex + 1);
+      const angle = useIndex * 2.39996;
+      const spread = useIndex === 0 ? 0 : 0.000055 * Math.ceil(Math.sqrt(useIndex));
       const marker = new google.maps.Marker({
-        position: { lat: s.lat, lng: s.lng },
+        position: {
+          lat: s.lat + Math.sin(angle) * spread,
+          lng: s.lng + Math.cos(angle) * spread,
+        },
         icon: createPinIcon(false),
         title: s.name,
       });
@@ -183,6 +213,12 @@ export function SearchMap({
     if (!clustererRef.current) {
       clustererRef.current = new MarkerClusterer({
         map,
+        algorithm: new SuperClusterAlgorithm({ maxZoom: 13 }),
+        onClusterClick: (_event, cluster, clusterMap) => {
+          interactionRef.current = true;
+          onMapInteractionRef.current?.();
+          if (cluster.bounds) clusterMap.fitBounds(cluster.bounds);
+        },
         renderer: {
           render: ({ count, position }) =>
             new google.maps.Marker({
@@ -206,6 +242,27 @@ export function SearchMap({
     };
   }, [storefronts, ready, onSelect]);
 
+  // Google Maps owns this popover so it stays anchored above the selected pin while panning.
+  useEffect(() => {
+    if (!ready || !mapRef.current) return;
+    const index = storefronts.findIndex((storefront) => storefront.id === selectedId);
+    const marker = markersRef.current[index];
+    const storefront = index >= 0 ? storefronts[index] : null;
+    if (!marker || !storefront) {
+      infoWindowRef.current?.close();
+      return;
+    }
+    const distance = kmById?.get(storefront.id);
+    const safeName = escapeHtml(storefront.name);
+    const safeArea = escapeHtml(neighbourhood(storefront));
+    const distanceLine = distance === undefined ? "" : `${escapeHtml(formatDistance(distance))} · `;
+    const treatmentCount = storefront.listed.length;
+    const content = `<div style="min-width:190px;padding:4px 2px;color:${INK};font-family:Helvetica Neue,Arial,sans-serif"><div style="font-size:15px;font-weight:700">${safeName}</div><div style="font-size:11px;opacity:.55;text-transform:lowercase">${safeArea}</div><div style="margin-top:6px;font-size:11px;opacity:.72;text-transform:lowercase">${distanceLine}${treatmentCount} treatment${treatmentCount === 1 ? "" : "s"}</div><a href="/storefront/${encodeURIComponent(storefront.id)}" style="display:inline-block;margin-top:8px;color:${HOT};font-size:12px;font-weight:600;text-decoration:none;text-transform:lowercase">view</a></div>`;
+    if (!infoWindowRef.current) infoWindowRef.current = new google.maps.InfoWindow();
+    infoWindowRef.current.setContent(content);
+    infoWindowRef.current.open({ map: mapRef.current, anchor: marker });
+  }, [kmById, ready, selectedId, storefronts]);
+
 
   // update marker icons when selection changes.
   useEffect(() => {
@@ -218,13 +275,14 @@ export function SearchMap({
     });
   }, [selectedId, ready, storefronts]);
 
-  // keep the map framed on the search location and its radius.
+  // radius is an initial framing control. pin updates must never reset a user's pan or zoom.
   useEffect(() => {
     if (!ready || !mapRef.current) return;
     const map = mapRef.current;
     const point = { lat: center.lat, lng: center.lng };
 
     if (typeof radiusKm === "number") {
+      interactionRef.current = false;
       if (!circleRef.current) {
         circleRef.current = new google.maps.Circle({
           map,
@@ -243,14 +301,8 @@ export function SearchMap({
       return;
     }
 
-    if (storefronts.length > 1) {
-      const bounds = new google.maps.LatLngBounds();
-      storefronts.forEach((s) => bounds.extend({ lat: s.lat, lng: s.lng }));
-      map.fitBounds(bounds, 40);
-      return;
-    }
     map.panTo(point);
-  }, [center.lat, center.lng, ready, radiusKm, storefronts]);
+  }, [center.lat, center.lng, ready, radiusKm]);
 
 
   const usingGoogleMaps = Boolean(browserKey) && !failed;
@@ -286,13 +338,11 @@ export function SearchMap({
 
   const chrome = (
     <>
-      {selected && (
+      {selected && !usingGoogleMaps && (
         <div
           className={cn(
             "absolute z-20 w-[212px]",
-            usingGoogleMaps
-              ? "left-1/2 top-3 -translate-x-1/2"
-              : flipBelow
+            flipBelow
                 ? "translate-y-2"
                 : "-translate-y-[calc(100%+30px)]",
           )}
@@ -308,7 +358,10 @@ export function SearchMap({
               : undefined
           }
         >
-          <StorefrontPopover storefront={selected} providerCount={providerCounts[selected.id] ?? 0} />
+          <StorefrontPopover
+            storefront={selected}
+            km={kmById?.get(selected.id) ?? null}
+          />
         </div>
       )}
 
@@ -327,7 +380,14 @@ export function SearchMap({
   if (usingGoogleMaps) {
     return (
       <div className={cn("relative w-full rounded-[20px] overflow-hidden border border-line", height, className)}>
-        <div ref={divRef} className="absolute inset-0" />
+        <div
+          ref={divRef}
+          className="absolute inset-0"
+          onPointerDown={() => {
+            interactionRef.current = true;
+            onMapInteractionRef.current?.();
+          }}
+        />
         {chrome}
       </div>
     );
@@ -387,6 +447,19 @@ function createPinIcon(active: boolean): google.maps.Icon {
   };
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    };
+    return entities[character] ?? character;
+  });
+}
+
 
 
 function Teardrop({ active }: { active: boolean }) {
@@ -411,33 +484,19 @@ function Teardrop({ active }: { active: boolean }) {
 
 export function StorefrontPopover({
   storefront,
-  providerCount,
+  km,
 }: {
   storefront: Storefront;
-  providerCount: number;
+  km: number | null;
 }) {
-  const isNew = !storefront.review_count;
   return (
     <div className="rounded-2xl border border-line bg-white p-3 shadow-lg">
       <p className="brand-display text-[15px] leading-tight truncate">{storefront.name}</p>
-      <p className="text-[11px] text-ink-mute lowercase truncate">{storefront.city.toLowerCase()}</p>
-      <div className="mt-1.5 flex items-center gap-2">
-        <span className="text-[11px] text-ink-soft lowercase">
-          {providerCount > 0
-            ? `${providerCount} provider${providerCount === 1 ? "" : "s"}`
-            : `${storefront.listed.length} treatment${storefront.listed.length === 1 ? "" : "s"} listed`}
-        </span>
-        {isNew ? (
-          <span className="rounded-pill bg-butter px-2 py-0.5 text-[10px] font-semibold lowercase">
-            new to treatme
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
-            <Star className="size-3 fill-ink text-ink" />
-            {storefront.rating}
-          </span>
-        )}
-      </div>
+      <p className="text-[11px] text-ink-mute lowercase truncate">{neighbourhood(storefront)}</p>
+      <p className="mt-1.5 text-[11px] text-ink-soft lowercase">
+        {km !== null ? `${formatDistance(km)} · ` : ""}
+        {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"}
+      </p>
       <Link
         to="/storefront/$id"
         params={{ id: storefront.id }}
