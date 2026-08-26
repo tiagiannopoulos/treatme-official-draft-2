@@ -64,6 +64,7 @@ export function SearchMap({
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const clustererRef = useRef<MarkerClusterer | null>(null);
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
   const idleTimerRef = useRef<number | null>(null);
   const interactionRef = useRef(false);
@@ -148,6 +149,8 @@ export function SearchMap({
       clustererRef.current?.clearMarkers();
       clustererRef.current?.setMap(null);
       clustererRef.current = null;
+      infoWindowRef.current?.close();
+      infoWindowRef.current = null;
       circleRef.current?.setMap(null);
       circleRef.current = null;
       mapRef.current = null;
@@ -183,9 +186,18 @@ export function SearchMap({
 
     const map = mapRef.current;
     const markers: google.maps.Marker[] = [];
+    const coordinateUses = new Map<string, number>();
     storefronts.forEach((s) => {
+      const coordinateKey = `${s.lat.toFixed(6)},${s.lng.toFixed(6)}`;
+      const useIndex = coordinateUses.get(coordinateKey) ?? 0;
+      coordinateUses.set(coordinateKey, useIndex + 1);
+      const angle = useIndex * 2.39996;
+      const spread = useIndex === 0 ? 0 : 0.000055 * Math.ceil(Math.sqrt(useIndex));
       const marker = new google.maps.Marker({
-        position: { lat: s.lat, lng: s.lng },
+        position: {
+          lat: s.lat + Math.sin(angle) * spread,
+          lng: s.lng + Math.cos(angle) * spread,
+        },
         icon: createPinIcon(false),
         title: s.name,
       });
@@ -229,6 +241,27 @@ export function SearchMap({
       clustererRef.current?.clearMarkers();
     };
   }, [storefronts, ready, onSelect]);
+
+  // Google Maps owns this popover so it stays anchored above the selected pin while panning.
+  useEffect(() => {
+    if (!ready || !mapRef.current) return;
+    const index = storefronts.findIndex((storefront) => storefront.id === selectedId);
+    const marker = markersRef.current[index];
+    const storefront = index >= 0 ? storefronts[index] : null;
+    if (!marker || !storefront) {
+      infoWindowRef.current?.close();
+      return;
+    }
+    const distance = kmById?.get(storefront.id);
+    const safeName = escapeHtml(storefront.name);
+    const safeArea = escapeHtml(neighbourhood(storefront));
+    const distanceLine = distance === undefined ? "" : `${escapeHtml(formatDistance(distance))} · `;
+    const treatmentCount = storefront.listed.length;
+    const content = `<div style="min-width:190px;padding:4px 2px;color:${INK};font-family:Helvetica Neue,Arial,sans-serif"><div style="font-size:15px;font-weight:700">${safeName}</div><div style="font-size:11px;opacity:.55;text-transform:lowercase">${safeArea}</div><div style="margin-top:6px;font-size:11px;opacity:.72;text-transform:lowercase">${distanceLine}${treatmentCount} treatment${treatmentCount === 1 ? "" : "s"}</div><a href="/storefront/${encodeURIComponent(storefront.id)}" style="display:inline-block;margin-top:8px;color:${HOT};font-size:12px;font-weight:600;text-decoration:none;text-transform:lowercase">view</a></div>`;
+    if (!infoWindowRef.current) infoWindowRef.current = new google.maps.InfoWindow();
+    infoWindowRef.current.setContent(content);
+    infoWindowRef.current.open({ map: mapRef.current, anchor: marker });
+  }, [kmById, ready, selectedId, storefronts]);
 
 
   // update marker icons when selection changes.
@@ -305,13 +338,11 @@ export function SearchMap({
 
   const chrome = (
     <>
-      {selected && (
+      {selected && !usingGoogleMaps && (
         <div
           className={cn(
             "absolute z-20 w-[212px]",
-            usingGoogleMaps
-              ? "left-1/2 top-3 -translate-x-1/2"
-              : flipBelow
+            flipBelow
                 ? "translate-y-2"
                 : "-translate-y-[calc(100%+30px)]",
           )}
@@ -414,6 +445,19 @@ function createPinIcon(active: boolean): google.maps.Icon {
     scaledSize: new google.maps.Size(size, Math.round(size * 1.33)),
     anchor: new google.maps.Point(size / 2, Math.round(size * 1.33)),
   };
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    };
+    return entities[character] ?? character;
+  });
 }
 
 

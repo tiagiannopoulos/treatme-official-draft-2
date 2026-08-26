@@ -22,12 +22,14 @@ import {
   matchStorefrontVia,
   providerFromPrice,
   nearbyStorefrontsQuery,
+  storefrontsInBoundsQuery,
   neighbourhood,
   areaLine,
   addressLine,
   TORONTO_CENTROID,
   RADIUS_OPTIONS,
   type LatLng,
+  type MapBounds,
   type Provider,
   type Storefront,
   type SearchTreatment,
@@ -102,6 +104,8 @@ function SearchPage() {
   const { location, ready: locationReady } = usePatientLocation();
   const [pickingLocation, setPickingLocation] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [mapInteracted, setMapInteracted] = useState(false);
 
   /** map framing only. distances never come from this. */
   const center: LatLng = location ? { lat: location.lat, lng: location.lng } : TORONTO_CENTROID;
@@ -114,6 +118,12 @@ function SearchPage() {
     for (const row of near ?? []) m.set(row.id, row.km);
     return m;
   }, [near]);
+  const { data: visibleMapData } = useQuery(storefrontsInBoundsQuery(mapInteracted ? mapBounds : null));
+  const visibleMapStorefronts = useMemo(() => {
+    if (!mapInteracted || !visibleMapData) return null;
+    const ids = new Set(visibleMapData.ids);
+    return data.storefronts.filter((storefront) => ids.has(storefront.id));
+  }, [data.storefronts, mapInteracted, visibleMapData]);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -210,8 +220,6 @@ function SearchPage() {
   const showProviders = scope === "all" || scope === "providers";
   const showMedspas = scope === "all" || scope === "medspas";
   const showTreatments = scope === "all" || scope === "treatments";
-
-  const mapStorefronts: Storefront[] = scope === "medspas" ? medspaResults : storefrontsInRange;
 
   const totalResults =
     (showProviders ? providerResults.length : 0) +
@@ -317,13 +325,16 @@ function SearchPage() {
               fallback={<div className="h-[180px] rounded-[20px] border border-line bg-muted" />}
             >
               <SearchMap
-                storefronts={resultStorefronts}
+                storefronts={visibleMapStorefronts ?? resultStorefronts}
                 center={center}
                 radiusKm={radius}
                 selectedId={selected}
                 onSelect={setSelected}
                 providerCounts={providerCounts}
-                height="h-[180px]"
+                kmById={kmById}
+                onViewportChange={setMapBounds}
+                onMapInteraction={() => setMapInteracted(true)}
+                height="aspect-[4/3]"
                 expandable
               />
             </ClientOnly>
@@ -474,13 +485,16 @@ function SearchPage() {
                   }
                 >
                   <SearchMap
-                    storefronts={storefrontsInRange}
+                    storefronts={visibleMapStorefronts ?? storefrontsInRange}
                     center={center}
                     radiusKm={radius}
                     selectedId={selected}
                     onSelect={setSelected}
                     providerCounts={providerCounts}
-                    height="h-[220px]"
+                    kmById={kmById}
+                    onViewportChange={setMapBounds}
+                    onMapInteraction={() => setMapInteracted(true)}
+                    height="aspect-[4/3]"
                     expandable
                   />
                 </ClientOnly>
@@ -491,7 +505,10 @@ function SearchPage() {
                   <button
                     key={r}
                     type="button"
-                    onClick={() => setRadius(r)}
+                    onClick={() => {
+                      setMapInteracted(false);
+                      setRadius(r);
+                    }}
                     className={cn(
                       "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
                       radius === r
