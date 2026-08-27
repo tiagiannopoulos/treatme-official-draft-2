@@ -205,19 +205,18 @@ export function storefrontsInBoundsQuery(bounds: MapBounds | null) {
     staleTime: 60_000,
     queryFn: async (): Promise<StorefrontBoundsResult> => {
       if (!bounds) return { ids: [], total: 0, capped: false };
-      const { data, error, count } = await supabase
-        .from("storefronts")
-        .select("id", { count: "exact" })
-        .gte("lat", bounds.minLat)
-        .lte("lat", bounds.maxLat)
-        .gte("lng", bounds.minLng)
-        .lte("lng", bounds.maxLng)
-        .order("id")
-        .limit(300);
+      const { data, error } = await supabase.rpc("storefronts_in_bounds", {
+        _min_lat: bounds.minLat,
+        _max_lat: bounds.maxLat,
+        _min_lng: bounds.minLng,
+        _max_lng: bounds.maxLng,
+        _limit: 300,
+      });
       if (error) throw new Error(error.message);
-      const total = count ?? data?.length ?? 0;
+      const rows = (data ?? []) as Array<{ id: string; total_count: number | string }>;
+      const total = rows.length ? Number(rows[0].total_count) : 0;
       return {
-        ids: (data ?? []).map((row) => row.id),
+        ids: rows.map((row) => row.id),
         total,
         capped: total > 300,
       };
