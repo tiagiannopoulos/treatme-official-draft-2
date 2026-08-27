@@ -2035,6 +2035,19 @@ export type Database = {
         Returns: number
       }
       owns_provider: { Args: { _provider_id: string }; Returns: boolean }
+      storefronts_in_bounds: {
+        Args: {
+          _limit?: number
+          _max_lat: number
+          _max_lng: number
+          _min_lat: number
+          _min_lng: number
+        }
+        Returns: {
+          id: string
+          total_count: number
+        }[]
+      }
       storefronts_near: {
         Args: {
           _lat: number
