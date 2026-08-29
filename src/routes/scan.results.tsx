@@ -114,6 +114,22 @@ function ResultsPage() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // how many clinics near this patient list each recommended treatment.
+  const { data: directory } = useQuery(directoryQuery);
+  const near = useNearbyKm();
+  const clinicCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    if (!directory) return counts;
+    for (const m of matches) {
+      counts[m.slug] = clinicsOfferingCount(directory.storefronts, m.slug, (id) =>
+        near.hasLocation ? (near.kmFor(id) ?? Infinity) <= 25 : true,
+      );
+    }
+    return counts;
+  }, [directory, matches, near]);
+
+
+
   if (loading && !result) return <ResultsSkeleton />;
 
   if (!result) {
