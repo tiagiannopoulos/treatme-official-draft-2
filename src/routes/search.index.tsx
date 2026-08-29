@@ -53,17 +53,17 @@ export const Route = createFileRoute("/search/")({
   }),
   head: () => ({
     meta: [
-      { title: "find a provider · treatme" },
+      { title: "find a clinic near you · treatme" },
       {
         name: "description",
         content:
-          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+          "search medspas and treatments near you, see what each clinic offers, and send a booking request.",
       },
-      { property: "og:title", content: "find a provider · treatme" },
+      { property: "og:title", content: "find a clinic near you · treatme" },
       {
         property: "og:description",
         content:
-          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+          "search medspas and treatments near you, see what each clinic offers, and send a booking request.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -76,7 +76,7 @@ export const Route = createFileRoute("/search/")({
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
       <p className="brand-eyebrow">something broke</p>
-      <h1 className="brand-display text-[28px] mt-2">couldn't load providers.</h1>
+      <h1 className="brand-display text-[28px] mt-2">couldn't load clinics.</h1>
       <p className="text-[13px] text-ink-mute mt-2">{error.message}</p>
     </div>
   ),
@@ -85,7 +85,11 @@ export const Route = createFileRoute("/search/")({
 });
 
 type Scope = "all" | "providers" | "medspas" | "treatments";
-const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
+/** the providers pill only exists while the provider side does. */
+const SCOPES: Scope[] = PROVIDERS_ENABLED
+  ? ["all", "providers", "medspas", "treatments"]
+  : ["all", "medspas", "treatments"];
+
 
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
