@@ -103,9 +103,12 @@ function SearchPage() {
     initialScope && (SCOPES as readonly string[]).includes(initialScope)
       ? (initialScope as Scope)
       : initialQ
-        ? "providers"
+        ? PROVIDERS_ENABLED
+          ? "providers"
+          : "medspas"
         : "all",
   );
+
   const [radius, setRadius] = useState<number>(10);
   const { location, ready: locationReady } = usePatientLocation();
   const [pickingLocation, setPickingLocation] = useState(false);
