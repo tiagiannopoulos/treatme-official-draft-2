@@ -226,7 +226,7 @@ function SearchPage() {
       .slice(0, 20);
   }, [treatments, needle]);
 
-  const showProviders = scope === "all" || scope === "providers";
+  const showProviders = PROVIDERS_ENABLED && (scope === "all" || scope === "providers");
   const showMedspas = scope === "all" || scope === "medspas";
   const showTreatments = scope === "all" || scope === "treatments";
 
@@ -235,15 +235,15 @@ function SearchPage() {
     (showMedspas ? medspaResults.length : 0) +
     (showTreatments ? treatmentResults.length : 0);
 
-  /** how many providers in range offer each treatment, for treatment rows. */
-  const treatmentProviderCounts = useMemo(() => {
+  /** how many clinics in range list each treatment, for treatment rows. */
+  const treatmentClinicCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const p of data.providers) {
-      if (!p.storefronts.some((s) => inRangeIds.has(s.id))) continue;
-      for (const t of p.treatments) counts[t.treatment_slug] = (counts[t.treatment_slug] ?? 0) + 1;
+    for (const s of storefrontsInRange) {
+      for (const o of s.listed) counts[o.slug] = (counts[o.slug] ?? 0) + 1;
     }
     return counts;
-  }, [data.providers, inRangeIds]);
+  }, [storefrontsInRange]);
+
 
   /** pins narrowed to whatever the current results reference. */
   const resultStorefronts = useMemo(() => {
