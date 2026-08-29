@@ -245,19 +245,56 @@ export function formatDistance(km: number): string {
 }
 
 
+/**
+ * postgrest hands back at most 1000 rows per request, and we have thousands of
+ * clinics and listings. every big read is paged or the directory silently ends
+ * a third of the way through the alphabet.
+ */
+async function readAll<T>(
+  run: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<T[]> {
+  const page = 1000;
+  const out: T[] = [];
+  for (let i = 0; i < 40; i++) {
+    const { data, error } = await run(i * page, i * page + page - 1);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < page) break;
+  }
+  return out;
+}
+
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
-  const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes, listedRes] = await Promise.all([
-    supabase.from("storefronts").select("*").order("name"),
+  const [storefrontRows, listedRows] = await Promise.all([
+    readAll<Record<string, unknown>>((from, to) =>
+      supabase.from("storefronts").select("*").order("name").range(from, to),
+    ),
+    readAll<{
+      storefront_id: string;
+      treatment_slug: string;
+      price_from: number | null;
+      verified_by_clinic: boolean | null;
+      evidence_url: string | null;
+    }>((from, to) =>
+      supabase
+        .from("storefront_treatments")
+        .select("storefront_id, treatment_slug, price_from, verified_by_clinic, evidence_url")
+        .order("storefront_id")
+        .range(from, to),
+    ),
+  ]);
+
+  const [providersRes, linksRes, ptRes, treatmentsRes, statsRes] = await Promise.all([
     supabase.from("providers").select("*").order("name"),
     supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
     supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from, is_signature"),
     supabase.from("treatments").select("slug, name, category"),
     // treatme ratings are derived live from the treatme reviews table, never stored.
     supabase.from("provider_rating_stats").select("provider_id, rating, review_count"),
-    supabase
-      .from("storefront_treatments")
-      .select("storefront_id, treatment_slug, price_from, verified_by_clinic, evidence_url"),
   ]);
+  const storefrontsRes = { data: storefrontRows, error: null as { message: string } | null };
+  const listedRes = { data: listedRows };
+
 
   const err =
     storefrontsRes.error ||
