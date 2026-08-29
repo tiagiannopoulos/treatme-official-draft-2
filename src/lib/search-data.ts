@@ -1,6 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
+
+
 
 
 export interface Storefront {
