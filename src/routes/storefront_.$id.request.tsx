@@ -59,7 +59,10 @@ function RequestPage() {
   const { data: listed = [] } = useQuery(storefrontTreatmentsQuery(id));
 
   const storefront = directory?.storefronts.find((s) => s.id === id);
-  const roster = (directory?.providers ?? []).filter((p) => p.storefronts.some((x) => x.id === id));
+  const roster = PROVIDERS_ENABLED
+    ? (directory?.providers ?? []).filter((p) => p.storefronts.some((x) => x.id === id))
+    : [];
+
   const accent = storefront?.brand_accent || "#F8A1C6";
   const clinicName = (storefront?.name ?? "this clinic").toLowerCase();
 
