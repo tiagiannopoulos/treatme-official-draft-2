@@ -712,11 +712,11 @@ function SearchPage() {
 /** compact horizontal-rail card for treatments. */
 function TreatmentCardCompact({
   treatment,
-  providerCount,
+  clinicCount,
   onClick,
 }: {
   treatment: SearchTreatment;
-  providerCount?: number;
+  clinicCount?: number;
   onClick?: () => void;
 }) {
   const body = (
@@ -740,11 +740,12 @@ function TreatmentCardCompact({
         {treatment.descriptor || treatment.category || treatment.family}
       </p>
       <div className="mt-2 flex items-center gap-2">
-        {providerCount !== undefined && (
+        {clinicCount !== undefined && clinicCount > 0 && (
           <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[10px] lowercase">
-            {providerCount} provider{providerCount === 1 ? "" : "s"}
+            {clinicCount} clinic{clinicCount === 1 ? "" : "s"}
           </span>
         )}
+
         {treatment.price_from !== null && (
           <span className="text-[11px] font-semibold lowercase">from ${treatment.price_from}</span>
         )}
