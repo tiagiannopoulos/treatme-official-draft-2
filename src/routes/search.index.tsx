@@ -447,12 +447,13 @@ function SearchPage() {
                         <TreatmentCardCompact
                           key={t.slug}
                           treatment={t}
-                          providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                          clinicCount={treatmentClinicCounts[t.slug] ?? 0}
                           onClick={() => {
                             setQ(t.name.toLowerCase());
-                            setScope("providers");
+                            setScope(PROVIDERS_ENABLED ? "providers" : "medspas");
                           }}
                         />
+
                       ),
                     )}
                   </div>
