@@ -939,11 +939,12 @@ function FeaturedStorefrontCard({
         </p>
         <p className="text-[12px] text-ink-mute lowercase mt-0.5">{areaLine(storefront)}</p>
         <div className="mt-2 flex items-center gap-2">
-          {providerCount > 0 ? (
+          {PROVIDERS_ENABLED && providerCount > 0 ? (
             <span className="text-[12px] text-ink-soft lowercase">
               {providerCount} {providerCount === 1 ? "provider" : "providers"}
             </span>
           ) : storefront.listed.length > 0 ? (
+
             <span className="text-[12px] text-ink-soft lowercase">
               {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
             </span>
