@@ -73,8 +73,9 @@ function MatchScreen() {
 
   const subline = data
     ? matchSubline(
-        data.providers.length,
+        PROVIDERS_ENABLED ? data.providers.length : data.clinics.length,
         concerns[0] ?? null,
+
         radiusKm,
         profile.budget,
         data.treatmentName,
