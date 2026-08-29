@@ -7,6 +7,7 @@ import { INK, HOT } from "@/lib/treatment-catalog";
 import { PillButton } from "@/components/treatme/PillButton";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 import { myBookingsQuery, slotDateLabel, statusChip } from "@/lib/booking";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 
 const MONTHS = [
   "january", "february", "march", "april", "may", "june",
@@ -53,13 +54,13 @@ async function fetchUpcoming(): Promise<Upcoming[]> {
   const slugs = Array.from(new Set(data.map((r) => r.treatment_slug)));
 
   const [provRes, txRes] = await Promise.all([
-    providerIds.length
+    providerIds.length && PROVIDERS_ENABLED
       ? supabase.from("providers").select("id, slug, name").in("id", providerIds)
       : Promise.resolve({ data: [] as Array<{ id: string; slug: string; name: string }> }),
     supabase.from("treatments").select("slug, name").in("slug", slugs),
   ]);
 
-  const storefrontRes = providerIds.length
+  const storefrontRes = providerIds.length && PROVIDERS_ENABLED
     ? await supabase
         .from("provider_storefronts")
         .select("provider_id, is_primary, storefronts(id, name)")
@@ -167,7 +168,7 @@ export function UpcomingAppointments() {
               variant="outline"
               onClick={() => navigate({ to: "/search", search: { q: undefined, scope: undefined } })}
             >
-              find a provider
+              find a clinic
             </PillButton>
           </div>
         </div>
