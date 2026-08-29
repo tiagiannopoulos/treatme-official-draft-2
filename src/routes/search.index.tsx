@@ -283,12 +283,21 @@ function SearchPage() {
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink-mute" />
             <input
               ref={inputRef}
-              aria-label="search providers, medspas and treatments"
+              aria-label={
+                PROVIDERS_ENABLED
+                  ? "search providers, medspas and treatments"
+                  : "search medspas and treatments"
+              }
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder="search providers, medspas, treatments"
+              placeholder={
+                PROVIDERS_ENABLED
+                  ? "search providers, medspas, treatments"
+                  : "search medspas, treatments"
+              }
+
               className="w-full rounded-pill border border-[rgba(17,17,17,0.08)] bg-cream pl-11 pr-10 py-3 text-[14px] lowercase placeholder:text-ink-mute focus:outline-none focus:border-[rgba(17,17,17,0.18)]"
             />
             {(focused || searching) && q.length > 0 && (
