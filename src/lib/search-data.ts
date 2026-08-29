@@ -249,18 +249,31 @@ export function formatDistance(km: number): string {
 
 
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
+  // clinics only in this build. the provider tables are never even queried while
+  // the flag is off, so seed people cannot leak through a hidden component.
+  const empty = <T,>() => Promise.resolve({ data: [] as T[], error: null });
+
   const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes, listedRes] = await Promise.all([
     supabase.from("storefronts").select("*").order("name"),
-    supabase.from("providers").select("*").order("name"),
-    supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
-    supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from, is_signature"),
+    PROVIDERS_ENABLED
+      ? supabase.from("providers").select("*").order("name")
+      : empty<Record<string, unknown>>(),
+    PROVIDERS_ENABLED
+      ? supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary")
+      : empty<{ provider_id: string; storefront_id: string; is_primary: boolean }>(),
+    PROVIDERS_ENABLED
+      ? supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from, is_signature")
+      : empty<{ provider_id: string; treatment_slug: string; price_from: number | null; is_signature: boolean }>(),
     supabase.from("treatments").select("slug, name, category"),
     // treatme ratings are derived live from the treatme reviews table, never stored.
-    supabase.from("provider_rating_stats").select("provider_id, rating, review_count"),
+    PROVIDERS_ENABLED
+      ? supabase.from("provider_rating_stats").select("provider_id, rating, review_count")
+      : empty<{ provider_id: string | null; rating: number | null; review_count: number | null }>(),
     supabase
       .from("storefront_treatments")
       .select("storefront_id, treatment_slug, price_from, verified_by_clinic, evidence_url"),
   ]);
+
 
   const err =
     storefrontsRes.error ||
