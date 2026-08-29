@@ -48,25 +48,28 @@ export const Route = createFileRoute("/search/")({
   validateSearch: (search: Record<string, unknown>) => ({
     q: typeof search.q === "string" ? search.q : undefined,
     scope: typeof search.scope === "string" ? search.scope : undefined,
+    /** a treatment slug. when set, results are only clinics that list it. */
+    treatment: typeof search.treatment === "string" ? search.treatment : undefined,
   }),
   head: () => ({
     meta: [
-      { title: "find a provider · treatme" },
+      { title: "find a clinic · treatme" },
       {
         name: "description",
         content:
-          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+          "search clinics near you by the treatment you want, and see what each one lists on their own site.",
       },
-      { property: "og:title", content: "find a provider · treatme" },
+      { property: "og:title", content: "find a clinic · treatme" },
       {
         property: "og:description",
         content:
-          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+          "search clinics near you by the treatment you want, and see what each one lists on their own site.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
+
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(directoryQuery);
     context.queryClient.ensureQueryData(searchTreatmentsQuery);
