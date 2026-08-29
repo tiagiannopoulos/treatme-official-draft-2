@@ -902,7 +902,7 @@ function MedspaCardCompact({
             <Avatar key={p.id} name={p.name} url={p.avatar_url} size="size-7" />
           ))}
           {/* never advertise zero. fall back to what they list. */}
-          {providers.length > 0 ? (
+          {PROVIDERS_ENABLED && providers.length > 0 ? (
             <span className="text-[11px] text-ink-mute lowercase">
               {providers.length} provider{providers.length === 1 ? "" : "s"}
             </span>
@@ -911,6 +911,7 @@ function MedspaCardCompact({
               {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
             </span>
           ) : null}
+
         </div>
         {viaWebsite && (
           <p className="mt-1.5 text-[11px] lowercase text-ink/45">listed on their website</p>
