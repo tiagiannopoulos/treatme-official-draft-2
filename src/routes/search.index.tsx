@@ -810,26 +810,39 @@ function MedspaCard({
         {km !== null && ` · ${formatDistance(km)}`}
       </p>
       <div className="mt-3 space-y-2 border-t border-line pt-3">
-        <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
-          {providers.length} provider{providers.length === 1 ? "" : "s"} here
-        </p>
-        {providers.map((p) => (
-          <Link
-            key={p.id}
-            to="/providers/$slug"
-            params={{ slug: p.slug }}
-            className="flex items-center gap-2.5"
-          >
-            <Avatar name={p.name} url={p.avatar_url} size="size-9" />
-            <span className="min-w-0">
-              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">
-                {p.name}
-              </span>
-              <span className="block text-[11px] text-ink-mute lowercase truncate">{p.title}</span>
-            </span>
-          </Link>
-        ))}
+        {PROVIDERS_ENABLED ? (
+          <>
+            <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
+              {providers.length} provider{providers.length === 1 ? "" : "s"} here
+            </p>
+            {providers.map((p) => (
+              <Link
+                key={p.id}
+                to="/providers/$slug"
+                params={{ slug: p.slug }}
+                className="flex items-center gap-2.5"
+              >
+                <Avatar name={p.name} url={p.avatar_url} size="size-9" />
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">
+                    {p.name}
+                  </span>
+                  <span className="block text-[11px] text-ink-mute lowercase truncate">
+                    {p.title}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </>
+        ) : (
+          <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
+            {storefront.listed.length > 0
+              ? `${storefront.listed.length} treatment${storefront.listed.length === 1 ? "" : "s"} listed`
+              : "tap to see what they offer"}
+          </p>
+        )}
       </div>
+
     </div>
   );
 }
