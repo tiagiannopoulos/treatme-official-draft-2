@@ -12,6 +12,7 @@ import { Play } from "lucide-react";
 import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
 import { ClinicsOffering } from "@/components/treatme/ClinicsOffering";
 import { ProviderCard } from "@/components/treatme/ProviderCard";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { directoryQuery } from "@/lib/search-data";
 import { useNearbyKm } from "@/lib/nearby";
@@ -37,14 +38,14 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
   }, [onClose]);
 
   const providers = useMemo(() => {
-    if (!directory) return [];
+    if (!directory || !PROVIDERS_ENABLED) return [];
     return directory.providers
       .filter((p) => p.treatments.some((t) => t.treatment_slug === slug))
       .slice(0, 5);
   }, [directory, slug]);
 
   function toSearch() {
-    navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: "providers" } });
+    navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: PROVIDERS_ENABLED ? "providers" : "medspas" } });
   }
 
   function onPointerDown(e: ReactPointerEvent) {
