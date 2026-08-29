@@ -290,8 +290,11 @@ function ResultsPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-[16px] lowercase leading-tight">{m.name}</p>
-                    <p className="text-[12px] text-ink-mute mt-0.5 lowercase">for {m.concernLabel}</p>
+                    <p className="text-[12px] text-ink-mute mt-0.5 lowercase">
+                      {clinicsOfferingLine(clinicCounts[m.slug] ?? 0) ?? `for ${m.concernLabel}`}
+                    </p>
                   </div>
+
                   {m.priceFrom !== null && (
                     <p className="text-[13px] font-semibold shrink-0">from ${Math.round(m.priceFrom)}</p>
                   )}
