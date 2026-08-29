@@ -561,7 +561,7 @@ function SearchPage() {
           )}
 
           {/* d) providers near you */}
-          {nearbyProviders.length > 0 && (
+          {PROVIDERS_ENABLED && nearbyProviders.length > 0 && (
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">providers near you - coming soon</h2>
