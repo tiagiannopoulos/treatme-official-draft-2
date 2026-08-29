@@ -84,10 +84,9 @@ export const treatmentMatchQuery = (slug: string, input: MatchInput) =>
 async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMatch | null> {
   const [tRes, ptRes] = await Promise.all([
     supabase.from("treatments").select("slug, name, price_from").eq("slug", slug).maybeSingle(),
-    supabase
-      .from("provider_treatments")
-      .select("provider_id, price_from")
-      .eq("treatment_slug", slug),
+    PROVIDERS_ENABLED
+      ? supabase.from("provider_treatments").select("provider_id, price_from").eq("treatment_slug", slug)
+      : Promise.resolve({ data: [] as Array<{ provider_id: string; price_from: number | null }>, error: null }),
   ]);
   if (tRes.error) throw new Error(tRes.error.message);
   if (ptRes.error) throw new Error(ptRes.error.message);
@@ -97,11 +96,22 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
   const treatmentName = noDash(displayTreatmentName(treatment.name, treatment.slug));
   const treatmentPriceFrom = treatment.price_from === null ? null : Number(treatment.price_from);
 
+  // clinics only: the clinic's own listing is the source of truth, nearest first.
+  if (!PROVIDERS_ENABLED) {
+    return {
+      treatmentName,
+      treatmentPriceFrom,
+      providers: [],
+      clinics: await fetchClinicsOffering(slug, treatmentPriceFrom, input),
+    };
+  }
+
   const offers = ptRes.data ?? [];
   const providerIds = Array.from(new Set(offers.map((o) => o.provider_id)));
   if (!providerIds.length) {
     return { treatmentName, treatmentPriceFrom, providers: [], clinics: [] };
   }
+
 
   const priceByProvider = new Map<string, number | null>();
   for (const o of offers) {
