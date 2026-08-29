@@ -284,19 +284,22 @@ function RequestPage() {
           )}
         </Field>
 
-        {/* who with */}
-        <Field label="who with">
-          <div className="flex flex-wrap gap-2">
-            <Chip active={providerId === ""} onClick={() => setProviderId("")}>
-              no preference
-            </Chip>
-            {roster.map((p) => (
-              <Chip key={p.id} active={providerId === p.id} onClick={() => setProviderId(p.id)}>
-                {p.name.toLowerCase()}
+        {/* who with. requests go to the clinic while the provider side is off. */}
+        {PROVIDERS_ENABLED && (
+          <Field label="who with">
+            <div className="flex flex-wrap gap-2">
+              <Chip active={providerId === ""} onClick={() => setProviderId("")}>
+                no preference
               </Chip>
-            ))}
-          </div>
-        </Field>
+              {roster.map((p) => (
+                <Chip key={p.id} active={providerId === p.id} onClick={() => setProviderId(p.id)}>
+                  {p.name.toLowerCase()}
+                </Chip>
+              ))}
+            </div>
+          </Field>
+        )}
+
 
         {/* three preferred times */}
         <Field label="three preferred times" required>
