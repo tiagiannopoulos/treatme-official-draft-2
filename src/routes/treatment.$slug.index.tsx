@@ -216,7 +216,7 @@ function TreatmentDetailPage() {
       </section>
 
       {/* providers */}
-      {providers.length > 0 && (
+      {PROVIDERS_ENABLED && providers.length > 0 && (
         <section className="mt-6 px-4">
           <SectionLabel>providers who offer this</SectionLabel>
           <div className="mt-2.5 space-y-3">
@@ -239,6 +239,7 @@ function TreatmentDetailPage() {
           </div>
         </section>
       )}
+
 
       <div className="px-4">
         <ClinicsOffering slug={t.slug} limit={6} />
