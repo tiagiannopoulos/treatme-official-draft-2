@@ -473,3 +473,27 @@ export function matchStorefront(s: Storefront, q: string): boolean {
     s.postcode.toLowerCase().includes(needle)
   );
 }
+
+/**
+ * how many clinics near this patient list a treatment. reads the clinic's own
+ * listing (storefront_treatments, already joined onto each storefront), never a
+ * provider roster, and only counts clinics inside the given distance map.
+ */
+export function clinicsOfferingCount(
+  storefronts: Storefront[],
+  slug: string,
+  inRange?: (id: string) => boolean,
+): number {
+  let n = 0;
+  for (const s of storefronts) {
+    if (inRange && !inRange(s.id)) continue;
+    if (s.listed.some((o) => o.slug === slug)) n += 1;
+  }
+  return n;
+}
+
+/** the one muted line under a recommended treatment. null when we know of none. */
+export function clinicsOfferingLine(count: number): string | null {
+  if (count <= 0) return null;
+  return `${count} clinic${count === 1 ? "" : "s"} near you offer this`;
+}
