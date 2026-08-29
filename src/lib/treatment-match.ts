@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { supabase } from "@/integrations/supabase/client";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 import { noDash } from "@/lib/treatment-detail";
@@ -282,6 +283,62 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     }));
 
   return { treatmentName, treatmentPriceFrom, providers, clinics };
+}
+
+/**
+ * clinics that list a treatment on their own storefront, joined to storefronts and
+ * ordered by distance from the patient. this is what a scan result links to.
+ */
+async function fetchClinicsOffering(
+  slug: string,
+  treatmentPriceFrom: number | null,
+  input: MatchInput,
+): Promise<MatchClinic[]> {
+  const { data: listed, error } = await supabase
+    .from("storefront_treatments")
+    .select("storefront_id, price_from")
+    .eq("treatment_slug", slug);
+  if (error) throw new Error(error.message);
+
+  const ids = Array.from(new Set((listed ?? []).map((r) => r.storefront_id)));
+  if (!ids.length) return [];
+
+  const priceById = new Map<string, number | null>();
+  for (const r of listed ?? []) {
+    priceById.set(r.storefront_id, r.price_from === null ? null : Number(r.price_from));
+  }
+
+  const { data: shops, error: sErr } = await supabase
+    .from("storefronts")
+    .select("id, name, neighbourhood, city, lat, lng, claimed")
+    .in("id", ids);
+  if (sErr) throw new Error(sErr.message);
+
+  const budgetCeiling = input.budget ? BUDGET_CEILING[input.budget] : Number.POSITIVE_INFINITY;
+
+  return (shops ?? [])
+    .map((s) => {
+      const km = input.center
+        ? distanceKm(input.center, { lat: Number(s.lat), lng: Number(s.lng) })
+        : Number.POSITIVE_INFINITY;
+      return { s, km, price: priceById.get(s.id) ?? treatmentPriceFrom };
+    })
+    .filter((r) => !Number.isFinite(r.km) || r.km <= input.radiusKm)
+    .sort((a, b) => {
+      const aFits = a.price === null || a.price <= budgetCeiling ? 0 : 1;
+      const bFits = b.price === null || b.price <= budgetCeiling ? 0 : 1;
+      if (aFits !== bFits) return aFits - bFits;
+      return a.km - b.km;
+    })
+    .slice(0, 6)
+    .map((r) => ({
+      id: r.s.id,
+      name: r.s.name.toLowerCase(),
+      neighbourhood: (r.s.neighbourhood ?? r.s.city).toLowerCase(),
+      distanceKm: Number.isFinite(r.km) ? r.km : null,
+      priceFrom: r.price,
+      claimed: r.s.claimed,
+    }));
 }
 
 const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
