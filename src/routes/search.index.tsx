@@ -34,6 +34,7 @@ import {
   type Storefront,
   type SearchTreatment,
 } from "@/lib/search-data";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { SearchMap } from "@/components/treatme/SearchMap";
 import { Avatar, ProviderCardCompact } from "@/components/treatme/ProviderCard";
 import { usePatient } from "@/lib/patient-store";
@@ -41,6 +42,7 @@ import { usePatientLocation } from "@/lib/patient-location";
 import { LocationCard, LocationChip } from "@/components/treatme/LocationCard";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+
 
 const FITZ_NUMBER: Record<string, number> = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
 
@@ -51,17 +53,17 @@ export const Route = createFileRoute("/search/")({
   }),
   head: () => ({
     meta: [
-      { title: "find a provider · treatme" },
+      { title: "find a clinic near you · treatme" },
       {
         name: "description",
         content:
-          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+          "search medspas and treatments near you, see what each clinic offers, and send a booking request.",
       },
-      { property: "og:title", content: "find a provider · treatme" },
+      { property: "og:title", content: "find a clinic near you · treatme" },
       {
         property: "og:description",
         content:
-          "search aesthetic doctors, nurses and specialists near you, and see the medspa each one works at.",
+          "search medspas and treatments near you, see what each clinic offers, and send a booking request.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -74,7 +76,7 @@ export const Route = createFileRoute("/search/")({
   errorComponent: ({ error }) => (
     <div className="px-6 pt-10" role="alert">
       <p className="brand-eyebrow">something broke</p>
-      <h1 className="brand-display text-[28px] mt-2">couldn't load providers.</h1>
+      <h1 className="brand-display text-[28px] mt-2">couldn't load clinics.</h1>
       <p className="text-[13px] text-ink-mute mt-2">{error.message}</p>
     </div>
   ),
@@ -83,7 +85,11 @@ export const Route = createFileRoute("/search/")({
 });
 
 type Scope = "all" | "providers" | "medspas" | "treatments";
-const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
+/** the providers pill only exists while the provider side does. */
+const SCOPES: Scope[] = PROVIDERS_ENABLED
+  ? ["all", "providers", "medspas", "treatments"]
+  : ["all", "medspas", "treatments"];
+
 
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
@@ -97,9 +103,12 @@ function SearchPage() {
     initialScope && (SCOPES as readonly string[]).includes(initialScope)
       ? (initialScope as Scope)
       : initialQ
-        ? "providers"
+        ? PROVIDERS_ENABLED
+          ? "providers"
+          : "medspas"
         : "all",
   );
+
   const [radius, setRadius] = useState<number>(10);
   const { location, ready: locationReady } = usePatientLocation();
   const [pickingLocation, setPickingLocation] = useState(false);
@@ -158,10 +167,12 @@ function SearchPage() {
 
   const providerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
+    if (!PROVIDERS_ENABLED) return counts;
     for (const p of data.providers)
       for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
     return counts;
   }, [data.providers]);
+
 
   /** featured medspas for the explore rail. */
   const featuredStorefronts = useMemo(
@@ -217,7 +228,7 @@ function SearchPage() {
       .slice(0, 20);
   }, [treatments, needle]);
 
-  const showProviders = scope === "all" || scope === "providers";
+  const showProviders = PROVIDERS_ENABLED && (scope === "all" || scope === "providers");
   const showMedspas = scope === "all" || scope === "medspas";
   const showTreatments = scope === "all" || scope === "treatments";
 
@@ -226,15 +237,15 @@ function SearchPage() {
     (showMedspas ? medspaResults.length : 0) +
     (showTreatments ? treatmentResults.length : 0);
 
-  /** how many providers in range offer each treatment, for treatment rows. */
-  const treatmentProviderCounts = useMemo(() => {
+  /** how many clinics in range list each treatment, for treatment rows. */
+  const treatmentClinicCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const p of data.providers) {
-      if (!p.storefronts.some((s) => inRangeIds.has(s.id))) continue;
-      for (const t of p.treatments) counts[t.treatment_slug] = (counts[t.treatment_slug] ?? 0) + 1;
+    for (const s of storefrontsInRange) {
+      for (const o of s.listed) counts[o.slug] = (counts[o.slug] ?? 0) + 1;
     }
     return counts;
-  }, [data.providers, inRangeIds]);
+  }, [storefrontsInRange]);
+
 
   /** pins narrowed to whatever the current results reference. */
   const resultStorefronts = useMemo(() => {
@@ -272,12 +283,21 @@ function SearchPage() {
             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-ink-mute" />
             <input
               ref={inputRef}
-              aria-label="search providers, medspas and treatments"
+              aria-label={
+                PROVIDERS_ENABLED
+                  ? "search providers, medspas and treatments"
+                  : "search medspas and treatments"
+              }
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder="search providers, medspas, treatments"
+              placeholder={
+                PROVIDERS_ENABLED
+                  ? "search providers, medspas, treatments"
+                  : "search medspas, treatments"
+              }
+
               className="w-full rounded-pill border border-[rgba(17,17,17,0.08)] bg-cream pl-11 pr-10 py-3 text-[14px] lowercase placeholder:text-ink-mute focus:outline-none focus:border-[rgba(17,17,17,0.18)]"
             />
             {(focused || searching) && q.length > 0 && (
@@ -438,12 +458,13 @@ function SearchPage() {
                         <TreatmentCardCompact
                           key={t.slug}
                           treatment={t}
-                          providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                          clinicCount={treatmentClinicCounts[t.slug] ?? 0}
                           onClick={() => {
                             setQ(t.name.toLowerCase());
-                            setScope("providers");
+                            setScope(PROVIDERS_ENABLED ? "providers" : "medspas");
                           }}
                         />
+
                       ),
                     )}
                   </div>
@@ -549,7 +570,7 @@ function SearchPage() {
           )}
 
           {/* d) providers near you */}
-          {nearbyProviders.length > 0 && (
+          {PROVIDERS_ENABLED && nearbyProviders.length > 0 && (
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">providers near you - coming soon</h2>
@@ -700,11 +721,11 @@ function SearchPage() {
 /** compact horizontal-rail card for treatments. */
 function TreatmentCardCompact({
   treatment,
-  providerCount,
+  clinicCount,
   onClick,
 }: {
   treatment: SearchTreatment;
-  providerCount?: number;
+  clinicCount?: number;
   onClick?: () => void;
 }) {
   const body = (
@@ -728,11 +749,12 @@ function TreatmentCardCompact({
         {treatment.descriptor || treatment.category || treatment.family}
       </p>
       <div className="mt-2 flex items-center gap-2">
-        {providerCount !== undefined && (
+        {clinicCount !== undefined && clinicCount > 0 && (
           <span className="shrink-0 rounded-pill bg-muted px-2 py-0.5 text-[10px] lowercase">
-            {providerCount} provider{providerCount === 1 ? "" : "s"}
+            {clinicCount} clinic{clinicCount === 1 ? "" : "s"}
           </span>
         )}
+
         {treatment.price_from !== null && (
           <span className="text-[11px] font-semibold lowercase">from ${treatment.price_from}</span>
         )}
@@ -797,26 +819,39 @@ function MedspaCard({
         {km !== null && ` · ${formatDistance(km)}`}
       </p>
       <div className="mt-3 space-y-2 border-t border-line pt-3">
-        <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
-          {providers.length} provider{providers.length === 1 ? "" : "s"} here
-        </p>
-        {providers.map((p) => (
-          <Link
-            key={p.id}
-            to="/providers/$slug"
-            params={{ slug: p.slug }}
-            className="flex items-center gap-2.5"
-          >
-            <Avatar name={p.name} url={p.avatar_url} size="size-9" />
-            <span className="min-w-0">
-              <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">
-                {p.name}
-              </span>
-              <span className="block text-[11px] text-ink-mute lowercase truncate">{p.title}</span>
-            </span>
-          </Link>
-        ))}
+        {PROVIDERS_ENABLED ? (
+          <>
+            <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
+              {providers.length} provider{providers.length === 1 ? "" : "s"} here
+            </p>
+            {providers.map((p) => (
+              <Link
+                key={p.id}
+                to="/providers/$slug"
+                params={{ slug: p.slug }}
+                className="flex items-center gap-2.5"
+              >
+                <Avatar name={p.name} url={p.avatar_url} size="size-9" />
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold lowercase leading-tight line-clamp-2 break-words">
+                    {p.name}
+                  </span>
+                  <span className="block text-[11px] text-ink-mute lowercase truncate">
+                    {p.title}
+                  </span>
+                </span>
+              </Link>
+            ))}
+          </>
+        ) : (
+          <p className="text-[11px] font-semibold lowercase tracking-[0.06em] text-ink-mute">
+            {storefront.listed.length > 0
+              ? `${storefront.listed.length} treatment${storefront.listed.length === 1 ? "" : "s"} listed`
+              : "tap to see what they offer"}
+          </p>
+        )}
       </div>
+
     </div>
   );
 }
@@ -876,7 +911,7 @@ function MedspaCardCompact({
             <Avatar key={p.id} name={p.name} url={p.avatar_url} size="size-7" />
           ))}
           {/* never advertise zero. fall back to what they list. */}
-          {providers.length > 0 ? (
+          {PROVIDERS_ENABLED && providers.length > 0 ? (
             <span className="text-[11px] text-ink-mute lowercase">
               {providers.length} provider{providers.length === 1 ? "" : "s"}
             </span>
@@ -885,6 +920,7 @@ function MedspaCardCompact({
               {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
             </span>
           ) : null}
+
         </div>
         {viaWebsite && (
           <p className="mt-1.5 text-[11px] lowercase text-ink/45">listed on their website</p>
@@ -926,11 +962,12 @@ function FeaturedStorefrontCard({
         </p>
         <p className="text-[12px] text-ink-mute lowercase mt-0.5">{areaLine(storefront)}</p>
         <div className="mt-2 flex items-center gap-2">
-          {providerCount > 0 ? (
+          {PROVIDERS_ENABLED && providerCount > 0 ? (
             <span className="text-[12px] text-ink-soft lowercase">
               {providerCount} {providerCount === 1 ? "provider" : "providers"}
             </span>
           ) : storefront.listed.length > 0 ? (
+
             <span className="text-[12px] text-ink-soft lowercase">
               {storefront.listed.length} treatment{storefront.listed.length === 1 ? "" : "s"} listed
             </span>

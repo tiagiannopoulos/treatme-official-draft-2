@@ -24,6 +24,7 @@ import {
   reviewDate,
   type ProviderResult,
 } from "@/lib/provider-profile";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { providerFit } from "@/lib/provider-fit";
 import { usePatient } from "@/lib/patient-store";
 import { TreatmentSheet } from "@/components/treatme/TreatmentSheet";
@@ -60,8 +61,11 @@ export function ProviderProfileView({ match }: { match: (p: Provider) => boolean
   const router = useRouter();
   const { data } = useSuspenseQuery(directoryQuery);
   const near = useNearbyKm();
+  // clinics only in this build. no provider profile is reachable while the flag is off.
+  if (!PROVIDERS_ENABLED) throw notFound();
   const provider = data.providers.find(match);
   if (!provider) throw notFound();
+
 
   const { data: results } = useSuspenseQuery(providerResultsQuery(provider.id));
   const { data: reviews } = useSuspenseQuery(providerReviewsQuery(provider.id));

@@ -12,6 +12,7 @@ import { Play } from "lucide-react";
 import { TreatmentIcon } from "@/components/treatme/TreatmentIcon";
 import { ClinicsOffering } from "@/components/treatme/ClinicsOffering";
 import { ProviderCard } from "@/components/treatme/ProviderCard";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { directoryQuery } from "@/lib/search-data";
 import { useNearbyKm } from "@/lib/nearby";
@@ -37,14 +38,14 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
   }, [onClose]);
 
   const providers = useMemo(() => {
-    if (!directory) return [];
+    if (!directory || !PROVIDERS_ENABLED) return [];
     return directory.providers
       .filter((p) => p.treatments.some((t) => t.treatment_slug === slug))
       .slice(0, 5);
   }, [directory, slug]);
 
   function toSearch() {
-    navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: "providers" } });
+    navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: PROVIDERS_ENABLED ? "providers" : "medspas" } });
   }
 
   function onPointerDown(e: ReactPointerEvent) {
@@ -128,25 +129,27 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
               </button>
             )}
 
-            <section className="mt-7">
-              <p className="brand-eyebrow">providers who offer this</p>
-              <div className="mt-3 space-y-2.5">
-                {providers.length === 0 ? (
-                  <p className="text-[13px] lowercase text-ink/55">
-                    no verified provider has listed this yet. search nearby to ask.
-                  </p>
-                ) : (
-                  providers.map((p) => (
-                    <ProviderCard
-                      key={p.id}
-                      provider={p}
-                      km={p.storefronts[0] ? near.kmFor(p.storefronts[0].id) : null}
-                      shops={p.storefronts}
-                    />
-                  ))
-                )}
-              </div>
-            </section>
+            {PROVIDERS_ENABLED && (
+              <section className="mt-7">
+                <p className="brand-eyebrow">providers who offer this</p>
+                <div className="mt-3 space-y-2.5">
+                  {providers.length === 0 ? (
+                    <p className="text-[13px] lowercase text-ink/55">
+                      no verified provider has listed this yet. search nearby to ask.
+                    </p>
+                  ) : (
+                    providers.map((p) => (
+                      <ProviderCard
+                        key={p.id}
+                        provider={p}
+                        km={p.storefronts[0] ? near.kmFor(p.storefronts[0].id) : null}
+                        shops={p.storefronts}
+                      />
+                    ))
+                  )}
+                </div>
+              </section>
+            )}
 
             <ClinicsOffering slug={treatment.slug} />
 
@@ -155,8 +158,9 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
               onClick={toSearch}
               className="mt-6 w-full text-center text-[14px] font-semibold lowercase text-ink underline"
             >
-              see all providers
+              {PROVIDERS_ENABLED ? "see all providers" : "see all clinics"}
             </button>
+
           </div>
         )}
       </div>

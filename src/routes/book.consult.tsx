@@ -30,9 +30,9 @@ export const Route = createFileRoute("/book/consult")({
   head: () => ({
     meta: [
       { title: "request a booking · treatme" },
-      { name: "description", content: "pick your times and we confirm one with your treatme provider." },
+      { name: "description", content: "pick your times and we confirm one with your treatme clinic." },
       { property: "og:title", content: "request a booking · treatme" },
-      { property: "og:description", content: "pick your times and we confirm one with your treatme provider." },
+      { property: "og:description", content: "pick your times and we confirm one with your treatme clinic." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -291,7 +291,7 @@ function BookingFlow() {
             />
             <Field label="email" value={email} onChange={setEmail} placeholder="you@email.com" inputMode="email" />
             <label className="block">
-              <span className="brand-eyebrow">anything the provider should know?</span>
+              <span className="brand-eyebrow">anything the clinic should know?</span>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
@@ -310,7 +310,7 @@ function BookingFlow() {
         <section className="px-5 mt-6">
           <div className="rounded-[18px] border border-line bg-white p-5">
             <SummaryLine label="treatment" value={treatment?.name.toLowerCase() ?? "not picked"} />
-            <SummaryLine label="provider" value="any available provider" />
+            <SummaryLine label="who with" value="whoever the clinic assigns" />
             <SummaryLine
               label="clinic"
               value={`${clinic?.name ?? "not picked"}${clinic?.neighbourhood ? ` · ${clinic.neighbourhood.toLowerCase()}` : ""}`}

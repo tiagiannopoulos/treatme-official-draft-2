@@ -4,6 +4,7 @@ import { ChevronRight, MapPin } from "lucide-react";
 
 import { directoryQuery, formatDistance } from "@/lib/search-data";
 import { useNearbyKm } from "@/lib/nearby";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 
 /**
  * clinics that offer a treatment, read from the clinic's own listing rather than
@@ -16,7 +17,7 @@ export function ClinicsOffering({ slug, limit = 4 }: { slug: string; limit?: num
   const rows = (data?.storefronts ?? [])
     .map((s) => {
       const offer = s.listed.find((o) => o.slug === slug);
-      const roster = (data?.providers ?? []).some(
+      const roster = PROVIDERS_ENABLED && (data?.providers ?? []).some(
         (p) =>
           p.storefronts.some((x) => x.id === s.id) &&
           p.treatments.some((t) => t.treatment_slug === slug),

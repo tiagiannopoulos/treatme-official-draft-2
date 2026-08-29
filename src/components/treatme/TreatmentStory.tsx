@@ -124,9 +124,9 @@ function TreatmentStoryInner({ slug, onClose }: { slug: string; onClose: () => v
       onClose={onClose}
       cta={{
         defaultHeadline: "ready when you are.",
-        defaultBody: "providers near you offer this.",
+        defaultBody: "clinics near you offer this.",
         primary: {
-          label: "find providers",
+          label: "find clinics",
           onClick: () => { onClose(); navigate({ to: "/treatments" }); },
         },
         secondary: {

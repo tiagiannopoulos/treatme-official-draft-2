@@ -1,3 +1,4 @@
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -59,7 +60,10 @@ function RequestPage() {
   const { data: listed = [] } = useQuery(storefrontTreatmentsQuery(id));
 
   const storefront = directory?.storefronts.find((s) => s.id === id);
-  const roster = (directory?.providers ?? []).filter((p) => p.storefronts.some((x) => x.id === id));
+  const roster = PROVIDERS_ENABLED
+    ? (directory?.providers ?? []).filter((p) => p.storefronts.some((x) => x.id === id))
+    : [];
+
   const accent = storefront?.brand_accent || "#F8A1C6";
   const clinicName = (storefront?.name ?? "this clinic").toLowerCase();
 
@@ -284,19 +288,22 @@ function RequestPage() {
           )}
         </Field>
 
-        {/* who with */}
-        <Field label="who with">
-          <div className="flex flex-wrap gap-2">
-            <Chip active={providerId === ""} onClick={() => setProviderId("")}>
-              no preference
-            </Chip>
-            {roster.map((p) => (
-              <Chip key={p.id} active={providerId === p.id} onClick={() => setProviderId(p.id)}>
-                {p.name.toLowerCase()}
+        {/* who with. requests go to the clinic while the provider side is off. */}
+        {PROVIDERS_ENABLED && (
+          <Field label="who with">
+            <div className="flex flex-wrap gap-2">
+              <Chip active={providerId === ""} onClick={() => setProviderId("")}>
+                no preference
               </Chip>
-            ))}
-          </div>
-        </Field>
+              {roster.map((p) => (
+                <Chip key={p.id} active={providerId === p.id} onClick={() => setProviderId(p.id)}>
+                  {p.name.toLowerCase()}
+                </Chip>
+              ))}
+            </div>
+          </Field>
+        )}
+
 
         {/* three preferred times */}
         <Field label="three preferred times" required>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -213,7 +214,7 @@ export function TxLogEntrySheet({
   const queryClient = useQueryClient();
   const { data: treatments = [] } = useQuery(treatmentsQuery);
   const { data: storefronts = [] } = useQuery(storefrontsQuery);
-  const { data: providers = [] } = useQuery(providersQuery);
+  const { data: providers = [] } = useQuery({ ...providersQuery, enabled: PROVIDERS_ENABLED });
 
   const [slug, setSlug] = useState<string | null>(null);
   const [performedAt, setPerformedAt] = useState(today());
@@ -287,8 +288,8 @@ export function TxLogEntrySheet({
         performed_at: new Date(`${performedAt}T12:00:00`).toISOString(),
         storefront_id: storeOther ? null : storeId,
         storefront_name_text: storeOther ? (storeText.trim() || null) : null,
-        provider_id: provOther ? null : provId,
-        provider_name_text: provOther ? (provText.trim() || null) : null,
+        provider_id: !PROVIDERS_ENABLED || provOther ? null : provId,
+        provider_name_text: !PROVIDERS_ENABLED || provOther ? (provText.trim() || null) : null,
         product_name: product.trim() || null,
         price_paid: price.trim() === "" ? null : Number(price),
         areas_treated: areas.length > 0 ? areas : null,
@@ -404,7 +405,9 @@ export function TxLogEntrySheet({
 
           <div>
             <FieldLabel hint="optional">who did it</FieldLabel>
-            {provOther ? (
+            {/* plain text while the provider side is off. someone recording a past
+                treatment may still remember their injector's name. */}
+            {!PROVIDERS_ENABLED || provOther ? (
               <input
                 value={provText}
                 onChange={(e) => setProvText(e.target.value)}
@@ -428,7 +431,7 @@ export function TxLogEntrySheet({
                 }}
               />
             )}
-            {provOther && (
+            {PROVIDERS_ENABLED && provOther && (
               <button
                 type="button"
                 onClick={() => {
@@ -442,6 +445,7 @@ export function TxLogEntrySheet({
               </button>
             )}
           </div>
+
 
           <div>
             <FieldLabel hint="optional">what they used</FieldLabel>

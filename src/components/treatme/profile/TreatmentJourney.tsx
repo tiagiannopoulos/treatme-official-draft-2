@@ -84,7 +84,7 @@ export function TreatmentJourney() {
     {
       key: "record",
       label: "build your record",
-      detail: logCount > 0 ? `${logCount} entr${logCount === 1 ? "y" : "ies"} in your tx log` : "your provider records what they did and when you are due again",
+      detail: logCount > 0 ? `${logCount} entr${logCount === 1 ? "y" : "ies"} in your tx log` : "the clinic records what they did and when you are due again",
       done: logCount > 0,
     },
   ];
