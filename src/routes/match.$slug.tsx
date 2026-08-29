@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 import { ArrowLeft, BadgeCheck, Star } from "lucide-react";
 
 import { useScan } from "@/lib/scan-store";
@@ -23,12 +22,12 @@ export const Route = createFileRoute("/match/$slug")({
       { title: "matched for you · treatme" },
       {
         name: "description",
-        content: "clinics matched to your skin, your city and your budget.",
+        content: "providers and clinics matched to your skin, your city and your budget.",
       },
       { property: "og:title", content: "matched for you · treatme" },
       {
         property: "og:description",
-        content: "clinics matched to your skin, your city and your budget.",
+        content: "providers and clinics matched to your skin, your city and your budget.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -73,9 +72,8 @@ function MatchScreen() {
 
   const subline = data
     ? matchSubline(
-        PROVIDERS_ENABLED ? data.providers.length : data.clinics.length,
+        data.providers.length,
         concerns[0] ?? null,
-
         radiusKm,
         profile.budget,
         data.treatmentName,
@@ -102,12 +100,11 @@ function MatchScreen() {
           <span className="text-hot">.</span>
         </h1>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft lowercase">
-          {isLoading ? "pulling clinics near you." : subline}
+          {isLoading ? "pulling providers near you." : subline}
         </p>
       </div>
 
       {/* providers */}
-      {PROVIDERS_ENABLED && (
       <section className="mt-7 px-6">
         <h2 className="brand-display text-[22px] lowercase">providers</h2>
 
@@ -125,7 +122,6 @@ function MatchScreen() {
           </div>
         )}
       </section>
-      )}
 
       {/* clinics */}
       <section className="mt-8 px-6">

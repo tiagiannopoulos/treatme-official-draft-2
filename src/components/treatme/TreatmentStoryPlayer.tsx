@@ -6,7 +6,6 @@ import { Check, Clock, Lock, MessageCircle, Sparkles, User, X } from "lucide-rea
 import { realResultsQuery, treatmentCatalogQuery } from "@/lib/treatment-catalog";
 import { buildSlides, storySourceQuery, INK, type StorySlide } from "@/lib/treatment-story";
 import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 
 
 const SLIDE_MS = 6000;
@@ -218,7 +217,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           >
             <SlideBody
               slide={slide}
-              onFind={() => navigate({ to: "/search", search: { q: source?.name ?? slug, scope: PROVIDERS_ENABLED ? "providers" : "medspas" } })}
+              onFind={() => navigate({ to: "/search", search: { q: source?.name ?? slug, scope: "providers" } })}
               onScan={() => navigate({ to: "/scan" })}
             />
           </div>
@@ -395,7 +394,7 @@ function SlideBody({
     <div className="flex h-full flex-col">
       <Chip bg={bg} label={slide.chip} icon={null} />
       <Headline text="book now." size={40} />
-      <Body text="clinics near you offer this." />
+      <Body text="clinics and providers near you offer this." />
       <div className="mt-auto">
         <button
           type="button"
@@ -405,7 +404,7 @@ function SlideBody({
           className="w-full rounded-pill py-4 text-[17px] font-semibold lowercase"
           style={{ backgroundColor: INK, color: "#FCFBF7" }}
         >
-          {PROVIDERS_ENABLED ? "find providers" : "find clinics"}
+          find providers
         </button>
         <button
           type="button"

@@ -72,7 +72,7 @@ function TreatmentDetail() {
               );
             })}
           </div>
-          <p className="mt-2 text-[12px] text-ink-mute">optional. the clinic confirms the plan at consult.</p>
+          <p className="mt-2 text-[12px] text-ink-mute">optional. your provider confirms the plan at consult.</p>
         </div>
       )}
 
@@ -95,7 +95,7 @@ function TreatmentDetail() {
 
       <div className="px-6 mt-6 flex items-center gap-2 text-[12px] text-ink-mute">
         <ShieldCheck className="size-4 text-ink" />
-        every clinic verified. every listing checked.
+        every clinic verified. every provider licensed.
       </div>
 
       <div className="px-6 mt-6">

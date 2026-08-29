@@ -44,7 +44,7 @@ function SignedOut() {
         </div>
       </div>
       <p className="mt-4 text-[12.5px] lowercase leading-relaxed text-ink/55">
-        everything else stays open. keep browsing treatments and clinics without an account.
+        everything else stays open. keep browsing treatments, clinics and providers without an account.
       </p>
       <div className="mt-4 flex flex-col gap-2">
         <Link to="/treatments">

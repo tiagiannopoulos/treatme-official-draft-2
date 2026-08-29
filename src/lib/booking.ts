@@ -1,7 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 
 export type TimeOfDay = "morning" | "afternoon" | "evening";
 export const TIMES_OF_DAY: TimeOfDay[] = ["morning", "afternoon", "evening"];
@@ -53,8 +52,6 @@ export const bookingOptionsQuery = (providerId?: string, storefrontId?: string) 
   });
 
 async function fetchProviders(storefrontId?: string): Promise<ProviderOption[]> {
-  // clinics only in this build: never query the seeded provider rows.
-  if (!PROVIDERS_ENABLED) return [];
   if (storefrontId) {
     const { data } = await supabase
       .from("provider_storefronts")

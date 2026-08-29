@@ -1,9 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
-
-
 
 
 export interface Storefront {
@@ -249,31 +246,18 @@ export function formatDistance(km: number): string {
 
 
 async function fetchDirectory(): Promise<{ providers: Provider[]; storefronts: Storefront[] }> {
-  // clinics only in this build. the provider tables are never even queried while
-  // the flag is off, so seed people cannot leak through a hidden component.
-  const empty = <T,>() => Promise.resolve({ data: [] as T[], error: null });
-
   const [storefrontsRes, providersRes, linksRes, ptRes, treatmentsRes, statsRes, listedRes] = await Promise.all([
     supabase.from("storefronts").select("*").order("name"),
-    PROVIDERS_ENABLED
-      ? supabase.from("providers").select("*").order("name")
-      : empty<Record<string, unknown>>(),
-    PROVIDERS_ENABLED
-      ? supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary")
-      : empty<{ provider_id: string; storefront_id: string; is_primary: boolean }>(),
-    PROVIDERS_ENABLED
-      ? supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from, is_signature")
-      : empty<{ provider_id: string; treatment_slug: string; price_from: number | null; is_signature: boolean }>(),
+    supabase.from("providers").select("*").order("name"),
+    supabase.from("provider_storefronts").select("provider_id, storefront_id, is_primary"),
+    supabase.from("provider_treatments").select("provider_id, treatment_slug, price_from, is_signature"),
     supabase.from("treatments").select("slug, name, category"),
     // treatme ratings are derived live from the treatme reviews table, never stored.
-    PROVIDERS_ENABLED
-      ? supabase.from("provider_rating_stats").select("provider_id, rating, review_count")
-      : empty<{ provider_id: string | null; rating: number | null; review_count: number | null }>(),
+    supabase.from("provider_rating_stats").select("provider_id, rating, review_count"),
     supabase
       .from("storefront_treatments")
       .select("storefront_id, treatment_slug, price_from, verified_by_clinic, evidence_url"),
   ]);
-
 
   const err =
     storefrontsRes.error ||
@@ -472,28 +456,4 @@ export function matchStorefront(s: Storefront, q: string): boolean {
     neighbourhood(s).toLowerCase().includes(needle) ||
     s.postcode.toLowerCase().includes(needle)
   );
-}
-
-/**
- * how many clinics near this patient list a treatment. reads the clinic's own
- * listing (storefront_treatments, already joined onto each storefront), never a
- * provider roster, and only counts clinics inside the given distance map.
- */
-export function clinicsOfferingCount(
-  storefronts: Storefront[],
-  slug: string,
-  inRange?: (id: string) => boolean,
-): number {
-  let n = 0;
-  for (const s of storefronts) {
-    if (inRange && !inRange(s.id)) continue;
-    if (s.listed.some((o) => o.slug === slug)) n += 1;
-  }
-  return n;
-}
-
-/** the one muted line under a recommended treatment. null when we know of none. */
-export function clinicsOfferingLine(count: number): string | null {
-  if (count <= 0) return null;
-  return `${count} clinic${count === 1 ? "" : "s"} near you offer this`;
 }

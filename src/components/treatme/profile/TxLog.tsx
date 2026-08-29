@@ -9,7 +9,6 @@ import { PillButton } from "@/components/treatme/PillButton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { displayTreatmentName } from "@/lib/treatment-labels";
 import { TxLogEntrySheet, type EditableEntry } from "@/components/treatme/profile/TxLogEntrySheet";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 
 interface LogMedia {
   id: string;
@@ -73,13 +72,13 @@ async function fetchLog(): Promise<LogEntry[]> {
 
   const [mediaRes, provRes, txRes] = await Promise.all([
     supabase.from("treatment_log_media").select("id, log_id, url, kind").in("log_id", ids),
-    providerIds.length && PROVIDERS_ENABLED
+    providerIds.length
       ? supabase.from("providers").select("id, slug, name").in("id", providerIds)
       : Promise.resolve({ data: [], error: null } as const),
     supabase.from("treatments").select("slug, name").in("slug", slugs),
   ]);
 
-  const storefrontRes = providerIds.length && PROVIDERS_ENABLED
+  const storefrontRes = providerIds.length
     ? await supabase
         .from("provider_storefronts")
         .select("provider_id, is_primary, storefronts(name)")
@@ -167,14 +166,14 @@ export function TxLog() {
               your record starts with your first booking
             </p>
             <p className="mt-1 max-w-[280px] text-[12.5px] lowercase leading-snug" style={{ color: "rgba(17,17,17,0.55)" }}>
-              book through treatme and the clinic records what they did, what they used, and when you are due again. it stays yours, wherever you go next.
+              book through treatme and your provider records what they did, what they used, and when you are due again. it stays yours, wherever you go next.
             </p>
             <PillButton
               className="mt-4 h-10 px-5 text-[13px]"
               variant="outline"
               onClick={() => navigate({ to: "/search", search: { q: undefined, scope: undefined } })}
             >
-              find a clinic
+              find a provider
             </PillButton>
             <button
               type="button"
@@ -250,9 +249,9 @@ export function TxLog() {
                   {(e.provider_name || e.storefront_name) && (
                     <button
                       type="button"
-                      disabled={!(PROVIDERS_ENABLED && e.provider_slug)}
+                      disabled={!e.provider_slug}
                       onClick={() =>
-                        PROVIDERS_ENABLED && e.provider_slug && navigate({ to: "/providers/$slug", params: { slug: e.provider_slug } })
+                        e.provider_slug && navigate({ to: "/providers/$slug", params: { slug: e.provider_slug } })
                       }
                       className="mt-2 block text-left text-[12.5px] lowercase"
                       style={{ color: "rgba(17,17,17,0.60)" }}
@@ -336,7 +335,7 @@ export function TxLog() {
   );
 }
 
-/** clinic recorded entries open read only. no edit, no delete, anywhere. */
+/** provider recorded entries open read only. no edit, no delete, anywhere. */
 function ReadOnlyDetail({ entry, onClose }: { entry: LogEntry; onClose: () => void }) {
   const rows: Array<[string, string]> = [
     ["when", shortDate(entry.performed_at)],
@@ -347,7 +346,7 @@ function ReadOnlyDetail({ entry, onClose }: { entry: LogEntry; onClose: () => vo
     entry.price_paid !== null ? ["what it cost", `$${entry.price_paid}`] : null,
     entry.areas_treated && entry.areas_treated.length > 0 ? ["areas treated", entry.areas_treated.join(", ").toLowerCase()] : null,
     entry.next_due_at ? ["due again", monthYear(entry.next_due_at)] : null,
-    entry.provider_notes ? ["notes from the clinic", entry.provider_notes.toLowerCase()] : null,
+    entry.provider_notes ? ["notes from your provider", entry.provider_notes.toLowerCase()] : null,
   ].filter((r): r is [string, string] => Boolean(r));
 
   return (

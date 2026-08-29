@@ -18,8 +18,6 @@ import { FaceMap } from "@/components/treatme/FaceMap";
 import { MarkerOverlay } from "@/components/treatme/MarkerOverlay";
 import { markerDrawing } from "@/lib/marker-shapes";
 import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
-import { clinicsOfferingCount, clinicsOfferingLine, directoryQuery } from "@/lib/search-data";
-import { useNearbyKm } from "@/lib/nearby";
 
 
 export const Route = createFileRoute("/scan/results")({
@@ -115,22 +113,6 @@ function ResultsPage() {
     enabled: !!worst,
     staleTime: 5 * 60 * 1000,
   });
-
-  // how many clinics near this patient list each recommended treatment.
-  const { data: directory } = useQuery(directoryQuery);
-  const near = useNearbyKm();
-  const clinicCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    if (!directory) return counts;
-    for (const m of matches) {
-      counts[m.slug] = clinicsOfferingCount(directory.storefronts, m.slug, (id) =>
-        near.hasLocation ? (near.kmFor(id) ?? Infinity) <= 25 : true,
-      );
-    }
-    return counts;
-  }, [directory, matches, near]);
-
-
 
   if (loading && !result) return <ResultsSkeleton />;
 
@@ -308,11 +290,8 @@ function ResultsPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-[16px] lowercase leading-tight">{m.name}</p>
-                    <p className="text-[12px] text-ink-mute mt-0.5 lowercase">
-                      {clinicsOfferingLine(clinicCounts[m.slug] ?? 0) ?? `for ${m.concernLabel}`}
-                    </p>
+                    <p className="text-[12px] text-ink-mute mt-0.5 lowercase">for {m.concernLabel}</p>
                   </div>
-
                   {m.priceFrom !== null && (
                     <p className="text-[13px] font-semibold shrink-0">from ${Math.round(m.priceFrom)}</p>
                   )}

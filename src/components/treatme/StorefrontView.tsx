@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 
 import { ProviderCard } from "@/components/treatme/ProviderCard";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 import { StorefrontMapStrip } from "@/components/treatme/StorefrontMapStrip";
 import {
   directoryQuery,
@@ -69,7 +68,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
 
   const roster = useMemo(
     () =>
-      storefront && PROVIDERS_ENABLED
+      storefront
         ? data.providers.filter((p) => p.storefronts.some((s) => s.id === storefront.id))
         : [],
     [data.providers, storefront],
@@ -389,7 +388,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       </div>
 
       {/* section 4, who works here */}
-      {PROVIDERS_ENABLED && claimed && roster.length > 0 && (
+      {claimed && roster.length > 0 && (
         <section ref={rosterRef} className="scroll-mt-4 px-5 pt-8">
           <div className="flex items-baseline gap-2">
             <h2 className="text-[20px] font-medium lowercase tracking-[-0.02em]">who works here</h2>
@@ -531,7 +530,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       )}
 
       {/* section 9, unclaimed */}
-      {(!claimed || (PROVIDERS_ENABLED && roster.length === 0)) && (
+      {(!claimed || roster.length === 0) && (
         <section className="px-5 pt-8">
           <div
             className="rounded-[18px] p-5"

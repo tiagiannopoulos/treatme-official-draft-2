@@ -8,13 +8,12 @@ import { ProviderCard } from "@/components/treatme/ProviderCard";
 import { treatmentDetailQuery, type TreatmentDetail } from "@/lib/treatment-detail";
 import { directoryQuery } from "@/lib/search-data";
 import { useNearbyKm } from "@/lib/nearby";
-import { PROVIDERS_ENABLED } from "@/lib/features";
 
 export const Route = createFileRoute("/treatment/$slug/")({
   head: ({ params }) => {
     const pretty = params.slug.replace(/-/g, " ");
     const title = `${pretty} · treatme`;
-    const description = `what ${pretty} does, the downtime, the typical range, and the clinics near you that offer it.`;
+    const description = `what ${pretty} does, the downtime, the typical range, and the verified providers near you who offer it.`;
     return {
       meta: [
         { title },
@@ -52,7 +51,7 @@ function TreatmentDetailPage() {
   const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   const providers = useMemo(() => {
-    if (!directory || !PROVIDERS_ENABLED) return [];
+    if (!directory) return [];
     return directory.providers
       .filter((p) => p.treatments.some((t) => t.treatment_slug === slug))
       .slice(0, 2);
@@ -206,7 +205,7 @@ function TreatmentDetailPage() {
         <div className="mt-2.5 flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-1.5 rounded-pill border border-[rgba(17,17,17,0.12)] px-3 py-1.5 text-[12px] font-bold lowercase text-ink">
             <Star className="size-3.5 shrink-0" style={{ color: HOT }} strokeWidth={2.2} />
-            treatme verified clinic
+            treatme verified provider
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-pill border border-[rgba(17,17,17,0.12)] px-3 py-1.5 text-[12px] font-bold lowercase text-ink">
             <Check className="size-3.5 shrink-0" style={{ color: HOT }} strokeWidth={2.6} />
@@ -216,7 +215,7 @@ function TreatmentDetailPage() {
       </section>
 
       {/* providers */}
-      {PROVIDERS_ENABLED && providers.length > 0 && (
+      {providers.length > 0 && (
         <section className="mt-6 px-4">
           <SectionLabel>providers who offer this</SectionLabel>
           <div className="mt-2.5 space-y-3">
@@ -231,7 +230,7 @@ function TreatmentDetailPage() {
           <div className="mt-3.5 text-center">
             <Link
               to="/search"
-              search={{ q: t.name, scope: PROVIDERS_ENABLED ? "providers" : "medspas" }}
+              search={{ q: t.name, scope: "providers" }}
               className="text-[14px] font-bold lowercase text-ink underline"
             >
               see all providers
@@ -239,7 +238,6 @@ function TreatmentDetailPage() {
           </div>
         </section>
       )}
-
 
       <div className="px-4">
         <ClinicsOffering slug={t.slug} limit={6} />
