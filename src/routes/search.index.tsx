@@ -167,10 +167,12 @@ function SearchPage() {
 
   const providerCounts = useMemo(() => {
     const counts: Record<string, number> = {};
+    if (!PROVIDERS_ENABLED) return counts;
     for (const p of data.providers)
       for (const s of p.storefronts) counts[s.id] = (counts[s.id] ?? 0) + 1;
     return counts;
   }, [data.providers]);
+
 
   /** featured medspas for the explore rail. */
   const featuredStorefronts = useMemo(
