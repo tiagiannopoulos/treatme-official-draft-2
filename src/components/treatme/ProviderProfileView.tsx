@@ -24,6 +24,7 @@ import {
   reviewDate,
   type ProviderResult,
 } from "@/lib/provider-profile";
+import { PROVIDERS_ENABLED } from "@/lib/features";
 import { providerFit } from "@/lib/provider-fit";
 import { usePatient } from "@/lib/patient-store";
 import { TreatmentSheet } from "@/components/treatme/TreatmentSheet";
