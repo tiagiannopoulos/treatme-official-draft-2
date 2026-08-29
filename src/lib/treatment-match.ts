@@ -345,18 +345,17 @@ const COUNT_WORDS = ["no", "one", "two", "three", "four", "five", "six"];
 
 /** one sentence explaining the match, e.g. "three providers who treat redness, within 10km, in your budget." */
 export function matchSubline(
-  providerCount: number,
+  count_: number,
   topConcern: string | null,
   radiusKm: number,
   budget: Budget | null,
   treatmentName: string,
 ): string {
-  const count = COUNT_WORDS[providerCount] ?? String(providerCount);
+  const count = COUNT_WORDS[count_] ?? String(count_);
+  const noun = PROVIDERS_ENABLED ? "provider" : "clinic";
   const who = topConcern ? `who treat ${topConcern}` : `who do ${treatmentName}`;
-  const bits = [
-    `${count} provider${providerCount === 1 ? "" : "s"} ${who}`,
-    `within ${radiusKm}km`,
-  ];
+  const bits = [`${count} ${noun}${count_ === 1 ? "" : "s"} ${who}`, `within ${radiusKm}km`];
   if (budget) bits.push("in your budget");
   return `${bits.join(", ")}.`;
 }
+
