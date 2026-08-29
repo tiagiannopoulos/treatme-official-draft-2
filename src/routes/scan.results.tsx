@@ -18,6 +18,8 @@ import { FaceMap } from "@/components/treatme/FaceMap";
 import { MarkerOverlay } from "@/components/treatme/MarkerOverlay";
 import { markerDrawing } from "@/lib/marker-shapes";
 import { findIndicator, skinIndicatorsQuery } from "@/lib/skin-indicators";
+import { clinicsOfferingCount, clinicsOfferingLine, directoryQuery } from "@/lib/search-data";
+import { useNearbyKm } from "@/lib/nearby";
 
 
 export const Route = createFileRoute("/scan/results")({
