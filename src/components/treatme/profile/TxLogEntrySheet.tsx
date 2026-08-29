@@ -404,7 +404,9 @@ export function TxLogEntrySheet({
 
           <div>
             <FieldLabel hint="optional">who did it</FieldLabel>
-            {provOther ? (
+            {/* plain text while the provider side is off. someone recording a past
+                treatment may still remember their injector's name. */}
+            {!PROVIDERS_ENABLED || provOther ? (
               <input
                 value={provText}
                 onChange={(e) => setProvText(e.target.value)}
@@ -428,7 +430,7 @@ export function TxLogEntrySheet({
                 }}
               />
             )}
-            {provOther && (
+            {PROVIDERS_ENABLED && provOther && (
               <button
                 type="button"
                 onClick={() => {
@@ -442,6 +444,7 @@ export function TxLogEntrySheet({
               </button>
             )}
           </div>
+
 
           <div>
             <FieldLabel hint="optional">what they used</FieldLabel>
