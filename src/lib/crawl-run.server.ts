@@ -98,28 +98,51 @@ export async function crawlOne(storefrontId: string): Promise<CrawlOutcome> {
 export interface RunnerResult {
   considered: number;
   crawled: number;
-  results: Array<{ storefront_id: string; name: string; status: CrawlStatus; treatments_found: number }>;
+  with_website: number;
+  by_status: Record<string, number>;
+  results: Array<{
+    storefront_id: string;
+    name: string;
+    status: CrawlStatus;
+    treatments_found: number;
+    error: string | null;
+  }>;
 }
+
 
 /** every clinic with a website and no crawl in the last thirty days, two seconds apart. */
 export async function crawlAll(limit = 50): Promise<RunnerResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const { data: storefronts, error } = await supabaseAdmin
-    .from("storefronts")
-    .select("id, name, website")
-    .not("website", "is", null)
-    .order("name");
-  if (error) throw new Error(error.message);
+  // postgrest caps a plain select at 1000 rows, so both reads are paged. without
+  // this the runner only ever saw the first thousand clinics.
+  const storefronts: Array<{ id: string; name: string }> = [];
+  for (let page = 0; page < 50; page++) {
+    const { data, error } = await supabaseAdmin
+      .from("storefronts")
+      .select("id, name, website")
+      .not("website", "is", null)
+      .order("name")
+      .range(page * 1000, page * 1000 + 999);
+    if (error) throw new Error(error.message);
+    storefronts.push(...(data ?? []).map((s) => ({ id: s.id, name: s.name })));
+    if (!data || data.length < 1000) break;
+  }
 
-  const { data: recent } = await supabaseAdmin
-    .from("storefront_crawls")
-    .select("storefront_id, ran_at")
-    .gte("ran_at", cutoff);
-  const crawledRecently = new Set((recent ?? []).map((r) => r.storefront_id));
+  const crawledRecently = new Set<string>();
+  for (let page = 0; page < 50; page++) {
+    const { data } = await supabaseAdmin
+      .from("storefront_crawls")
+      .select("storefront_id, ran_at")
+      .gte("ran_at", cutoff)
+      .range(page * 1000, page * 1000 + 999);
+    for (const r of data ?? []) crawledRecently.add(r.storefront_id);
+    if (!data || data.length < 1000) break;
+  }
 
-  const due = (storefronts ?? []).filter((s) => !crawledRecently.has(s.id)).slice(0, limit);
+
+  const due = storefronts.filter((s) => !crawledRecently.has(s.id)).slice(0, limit);
   const results: RunnerResult["results"] = [];
 
   for (const [i, s] of due.entries()) {
@@ -131,17 +154,30 @@ export async function crawlAll(limit = 50): Promise<RunnerResult> {
         name: s.name,
         status: outcome.status,
         treatments_found: outcome.treatments_found,
+        error: outcome.error,
       });
     } catch (err) {
+      const message = err instanceof Error ? err.message : "crawl threw";
       results.push({
         storefront_id: s.id,
         name: s.name,
         status: "match_failed",
         treatments_found: 0,
+        error: message,
       });
       console.error(`[treatme] crawl failed for ${s.name}:`, err);
     }
   }
 
-  return { considered: due.length, crawled: results.length, results };
+  const by_status: Record<string, number> = {};
+  for (const r of results) by_status[r.status] = (by_status[r.status] ?? 0) + 1;
+
+  return {
+    considered: due.length,
+    crawled: results.length,
+    with_website: storefronts.length,
+    by_status,
+    results,
+  };
+
 }

@@ -1,4 +1,4 @@
-import { generateObject } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 
 import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
@@ -284,22 +284,59 @@ rules, follow them exactly:
 catalog:
 ${catalogLines}`;
 
+  // the gateway's models do not all honour a response schema, so we ask for plain
+  // json in the prompt and validate it ourselves. that keeps every model usable.
+  const instruction = `answer with json only, no prose and no code fence, shaped exactly:
+{"matches":[{"treatment_slug":"...","confidence":0.0,"evidence_snippet":"...","evidence_url":"...","price_from":null}]}`;
+
   let lastError: string | null = null;
   for (const modelId of MODELS) {
     try {
-      const { object } = await generateObject({
+      const { text: raw } = await generateText({
         model: gateway(modelId),
-        schema: MatchSchema,
         system,
-        prompt: `clinic website text:\n${text}`,
+        prompt: `${instruction}\n\nclinic website text:\n${text}`,
       });
-      return { matches: object.matches, error: null };
+      const parsed = parseMatches(raw);
+      if (!parsed) {
+        lastError = `unreadable answer from ${modelId}`;
+        continue;
+      }
+      return { matches: parsed, error: null };
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }
   }
   return { matches: [], error: lastError };
 }
+
+/** the model's json, however it wrapped it. null when there is nothing usable. */
+function parseMatches(raw: string): TreatmentMatch[] | null {
+  const trimmed = raw.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const start = trimmed.search(/[[{]/);
+  if (start < 0) return null;
+  const end = Math.max(trimmed.lastIndexOf("}"), trimmed.lastIndexOf("]"));
+  let value: unknown;
+  try {
+    value = JSON.parse(trimmed.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+  const list = Array.isArray(value)
+    ? value
+    : Array.isArray((value as { matches?: unknown }).matches)
+      ? (value as { matches: unknown[] }).matches
+      : null;
+  if (!list) return null;
+
+  const out: TreatmentMatch[] = [];
+  for (const item of list) {
+    const row = MatchSchema.shape.matches.element.safeParse(item);
+    if (row.success) out.push(row.data);
+  }
+  return out;
+}
+
 
 /** keep only real slugs, real evidence urls and confident matches. */
 export function cleanMatches(
