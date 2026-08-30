@@ -91,8 +91,6 @@ export const Route = createFileRoute("/search/")({
   component: SearchPage,
 });
 
-type Scope = "all" | "providers" | "medspas";
-const SCOPES: Scope[] = ["all", "providers", "medspas"];
 
 /** browse-by-category cards. each links into the treatment library filtered to its families. */
 const BROWSE_CATEGORIES = [
@@ -109,17 +107,10 @@ function SearchPage() {
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const patient = usePatient();
 
-  const { q: initialQ = "", scope: initialScope, treatment: treatmentSlug } = Route.useSearch();
+  const { q: initialQ = "", treatment: treatmentSlug } = Route.useSearch();
   const navigate = useNavigate();
   const [q, setQ] = useState(initialQ);
   const [focused, setFocused] = useState(false);
-  const [scope, setScope] = useState<Scope>(
-    initialScope && (SCOPES as readonly string[]).includes(initialScope)
-      ? (initialScope as Scope)
-      : initialQ
-        ? "providers"
-        : "all",
-  );
   const [radius, setRadius] = useState<number>(10);
   const { location, ready: locationReady } = usePatientLocation();
   const [pickingLocation, setPickingLocation] = useState(false);
@@ -259,9 +250,9 @@ function SearchPage() {
       .slice(0, 20);
   }, [treatments, needle]);
 
-  const showProviders = scope === "all" || scope === "providers";
-  const showMedspas = scope === "all" || scope === "medspas";
-  const showTreatments = scope === "all";
+  const showProviders = true;
+  const showMedspas = true;
+  const showTreatments = true;
 
   const totalResults =
     (showProviders ? providerResults.length : 0) +
