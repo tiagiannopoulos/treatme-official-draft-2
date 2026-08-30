@@ -150,7 +150,7 @@ function BookingFlow() {
       <div className="px-5 pt-5">
         <button
           type="button"
-          onClick={() => (step === 0 ? navigate({ to: "/search", search: { q: undefined, scope: undefined } }) : setStep(step - 1))}
+          onClick={() => (step === 0 ? navigate({ to: "/search", search: { q: undefined, scope: undefined, treatment: undefined } }) : setStep(step - 1))}
           className="inline-flex items-center gap-1 text-[13px] font-semibold lowercase text-ink/60"
         >
           <ArrowLeft className="size-4" /> back
@@ -506,7 +506,7 @@ function SentScreen() {
         <Link to="/profile">
           <PillButton fullWidth>view my bookings</PillButton>
         </Link>
-        <Link to="/search" search={{ q: undefined, scope: undefined }}>
+        <Link to="/search" search={{ q: undefined, scope: undefined, treatment: undefined }}>
           <PillButton fullWidth variant="outline">back to search</PillButton>
         </Link>
       </div>

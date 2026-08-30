@@ -165,7 +165,7 @@ export function UpcomingAppointments() {
             <PillButton
               className="mt-4 h-10 px-5 text-[13px]"
               variant="outline"
-              onClick={() => navigate({ to: "/search", search: { q: undefined, scope: undefined } })}
+              onClick={() => navigate({ to: "/search", search: { q: undefined, scope: undefined, treatment: undefined } })}
             >
               find a provider
             </PillButton>
