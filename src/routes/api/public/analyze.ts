@@ -338,13 +338,48 @@ async function logScanError(input: {
   }
 }
 
+/**
+ * logs a failure without the admin client. used for configuration failures,
+ * where the service role key may be missing too (self hosted deploys).
+ */
+async function logScanErrorViaRest(status: number, message: string) {
+  try {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!url || !key) return;
+    await fetch(`${url}/rest/v1/scan_errors`, {
+      method: "POST",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({ status_code: status, error_message: message.slice(0, 900) }),
+    });
+  } catch (logError) {
+    console.error("scan config error log failed:", logError);
+  }
+}
+
 export const Route = createFileRoute("/api/public/analyze")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         const key = process.env.LOVABLE_API_KEY;
         if (!key) {
-          return Response.json({ error: "Missing LOVABLE_API_KEY", code: "service" }, { status: 500 });
+          console.error(
+            "scan analysis unavailable: LOVABLE_API_KEY is not set in this deployment's environment",
+          );
+          await logScanErrorViaRest(500, "missing LOVABLE_API_KEY in deployment environment");
+          return Response.json(
+            {
+              error: "Missing LOVABLE_API_KEY",
+              code: "config",
+              detail: "the deployment is missing LOVABLE_API_KEY",
+            },
+            { status: 500 },
+          );
         }
 
         let body: z.infer<typeof RequestBody>;
