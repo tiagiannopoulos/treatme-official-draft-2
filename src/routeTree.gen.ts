@@ -46,6 +46,7 @@ import { Route as TreatmentSlugReviewsRouteImport } from './routes/treatment.$sl
 import { Route as StorefrontIdRequestRouteImport } from './routes/storefront_.$id.request'
 import { Route as ScanConcernKeyRouteImport } from './routes/scan.concern.$key'
 import { Route as ReportScanIdPreviewRouteImport } from './routes/report.$scanId.preview'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as ApiPublicAnalyzeRouteImport } from './routes/api/public/analyze'
 
 const TermsRoute = TermsRouteImport.update({
@@ -233,6 +234,11 @@ const ReportScanIdPreviewRoute = ReportScanIdPreviewRouteImport.update({
   path: '/report/$scanId/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAnalyzeRoute = ApiPublicAnalyzeRouteImport.update({
   id: '/api/public/analyze',
   path: '/api/public/analyze',
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/storefront/$id/request': typeof StorefrontIdRequestRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchIndexRoute
   '/treatments': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/storefront/$id/request': typeof StorefrontIdRequestRoute
@@ -352,6 +360,7 @@ export interface FileRoutesById {
   '/search/': typeof SearchIndexRoute
   '/treatments/': typeof TreatmentsIndexRoute
   '/api/public/analyze': typeof ApiPublicAnalyzeRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/report/$scanId/preview': typeof ReportScanIdPreviewRoute
   '/scan/concern/$key': typeof ScanConcernKeyRoute
   '/storefront_/$id/request': typeof StorefrontIdRequestRoute
@@ -394,6 +403,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/api/public/health'
     | '/report/$scanId/preview'
     | '/scan/concern/$key'
     | '/storefront/$id/request'
@@ -434,6 +444,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/treatments'
     | '/api/public/analyze'
+    | '/api/public/health'
     | '/report/$scanId/preview'
     | '/scan/concern/$key'
     | '/storefront/$id/request'
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '/search/'
     | '/treatments/'
     | '/api/public/analyze'
+    | '/api/public/health'
     | '/report/$scanId/preview'
     | '/scan/concern/$key'
     | '/storefront_/$id/request'
@@ -515,6 +527,7 @@ export interface RootRouteChildren {
   SearchIndexRoute: typeof SearchIndexRoute
   TreatmentsIndexRoute: typeof TreatmentsIndexRoute
   ApiPublicAnalyzeRoute: typeof ApiPublicAnalyzeRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
   ReportScanIdPreviewRoute: typeof ReportScanIdPreviewRoute
   ScanConcernKeyRoute: typeof ScanConcernKeyRoute
   StorefrontIdRequestRoute: typeof StorefrontIdRequestRoute
@@ -785,6 +798,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportScanIdPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/analyze': {
       id: '/api/public/analyze'
       path: '/api/public/analyze'
@@ -827,6 +847,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchIndexRoute: SearchIndexRoute,
   TreatmentsIndexRoute: TreatmentsIndexRoute,
   ApiPublicAnalyzeRoute: ApiPublicAnalyzeRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
   ReportScanIdPreviewRoute: ReportScanIdPreviewRoute,
   ScanConcernKeyRoute: ScanConcernKeyRoute,
   StorefrontIdRequestRoute: StorefrontIdRequestRoute,
