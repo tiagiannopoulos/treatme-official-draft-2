@@ -15,6 +15,8 @@ import {
   Waves,
   CircleDot,
   Heart,
+  Map as MapIcon,
+  List,
 } from "lucide-react";
 
 import {
