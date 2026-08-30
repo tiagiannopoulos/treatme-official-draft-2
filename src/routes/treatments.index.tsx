@@ -119,6 +119,8 @@ function TreatmentsPage() {
     familySet ? new Set(familySet) : new Set(),
   );
 
+  const navigate = useNavigate();
+
   const toggleFamily = (family: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
