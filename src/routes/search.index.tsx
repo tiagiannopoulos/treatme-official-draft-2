@@ -842,24 +842,6 @@ function SearchPage() {
             </section>
           )}
 
-          {showTreatments && (
-            <section className="mt-6">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="brand-eyebrow">popular treatments</h2>
-                <Link
-                  to="/treatments"
-                  className="inline-flex items-center gap-1 text-[12px] font-semibold text-hot lowercase"
-                >
-                  browse all <ArrowRight className="size-3.5" />
-                </Link>
-              </div>
-              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                {treatments.slice(0, 8).map((t) => (
-                  <TreatmentCardCompact key={t.slug} treatment={t} />
-                ))}
-              </div>
-            </section>
-          )}
 
           {((showProviders && providerResults.length === 0) ||
             (showMedspas && medspaResults.length === 0)) && (
