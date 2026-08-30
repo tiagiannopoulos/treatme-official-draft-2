@@ -686,10 +686,7 @@ function SearchPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => {
-                    setQ("");
-                    setScope("providers");
-                  }}
+                  onClick={() => setQ("")}
                   className="shrink-0 w-[78vw] max-w-[320px] rounded-[20px] border border-dashed border-[rgba(17,17,17,0.25)] bg-transparent p-3.5 text-left active:scale-[0.98] transition-transform"
                 >
                   <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
