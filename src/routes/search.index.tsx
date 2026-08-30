@@ -91,8 +91,6 @@ export const Route = createFileRoute("/search/")({
   component: SearchPage,
 });
 
-type Scope = "all" | "providers" | "medspas";
-const SCOPES: Scope[] = ["all", "providers", "medspas"];
 
 /** browse-by-category cards. each links into the treatment library filtered to its families. */
 const BROWSE_CATEGORIES = [
@@ -109,17 +107,10 @@ function SearchPage() {
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const patient = usePatient();
 
-  const { q: initialQ = "", scope: initialScope, treatment: treatmentSlug } = Route.useSearch();
+  const { q: initialQ = "", treatment: treatmentSlug } = Route.useSearch();
   const navigate = useNavigate();
   const [q, setQ] = useState(initialQ);
   const [focused, setFocused] = useState(false);
-  const [scope, setScope] = useState<Scope>(
-    initialScope && (SCOPES as readonly string[]).includes(initialScope)
-      ? (initialScope as Scope)
-      : initialQ
-        ? "providers"
-        : "all",
-  );
   const [radius, setRadius] = useState<number>(10);
   const { location, ready: locationReady } = usePatientLocation();
   const [pickingLocation, setPickingLocation] = useState(false);
@@ -259,9 +250,9 @@ function SearchPage() {
       .slice(0, 20);
   }, [treatments, needle]);
 
-  const showProviders = scope === "all" || scope === "providers";
-  const showMedspas = scope === "all" || scope === "medspas";
-  const showTreatments = scope === "all";
+  const showProviders = true;
+  const showMedspas = true;
+  const showTreatments = true;
 
   const totalResults =
     (showProviders ? providerResults.length : 0) +
@@ -294,14 +285,7 @@ function SearchPage() {
     storefrontsInRange,
   ]);
 
-  const countLine = (() => {
-    const where = ` in ${locLabel}`;
-    if (scope === "providers")
-      return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "medspas")
-      return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
-    return `${totalResults} result${totalResults === 1 ? "" : "s"}${where}`;
-  })();
+  const countLine = `${totalResults} result${totalResults === 1 ? "" : "s"} in ${locLabel}`;
 
   return (
     <div className="pb-28">
@@ -337,8 +321,8 @@ function SearchPage() {
           </div>
         </div>
 
-        {/* pinned to a treatment: the scope pills would only confuse things. */}
-        {treatmentSlug ? (
+        {/* pinned to a treatment: show the active treatment chip. */}
+        {treatmentSlug && (
           <div className="mt-2.5 px-6">
             <span className="inline-flex items-center gap-2 rounded-pill bg-hot px-4 py-1.5 text-[12.5px] font-semibold lowercase text-cream">
               {(filterTreatment?.name ?? treatmentSlug.replace(/-/g, " ")).toLowerCase()}
@@ -347,7 +331,7 @@ function SearchPage() {
                 onClick={() =>
                   navigate({
                     to: "/search",
-                    search: { q: undefined, scope: "medspas", treatment: undefined },
+                    search: { q: undefined, treatment: undefined },
                   })
                 }
                 aria-label="clear the treatment filter"
@@ -355,24 +339,6 @@ function SearchPage() {
                 <X className="size-3.5" />
               </button>
             </span>
-          </div>
-        ) : (
-          <div className="mt-2.5 flex gap-2 overflow-x-auto no-scrollbar px-6">
-            {SCOPES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setScope(s)}
-                className={cn(
-                  "shrink-0 rounded-pill px-4 py-1.5 text-[12.5px] font-semibold lowercase transition-colors",
-                  scope === s
-                    ? "bg-hot text-cream border border-hot"
-                    : "bg-transparent text-ink border border-[rgba(17,17,17,0.12)]",
-                )}
-              >
-                {s}
-              </button>
-            ))}
           </div>
         )}
       </div>
