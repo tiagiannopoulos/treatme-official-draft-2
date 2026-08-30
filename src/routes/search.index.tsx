@@ -94,12 +94,12 @@ export const Route = createFileRoute("/search/")({
 
 /** browse-by-category cards. each links into the treatment library filtered to its families. */
 const BROWSE_CATEGORIES = [
-  { label: "skin health", family: "skin & facials,resurfacing", icon: Sparkles, tile: "bg-bubblegum" },
-  { label: "injectables", family: "injectables", icon: Droplet, tile: "bg-mint" },
-  { label: "laser & light", family: "laser & light,tightening & lifting", icon: Sun, tile: "bg-butter" },
-  { label: "body contouring", family: "body", icon: Waves, tile: "bg-bubblegum" },
-  { label: "hair & scalp", family: "hair & regenerative", icon: CircleDot, tile: "bg-mint" },
-  { label: "wellness", family: "wellness", icon: Heart, tile: "bg-butter" },
+  { label: "skin health", family: "skin & facials,resurfacing", icon: Sparkles, tile: "bg-butter" },
+  { label: "injectables", family: "injectables", icon: Droplet, tile: "bg-bubblegum" },
+  { label: "laser & light", family: "laser & light,tightening & lifting", icon: Sun, tile: "bg-mint" },
+  { label: "body contouring", family: "body", icon: Waves, tile: "bg-mint" },
+  { label: "hair & scalp", family: "hair & regenerative", icon: CircleDot, tile: "bg-butter" },
+  { label: "wellness", family: "wellness", icon: Heart, tile: "bg-bubblegum" },
 ] as const;
 
 function SearchPage() {
