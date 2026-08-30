@@ -331,7 +331,7 @@ function SearchPage() {
                 onClick={() =>
                   navigate({
                     to: "/search",
-                    search: { q: undefined, treatment: undefined },
+                    search: { q: undefined, scope: undefined, treatment: undefined },
                   })
                 }
                 aria-label="clear the treatment filter"
@@ -480,54 +480,30 @@ function SearchPage() {
 
               {showProviders && providerResults.length > 0 && (
                 <section className="mt-6">
-                  {scope === "all" && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="brand-eyebrow">providers</h2>
-                      {providerResults.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setScope("providers")}
-                          className="text-[12px] font-semibold text-hot lowercase"
-                        >
-                          see all {providerResults.length}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="brand-eyebrow">providers</h2>
+                  </div>
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? providerResults.slice(0, 6) : providerResults).map(
-                      ({ p, via, shops, km }) => (
-                        <ProviderCardCompact
-                          key={p.id}
-                          provider={p}
-                          via={via}
-                          km={km}
-                          shops={shops}
-                        />
-                      ),
-                    )}
+                    {providerResults.map(({ p, via, shops, km }) => (
+                      <ProviderCardCompact
+                        key={p.id}
+                        provider={p}
+                        via={via}
+                        km={km}
+                        shops={shops}
+                      />
+                    ))}
                   </div>
                 </section>
               )}
 
               {showMedspas && medspaResults.length > 0 && (
                 <section className="mt-6">
-                  {scope === "all" && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="brand-eyebrow">medspas</h2>
-                      {medspaResults.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setScope("medspas")}
-                          className="text-[12px] font-semibold text-hot lowercase"
-                        >
-                          see all {medspaResults.length}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="brand-eyebrow">medspas</h2>
+                  </div>
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? medspaResults.slice(0, 6) : medspaResults).map((s) => (
+                    {medspaResults.map((s) => (
                       <MedspaCardCompact
                         key={s.id}
                         storefront={s}
@@ -557,13 +533,13 @@ function SearchPage() {
                         providerCount={treatmentProviderCounts[t.slug] ?? 0}
                         onClick={() => {
                           setQ(t.name.toLowerCase());
-                          setScope("providers");
                         }}
                       />
                     ))}
                   </div>
                 </section>
               )}
+
 
               {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
             </>
@@ -575,7 +551,7 @@ function SearchPage() {
           {/* browse by category */}
           <section className="mt-6">
             <h2 className="brand-eyebrow">browse by category</h2>
-            <div className="mt-3 grid grid-cols-2 min-[420px]:grid-cols-3 gap-3">
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {BROWSE_CATEGORIES.map((c) => (
                 <a
                   key={c.label}
@@ -664,14 +640,8 @@ function SearchPage() {
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">featured storefronts</h2>
-                <button
-                  type="button"
-                  onClick={() => setScope("medspas")}
-                  className="text-[12px] text-hot lowercase font-semibold"
-                >
-                  see all
-                </button>
               </div>
+
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
                 {featuredStorefronts.map((s) => (
                   <FeaturedStorefrontCard
@@ -716,10 +686,7 @@ function SearchPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => {
-                    setQ("");
-                    setScope("providers");
-                  }}
+                  onClick={() => setQ("")}
                   className="shrink-0 w-[78vw] max-w-[320px] rounded-[20px] border border-dashed border-[rgba(17,17,17,0.25)] bg-transparent p-3.5 text-left active:scale-[0.98] transition-transform"
                 >
                   <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
@@ -755,7 +722,7 @@ function SearchPage() {
                 )}
               </div>
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                {(scope === "all" ? medspaResults.slice(0, 8) : medspaResults).map((s) => (
+                {medspaResults.slice(0, 8).map((s) => (
                   <MedspaCardCompact
                     key={s.id}
                     storefront={s}
@@ -768,13 +735,10 @@ function SearchPage() {
                     onSelect={() => setSelected(s.id)}
                   />
                 ))}
-                {scope === "all" && medspaResults.length > 8 && (
+                {medspaResults.length > 8 && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setQ("");
-                      setScope("medspas");
-                    }}
+                    onClick={() => setQ("")}
                     className="shrink-0 w-[220px] rounded-[20px] border border-dashed border-[rgba(17,17,17,0.25)] bg-transparent p-3.5 text-left active:scale-[0.98] transition-transform"
                   >
                     <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
