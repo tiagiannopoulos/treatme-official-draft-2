@@ -348,9 +348,11 @@ function AnalyzingPage() {
             {phase === "timeout" ? FAILURE_COPY.service : FAILURE_COPY[failure]}
           </h1>
           <div className="mt-6 space-y-3">
-            <PillButton fullWidth onClick={() => void run()}>
-              try again
-            </PillButton>
+            {!(phase === "failed" && failure === "config") && (
+              <PillButton fullWidth onClick={() => void run()}>
+                try again
+              </PillButton>
+            )}
             <PillButton fullWidth variant="outline" onClick={retake}>
               retake
             </PillButton>
