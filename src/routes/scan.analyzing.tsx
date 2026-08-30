@@ -51,12 +51,13 @@ const TIMEOUT_MS = 60_000;
 const RETRY_DELAYS = [2000, 5000];
 
 type Phase = "working" | "quality" | "photo" | "timeout" | "failed";
-type Failure = "face" | "image" | "service";
+type Failure = "face" | "image" | "service" | "config";
 
 const FAILURE_COPY: Record<Failure, string> = {
   face: "we could not find a face in that one. try again in better light, facing the camera.",
   image: "that photo did not upload properly. try taking a new one.",
   service: "our end had a problem. try again in a moment.",
+  config: "scanning isn't configured on this deployment yet.",
 };
 
 function sleep(ms: number) {
@@ -159,8 +160,10 @@ function AnalyzingPage() {
             throw Object.assign(new Error("photo_check_failed"), { retryable: false, photoReasons: reasons });
           }
           console.error("scan analysis rejected", res.status, body.code, body.detail);
-          const retryable = res.status === 429 || res.status >= 500;
-          const failure: Failure = body.code === "image" ? "image" : "service";
+          // a missing server key is not something a retry can fix.
+          const isConfig = body.code === "config";
+          const retryable = !isConfig && (res.status === 429 || res.status >= 500);
+          const failure: Failure = isConfig ? "config" : body.code === "image" ? "image" : "service";
           throw Object.assign(new Error(body.detail ?? `status_${res.status}`), { retryable, failure });
         }
 
@@ -230,7 +233,13 @@ function AnalyzingPage() {
       const meta = err as { failure?: Failure };
       const message = err instanceof Error ? err.message.toLowerCase() : "";
       setFailure(
-        aborted ? "service" : message.includes("face") ? "face" : (meta.failure ?? "service"),
+        aborted
+          ? "service"
+          : meta.failure === "config"
+            ? "config"
+            : message.includes("face")
+              ? "face"
+              : (meta.failure ?? "service"),
       );
       setPhase(aborted ? "timeout" : "failed");
     }
@@ -339,9 +348,11 @@ function AnalyzingPage() {
             {phase === "timeout" ? FAILURE_COPY.service : FAILURE_COPY[failure]}
           </h1>
           <div className="mt-6 space-y-3">
-            <PillButton fullWidth onClick={() => void run()}>
-              try again
-            </PillButton>
+            {!(phase === "failed" && failure === "config") && (
+              <PillButton fullWidth onClick={() => void run()}>
+                try again
+              </PillButton>
+            )}
             <PillButton fullWidth variant="outline" onClick={retake}>
               retake
             </PillButton>
