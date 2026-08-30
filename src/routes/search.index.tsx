@@ -9,6 +9,12 @@ import {
   ArrowRight,
   BadgeCheck,
   ChevronRight,
+  Sparkles,
+  Droplet,
+  Sun,
+  Waves,
+  CircleDot,
+  Heart,
 } from "lucide-react";
 
 import {
@@ -85,8 +91,18 @@ export const Route = createFileRoute("/search/")({
   component: SearchPage,
 });
 
-type Scope = "all" | "providers" | "medspas" | "treatments";
-const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
+type Scope = "all" | "providers" | "medspas";
+const SCOPES: Scope[] = ["all", "providers", "medspas"];
+
+/** browse-by-category cards. each links into the treatment library filtered to its families. */
+const BROWSE_CATEGORIES = [
+  { label: "skin health", family: "skin & facials,resurfacing", icon: Sparkles, tile: "bg-bubblegum" },
+  { label: "injectables", family: "injectables", icon: Droplet, tile: "bg-mint" },
+  { label: "laser & light", family: "laser & light,tightening & lifting", icon: Sun, tile: "bg-butter" },
+  { label: "body contouring", family: "body", icon: Waves, tile: "bg-bubblegum" },
+  { label: "hair & scalp", family: "hair & regenerative", icon: CircleDot, tile: "bg-mint" },
+  { label: "wellness", family: "wellness", icon: Heart, tile: "bg-butter" },
+] as const;
 
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
@@ -245,7 +261,7 @@ function SearchPage() {
 
   const showProviders = scope === "all" || scope === "providers";
   const showMedspas = scope === "all" || scope === "medspas";
-  const showTreatments = scope === "all" || scope === "treatments";
+  const showTreatments = scope === "all";
 
   const totalResults =
     (showProviders ? providerResults.length : 0) +
@@ -284,8 +300,6 @@ function SearchPage() {
       return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
     if (scope === "medspas")
       return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "treatments")
-      return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
     return `${totalResults} result${totalResults === 1 ? "" : "s"}${where}`;
   })();
 
@@ -566,34 +580,21 @@ function SearchPage() {
 
               {showTreatments && treatmentResults.length > 0 && (
                 <section className="mt-6">
-                  {scope === "all" && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="brand-eyebrow">treatments</h2>
-                      {treatmentResults.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setScope("treatments")}
-                          className="text-[12px] font-semibold text-hot lowercase"
-                        >
-                          see all {treatmentResults.length}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="brand-eyebrow">treatments</h2>
+                  </div>
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(
-                      ({ t }) => (
-                        <TreatmentCardCompact
-                          key={t.slug}
-                          treatment={t}
-                          providerCount={treatmentProviderCounts[t.slug] ?? 0}
-                          onClick={() => {
-                            setQ(t.name.toLowerCase());
-                            setScope("providers");
-                          }}
-                        />
-                      ),
-                    )}
+                    {treatmentResults.slice(0, 6).map(({ t }) => (
+                      <TreatmentCardCompact
+                        key={t.slug}
+                        treatment={t}
+                        providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                        onClick={() => {
+                          setQ(t.name.toLowerCase());
+                          setScope("providers");
+                        }}
+                      />
+                    ))}
                   </div>
                 </section>
               )}
@@ -605,6 +606,27 @@ function SearchPage() {
       ) : (
         /* ---------- explore state ---------- */
         <div className="px-6">
+          {/* browse by category */}
+          <section className="mt-6">
+            <h2 className="brand-eyebrow">browse by category</h2>
+            <div className="mt-3 grid grid-cols-2 min-[420px]:grid-cols-3 gap-3">
+              {BROWSE_CATEGORIES.map((c) => (
+                <a
+                  key={c.label}
+                  href={`/treatments?${new URLSearchParams({ family: c.family }).toString()}`}
+                  className="group flex flex-col items-center gap-3 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-cream p-4 text-center transition active:scale-[0.97]"
+                >
+                  <span className={`grid size-11 place-items-center rounded-xl ${c.tile}`}>
+                    <c.icon className="size-5 text-ink" strokeWidth={2} />
+                  </span>
+                  <span className="text-[13px] font-semibold lowercase text-ink leading-tight">
+                    {c.label}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+
           {/* a) map card */}
           <div className="mt-5 flex items-center justify-between gap-2">
             <h2 className="brand-eyebrow">near you</h2>

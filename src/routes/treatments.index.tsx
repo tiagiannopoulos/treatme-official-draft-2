@@ -1,9 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Info, Search, Sparkles, X, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "@tanstack/react-router";
 import { CATEGORY_PILLS, pillFor, treatmentCatalogQuery, type CategoryPill } from "@/lib/treatment-catalog";
 import { displayTreatmentCategory, displayTreatmentName } from "@/lib/treatment-labels";
 import { SaveTreatmentButton } from "@/components/treatme/SaveTreatmentButton";
@@ -104,10 +103,21 @@ function TreatmentsPage() {
   const { data: treatments } = useSuspenseQuery(libraryQuery);
   const { data: catalog } = useSuspenseQuery(treatmentCatalogQuery);
   const catalogBySlug = useMemo(() => new Map(catalog.map((c) => [c.slug, c])), [catalog]);
+  /** optional comma-separated family filter, e.g. ?family=skin & facials,resurfacing */
+  const search = useSearch({ strict: false }) as { family?: string };
+  const familyParam = (search.family ?? "").trim();
+  const familySet = useMemo(
+    () => (familyParam ? new Set(familyParam.split(",").map((f) => f.trim()).filter(Boolean)) : null),
+    [familyParam],
+  );
   const [pill, setPill] = useState<CategoryPill>("all");
   const [q, setQ] = useState("");
   const [concern, setConcern] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(
+    familySet ? new Set(familySet) : new Set(),
+  );
+
+  const navigate = useNavigate();
 
   const toggleFamily = (family: string) => {
     setExpanded((prev) => {
@@ -117,6 +127,7 @@ function TreatmentsPage() {
       return next;
     });
   };
+
 
   const concerns = useMemo(() => {
     const set = new Set<string>();
@@ -128,6 +139,7 @@ function TreatmentsPage() {
     const needle = norm(q);
     return treatments
       .map((t) => {
+        if (familySet && !familySet.has(t.family)) return null;
         if (pill !== "all" && pillFor(t.family) !== pill) return null;
         if (concern && !(t.improves ?? []).includes(concern)) return null;
         if (!needle) return { t, alias: null as string | null };
@@ -138,7 +150,8 @@ function TreatmentsPage() {
         return alias ? { t, alias } : null;
       })
       .filter((r): r is { t: LibraryRow; alias: string | null } => r !== null);
-  }, [treatments, q, concern, pill]);
+  }, [treatments, q, concern, pill, familySet]);
+
 
   const grouped = useMemo(() => {
     const order = (f: string) => {
@@ -196,6 +209,23 @@ function TreatmentsPage() {
           ))}
         </div>
       </div>
+
+      {/* active family filter chip */}
+      {familyParam && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-pill bg-hot px-4 py-1.5 text-[12.5px] font-semibold lowercase text-cream">
+            {familyParam.split(",").join(" · ")}
+            <button
+              type="button"
+              aria-label="clear category filter"
+              onClick={() => navigate({ to: "/treatments" })}
+              className="grid place-items-center size-4 rounded-full"
+            >
+              <X className="size-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
 
       {/* concern filter */}
       <div className="mt-3">
