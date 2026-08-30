@@ -9,6 +9,12 @@ import {
   ArrowRight,
   BadgeCheck,
   ChevronRight,
+  Sparkles,
+  Droplet,
+  Sun,
+  Waves,
+  CircleDot,
+  Heart,
 } from "lucide-react";
 
 import {
