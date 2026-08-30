@@ -551,7 +551,7 @@ function SearchPage() {
           {/* browse by category */}
           <section className="mt-6">
             <h2 className="brand-eyebrow">browse by category</h2>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="mt-3 grid grid-cols-3 gap-3">
               {BROWSE_CATEGORIES.map((c) => (
                 <a
                   key={c.label}
