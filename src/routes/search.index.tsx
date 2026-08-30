@@ -119,6 +119,7 @@ function SearchPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
   const [mapInteracted, setMapInteracted] = useState(false);
+  const [view, setView] = useState<"map" | "list">("map");
 
   /** map framing only. distances never come from this. */
   const center: LatLng = location ? { lat: location.lat, lng: location.lng } : TORONTO_CENTROID;
