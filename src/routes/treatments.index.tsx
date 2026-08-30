@@ -210,6 +210,23 @@ function TreatmentsPage() {
         </div>
       </div>
 
+      {/* active family filter chip */}
+      {familyParam && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-pill bg-hot px-4 py-1.5 text-[12.5px] font-semibold lowercase text-cream">
+            {familyParam.split(",").join(" · ")}
+            <button
+              type="button"
+              aria-label="clear category filter"
+              onClick={() => navigate({ to: "/treatments" })}
+              className="grid place-items-center size-4 rounded-full"
+            >
+              <X className="size-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
+
       {/* concern filter */}
       <div className="mt-3">
         <Sheet>
