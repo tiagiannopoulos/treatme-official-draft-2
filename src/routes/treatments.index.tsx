@@ -139,6 +139,7 @@ function TreatmentsPage() {
     const needle = norm(q);
     return treatments
       .map((t) => {
+        if (familySet && !familySet.has(t.family)) return null;
         if (pill !== "all" && pillFor(t.family) !== pill) return null;
         if (concern && !(t.improves ?? []).includes(concern)) return null;
         if (!needle) return { t, alias: null as string | null };
@@ -149,7 +150,8 @@ function TreatmentsPage() {
         return alias ? { t, alias } : null;
       })
       .filter((r): r is { t: LibraryRow; alias: string | null } => r !== null);
-  }, [treatments, q, concern, pill]);
+  }, [treatments, q, concern, pill, familySet]);
+
 
   const grouped = useMemo(() => {
     const order = (f: string) => {
