@@ -1,0 +1,1 @@
+UPDATE public.education_slides SET cta_label = 'find a clinic', updated_at = now() WHERE cta_route = '/search';
