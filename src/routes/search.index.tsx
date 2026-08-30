@@ -85,8 +85,8 @@ export const Route = createFileRoute("/search/")({
   component: SearchPage,
 });
 
-type Scope = "all" | "providers" | "medspas" | "treatments";
-const SCOPES: Scope[] = ["all", "providers", "medspas", "treatments"];
+type Scope = "all" | "providers" | "medspas";
+const SCOPES: Scope[] = ["all", "providers", "medspas"];
 
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
@@ -284,8 +284,6 @@ function SearchPage() {
       return `${providerResults.length} provider${providerResults.length === 1 ? "" : "s"}${where}`;
     if (scope === "medspas")
       return `${medspaResults.length} medspa${medspaResults.length === 1 ? "" : "s"}${where}`;
-    if (scope === "treatments")
-      return `${treatmentResults.length} treatment${treatmentResults.length === 1 ? "" : "s"}`;
     return `${totalResults} result${totalResults === 1 ? "" : "s"}${where}`;
   })();
 
@@ -566,34 +564,21 @@ function SearchPage() {
 
               {showTreatments && treatmentResults.length > 0 && (
                 <section className="mt-6">
-                  {scope === "all" && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="brand-eyebrow">treatments</h2>
-                      {treatmentResults.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setScope("treatments")}
-                          className="text-[12px] font-semibold text-hot lowercase"
-                        >
-                          see all {treatmentResults.length}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="brand-eyebrow">treatments</h2>
+                  </div>
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? treatmentResults.slice(0, 6) : treatmentResults).map(
-                      ({ t }) => (
-                        <TreatmentCardCompact
-                          key={t.slug}
-                          treatment={t}
-                          providerCount={treatmentProviderCounts[t.slug] ?? 0}
-                          onClick={() => {
-                            setQ(t.name.toLowerCase());
-                            setScope("providers");
-                          }}
-                        />
-                      ),
-                    )}
+                    {treatmentResults.slice(0, 6).map(({ t }) => (
+                      <TreatmentCardCompact
+                        key={t.slug}
+                        treatment={t}
+                        providerCount={treatmentProviderCounts[t.slug] ?? 0}
+                        onClick={() => {
+                          setQ(t.name.toLowerCase());
+                          setScope("providers");
+                        }}
+                      />
+                    ))}
                   </div>
                 </section>
               )}
