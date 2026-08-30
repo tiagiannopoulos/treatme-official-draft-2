@@ -553,40 +553,40 @@ function SearchPage() {
         <div className="px-6">
           {/* a) near you */}
           <section className="mt-6">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="brand-eyebrow">near you</h2>
-              <div className="flex items-center gap-2">
-                <div className="flex overflow-hidden rounded-pill border border-line">
-                  <button
-                    type="button"
-                    onClick={() => setView("map")}
-                    className={cn(
-                      "inline-flex items-center gap-1 px-2.5 py-1 text-[12px] lowercase",
-                      view === "map"
-                        ? "bg-ink text-cream font-semibold"
-                        : "text-ink-mute",
-                    )}
-                  >
-                    <MapIcon className="size-3.5" strokeWidth={2} />
-                    map
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setView("list")}
-                    className={cn(
-                      "inline-flex items-center gap-1 px-2.5 py-1 text-[12px] lowercase",
-                      view === "list"
-                        ? "bg-ink text-cream font-semibold"
-                        : "text-ink-mute",
-                    )}
-                  >
-                    <List className="size-3.5" strokeWidth={2} />
-                    list
-                  </button>
-                </div>
-                <LocationChip onClick={() => setPickingLocation(true)} />
-              </div>
+            <div className="flex overflow-hidden rounded-pill border border-line w-fit">
+              <button
+                type="button"
+                onClick={() => setView("map")}
+                className={cn(
+                  "inline-flex items-center gap-1 px-2.5 py-1 text-[12px] lowercase",
+                  view === "map"
+                    ? "bg-ink text-cream font-semibold"
+                    : "text-ink-mute",
+                )}
+              >
+                <MapIcon className="size-3.5" strokeWidth={2} />
+                map
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                className={cn(
+                  "inline-flex items-center gap-1 px-2.5 py-1 text-[12px] lowercase",
+                  view === "list"
+                    ? "bg-ink text-cream font-semibold"
+                    : "text-ink-mute",
+                )}
+              >
+                <List className="size-3.5" strokeWidth={2} />
+                list
+              </button>
             </div>
+
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <h2 className="brand-eyebrow">near you</h2>
+              <LocationChip onClick={() => setPickingLocation(true)} />
+            </div>
+          </section>
 
             {locationReady && (!location || pickingLocation) ? (
               <div className="mt-2">
