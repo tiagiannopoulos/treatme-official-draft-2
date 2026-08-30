@@ -551,8 +551,158 @@ function SearchPage() {
       ) : (
         /* ---------- explore state ---------- */
         <div className="px-6">
-          {/* browse by category */}
+          {/* a) near you */}
           <section className="mt-6">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="brand-eyebrow">near you</h2>
+              <div className="flex items-center gap-2">
+                <div className="flex overflow-hidden rounded-pill border border-line">
+                  <button
+                    type="button"
+                    onClick={() => setView("map")}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 text-[12px] lowercase",
+                      view === "map"
+                        ? "bg-ink text-cream font-semibold"
+                        : "text-ink-mute",
+                    )}
+                  >
+                    <MapIcon className="size-3.5" strokeWidth={2} />
+                    map
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView("list")}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 text-[12px] lowercase",
+                      view === "list"
+                        ? "bg-ink text-cream font-semibold"
+                        : "text-ink-mute",
+                    )}
+                  >
+                    <List className="size-3.5" strokeWidth={2} />
+                    list
+                  </button>
+                </div>
+                <LocationChip onClick={() => setPickingLocation(true)} />
+              </div>
+            </div>
+
+            {locationReady && (!location || pickingLocation) ? (
+              <div className="mt-2">
+                <LocationCard onDone={() => setPickingLocation(false)} />
+                {location && pickingLocation && (
+                  <button
+                    type="button"
+                    onClick={() => setPickingLocation(false)}
+                    className="mt-3 text-[12px] text-ink/60 lowercase underline"
+                  >
+                    keep {location.label}
+                  </button>
+                )}
+              </div>
+            ) : view === "map" ? (
+              <>
+                <div className="mt-2">
+                  <ClientOnly
+                    fallback={
+                      <div className="h-[220px] rounded-[20px] border border-line bg-muted" />
+                    }
+                  >
+                    <SearchMap
+                      storefronts={visibleMapStorefronts ?? storefrontsInRange}
+                      center={center}
+                      radiusKm={radius}
+                      selectedId={selected}
+                      onSelect={setSelected}
+                      providerCounts={providerCounts}
+                      kmById={kmById}
+                      onViewportChange={setMapBounds}
+                      onMapInteraction={() => setMapInteracted(true)}
+                      height="aspect-[4/3]"
+                      expandable
+                    />
+                  </ClientOnly>
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  {RADIUS_OPTIONS.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => {
+                        setMapInteracted(false);
+                        setRadius(r);
+                      }}
+                      className={cn(
+                        "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
+                        radius === r
+                          ? "border-ink bg-ink text-cream font-semibold"
+                          : "border-line text-ink-mute",
+                      )}
+                    >
+                      {r} km
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mt-3 flex gap-2">
+                  {RADIUS_OPTIONS.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRadius(r)}
+                      className={cn(
+                        "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
+                        radius === r
+                          ? "border-ink bg-ink text-cream font-semibold"
+                          : "border-line text-ink-mute",
+                      )}
+                    >
+                      {r} km
+                    </button>
+                  ))}
+                </div>
+
+                {storefrontsInRange.length === 0 ? (
+                  <p className="mt-3 text-[12px] lowercase text-ink-mute">
+                    no clinics near you yet
+                  </p>
+                ) : (
+                  <ul className="mt-3 overflow-hidden rounded-[18px] border border-line bg-white">
+                    {storefrontsInRange.map((s) => (
+                      <li key={s.id} className="border-t border-line first:border-t-0">
+                        <Link
+                          to="/storefront/$id"
+                          params={{ id: s.id }}
+                          onClick={() => setSelected(s.id)}
+                          className="flex items-center gap-3 px-4 py-3.5"
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-1 text-[15px] font-semibold lowercase leading-tight">
+                              <span className="truncate">{s.name.toLowerCase()}</span>
+                              {s.claimed && <BadgeCheck className="size-3.5 shrink-0 text-hot" />}
+                            </span>
+                            <span className="mt-0.5 block text-[12px] lowercase text-ink/55">
+                              {s.km !== null
+                                ? `${neighbourhood(s)} · ${formatDistance(s.km)}`
+                                : neighbourhood(s)}
+                            </span>
+                          </span>
+                          <ChevronRight className="size-4 shrink-0 text-ink/30" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </section>
+
+          {/* b) browse by category */}
+          <section className="mt-7">
             <h2 className="brand-eyebrow">browse by category</h2>
             <div className="mt-3 grid grid-cols-3 gap-3">
               {BROWSE_CATEGORIES.map((c) => (
@@ -571,72 +721,6 @@ function SearchPage() {
               ))}
             </div>
           </section>
-
-          {/* a) map card */}
-          <div className="mt-5 flex items-center justify-between gap-2">
-            <h2 className="brand-eyebrow">near you</h2>
-            <LocationChip onClick={() => setPickingLocation(true)} />
-          </div>
-
-          {locationReady && (!location || pickingLocation) ? (
-            <div className="mt-2">
-              <LocationCard onDone={() => setPickingLocation(false)} />
-              {location && pickingLocation && (
-                <button
-                  type="button"
-                  onClick={() => setPickingLocation(false)}
-                  className="mt-3 text-[12px] text-ink/60 lowercase underline"
-                >
-                  keep {location.label}
-                </button>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="mt-2">
-                <ClientOnly
-                  fallback={
-                    <div className="h-[220px] rounded-[20px] border border-line bg-muted" />
-                  }
-                >
-                  <SearchMap
-                    storefronts={visibleMapStorefronts ?? storefrontsInRange}
-                    center={center}
-                    radiusKm={radius}
-                    selectedId={selected}
-                    onSelect={setSelected}
-                    providerCounts={providerCounts}
-                    kmById={kmById}
-                    onViewportChange={setMapBounds}
-                    onMapInteraction={() => setMapInteracted(true)}
-                    height="aspect-[4/3]"
-                    expandable
-                  />
-                </ClientOnly>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                {RADIUS_OPTIONS.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => {
-                      setMapInteracted(false);
-                      setRadius(r);
-                    }}
-                    className={cn(
-                      "rounded-pill border px-3 py-1.5 text-[12px] lowercase",
-                      radius === r
-                        ? "border-ink bg-ink text-cream font-semibold"
-                        : "border-line text-ink-mute",
-                    )}
-                  >
-                    {r} km
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
 
           {/* c) featured storefronts row */}
           {featuredStorefronts.length > 0 && (
