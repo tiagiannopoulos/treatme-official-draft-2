@@ -94,6 +94,16 @@ export const Route = createFileRoute("/search/")({
 type Scope = "all" | "providers" | "medspas";
 const SCOPES: Scope[] = ["all", "providers", "medspas"];
 
+/** browse-by-category cards. each links into the treatment library filtered to its families. */
+const BROWSE_CATEGORIES = [
+  { label: "skin health", family: "skin & facials,resurfacing", icon: Sparkles, tile: "bg-bubblegum" },
+  { label: "injectables", family: "injectables", icon: Droplet, tile: "bg-mint" },
+  { label: "laser & light", family: "laser & light,tightening & lifting", icon: Sun, tile: "bg-butter" },
+  { label: "body contouring", family: "body", icon: Waves, tile: "bg-bubblegum" },
+  { label: "hair & scalp", family: "hair & regenerative", icon: CircleDot, tile: "bg-mint" },
+  { label: "wellness", family: "wellness", icon: Heart, tile: "bg-butter" },
+] as const;
+
 function SearchPage() {
   const { data } = useSuspenseQuery(directoryQuery);
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
