@@ -103,10 +103,9 @@ function TreatmentsPage() {
   const { data: treatments } = useSuspenseQuery(libraryQuery);
   const { data: catalog } = useSuspenseQuery(treatmentCatalogQuery);
   const catalogBySlug = useMemo(() => new Map(catalog.map((c) => [c.slug, c])), [catalog]);
-  const router = useRouter();
   /** optional comma-separated family filter, e.g. ?family=skin & facials,resurfacing */
-  const familyParam =
-    (router.state.location.search as { family?: string }).family?.trim() || "";
+  const search = useSearch({ strict: false }) as { family?: string };
+  const familyParam = (search.family ?? "").trim();
   const familySet = useMemo(
     () => (familyParam ? new Set(familyParam.split(",").map((f) => f.trim()).filter(Boolean)) : null),
     [familyParam],
