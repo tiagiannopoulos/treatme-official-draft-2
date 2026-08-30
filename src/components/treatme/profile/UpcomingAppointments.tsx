@@ -167,7 +167,7 @@ export function UpcomingAppointments() {
               variant="outline"
               onClick={() => navigate({ to: "/search", search: { q: undefined, scope: undefined, treatment: undefined } })}
             >
-              find a provider
+              find a clinic
             </PillButton>
           </div>
         </div>
