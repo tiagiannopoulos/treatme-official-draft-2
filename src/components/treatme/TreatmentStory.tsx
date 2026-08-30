@@ -124,10 +124,13 @@ function TreatmentStoryInner({ slug, onClose }: { slug: string; onClose: () => v
       onClose={onClose}
       cta={{
         defaultHeadline: "ready when you are.",
-        defaultBody: "providers near you offer this.",
+        defaultBody: "clinics near you list this on their own site.",
         primary: {
-          label: "find providers",
-          onClick: () => { onClose(); navigate({ to: "/treatments" }); },
+          label: "find a clinic",
+          onClick: () => {
+            onClose();
+            navigate({ to: "/search", search: { q: undefined, scope: "medspas", treatment: slug } });
+          },
         },
         secondary: {
           label: "scan first",
