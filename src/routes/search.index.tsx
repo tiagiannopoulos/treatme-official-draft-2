@@ -168,11 +168,10 @@ function SearchPage() {
    */
   const offeringClinics = useMemo(() => {
     if (!treatmentSlug) return [];
-    return storefrontsInRange
-      .map((s) => ({ s, offer: s.listed.find((o) => o.slug === treatmentSlug) }))
-      .filter((r): r is { s: (typeof storefrontsInRange)[number]; offer: (typeof r)["offer"] & object } =>
-        Boolean(r.offer),
-      );
+    return storefrontsInRange.flatMap((s) => {
+      const offer = s.listed.find((o) => o.slug === treatmentSlug);
+      return offer ? [{ s, offer }] : [];
+    });
   }, [storefrontsInRange, treatmentSlug]);
 
   const widerRadius = RADIUS_OPTIONS.find((r) => r > radius) ?? null;
