@@ -51,12 +51,13 @@ const TIMEOUT_MS = 60_000;
 const RETRY_DELAYS = [2000, 5000];
 
 type Phase = "working" | "quality" | "photo" | "timeout" | "failed";
-type Failure = "face" | "image" | "service";
+type Failure = "face" | "image" | "service" | "config";
 
 const FAILURE_COPY: Record<Failure, string> = {
   face: "we could not find a face in that one. try again in better light, facing the camera.",
   image: "that photo did not upload properly. try taking a new one.",
   service: "our end had a problem. try again in a moment.",
+  config: "scanning isn't configured on this deployment yet.",
 };
 
 function sleep(ms: number) {
