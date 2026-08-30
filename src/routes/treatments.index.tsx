@@ -21,6 +21,10 @@ import {
 } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/treatments/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    /** comma-separated family names; when set, only those families show. */
+    family: typeof search.family === "string" ? search.family : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "treatment library · treatme" },
