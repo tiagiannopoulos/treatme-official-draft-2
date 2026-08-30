@@ -233,7 +233,13 @@ function AnalyzingPage() {
       const meta = err as { failure?: Failure };
       const message = err instanceof Error ? err.message.toLowerCase() : "";
       setFailure(
-        aborted ? "service" : message.includes("face") ? "face" : (meta.failure ?? "service"),
+        aborted
+          ? "service"
+          : meta.failure === "config"
+            ? "config"
+            : message.includes("face")
+              ? "face"
+              : (meta.failure ?? "service"),
       );
       setPhase(aborted ? "timeout" : "failed");
     }
