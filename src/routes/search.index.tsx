@@ -155,6 +155,29 @@ function SearchPage() {
       .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
   }, [data.storefronts, location, kmById]);
 
+  /** the treatment this search is pinned to, when someone arrived from a story,
+   * a scan result or a quick sheet. */
+  const filterTreatment = useMemo(
+    () => (treatmentSlug ? (treatments.find((t) => t.slug === treatmentSlug) ?? null) : null),
+    [treatments, treatmentSlug],
+  );
+
+  /**
+   * clinics that actually have a storefront_treatments row for this slug, nearest
+   * first. never a fallback to everything nearby: an empty answer is honest.
+   */
+  const offeringClinics = useMemo(() => {
+    if (!treatmentSlug) return [];
+    return storefrontsInRange
+      .map((s) => ({ s, offer: s.listed.find((o) => o.slug === treatmentSlug) }))
+      .filter((r): r is { s: (typeof storefrontsInRange)[number]; offer: (typeof r)["offer"] & object } =>
+        Boolean(r.offer),
+      );
+  }, [storefrontsInRange, treatmentSlug]);
+
+  const widerRadius = RADIUS_OPTIONS.find((r) => r > radius) ?? null;
+
+
   const inRangeIds = useMemo(
     () => new Set(storefrontsInRange.map((s) => s.id)),
     [storefrontsInRange],
