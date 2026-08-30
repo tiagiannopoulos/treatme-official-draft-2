@@ -217,7 +217,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           >
             <SlideBody
               slide={slide}
-              onFind={() => navigate({ to: "/search", search: { q: source?.name ?? slug, scope: "providers" } })}
+              onFind={() => navigate({ to: "/search", search: { q: undefined, scope: "medspas", treatment: slug } })}
               onScan={() => navigate({ to: "/scan" })}
             />
           </div>
@@ -394,7 +394,7 @@ function SlideBody({
     <div className="flex h-full flex-col">
       <Chip bg={bg} label={slide.chip} icon={null} />
       <Headline text="book now." size={40} />
-      <Body text="clinics and providers near you offer this." />
+      <Body text="clinics near you list this on their own site." />
       <div className="mt-auto">
         <button
           type="button"
@@ -404,7 +404,7 @@ function SlideBody({
           className="w-full rounded-pill py-4 text-[17px] font-semibold lowercase"
           style={{ backgroundColor: INK, color: "#FCFBF7" }}
         >
-          find providers
+          find a clinic
         </button>
         <button
           type="button"

@@ -79,7 +79,7 @@ export function TreatmentJourney() {
           ? `${requestCount} request${requestCount === 1 ? "" : "s"} sent`
           : "pick your times, the clinic confirms one",
       done: requestCount > 0,
-      cta: requestCount > 0 ? undefined : { label: "find a clinic", go: () => navigate({ to: "/search", search: { q: undefined, scope: undefined } }) },
+      cta: requestCount > 0 ? undefined : { label: "find a clinic", go: () => navigate({ to: "/search", search: { q: undefined, scope: "medspas", treatment: undefined } }) },
     },
     {
       key: "record",

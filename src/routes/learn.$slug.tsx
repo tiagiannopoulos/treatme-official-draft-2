@@ -246,7 +246,17 @@ function LearnStory() {
             className="absolute inset-x-0 bottom-0 top-[36%] z-20 px-6 pb-10 transition-opacity duration-200"
             style={{ opacity: held ? 0.35 : 1, color: INK }}
           >
-            <SlideBody slide={slide} onCta={(route) => navigate({ to: route as never })} />
+            <SlideBody
+              slide={slide}
+              onCta={(route) =>
+                route.startsWith("/search")
+                  ? navigate({
+                      to: "/search",
+                      search: { q: undefined, scope: "medspas", treatment: undefined },
+                    })
+                  : navigate({ to: route as never })
+              }
+            />
           </div>
         )}
       </div>
