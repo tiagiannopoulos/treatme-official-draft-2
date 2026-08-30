@@ -44,7 +44,7 @@ export function TreatmentSheet({ slug, onClose }: { slug: string; onClose: () =>
   }, [directory, slug]);
 
   function toSearch() {
-    navigate({ to: "/search", search: { q: treatment?.name ?? slug, scope: "providers" } });
+    navigate({ to: "/search", search: { q: undefined, scope: "medspas", treatment: slug } });
   }
 
   function onPointerDown(e: ReactPointerEvent) {

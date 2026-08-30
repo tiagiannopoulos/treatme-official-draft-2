@@ -217,7 +217,7 @@ export function TreatmentStoryPlayer({ slug }: { slug: string }) {
           >
             <SlideBody
               slide={slide}
-              onFind={() => navigate({ to: "/search", search: { q: source?.name ?? slug, scope: "providers" } })}
+              onFind={() => navigate({ to: "/search", search: { q: undefined, scope: "medspas", treatment: slug } })}
               onScan={() => navigate({ to: "/scan" })}
             />
           </div>
