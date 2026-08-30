@@ -160,8 +160,10 @@ function AnalyzingPage() {
             throw Object.assign(new Error("photo_check_failed"), { retryable: false, photoReasons: reasons });
           }
           console.error("scan analysis rejected", res.status, body.code, body.detail);
-          const retryable = res.status === 429 || res.status >= 500;
-          const failure: Failure = body.code === "image" ? "image" : "service";
+          // a missing server key is not something a retry can fix.
+          const isConfig = body.code === "config";
+          const retryable = !isConfig && (res.status === 429 || res.status >= 500);
+          const failure: Failure = isConfig ? "config" : body.code === "image" ? "image" : "service";
           throw Object.assign(new Error(body.detail ?? `status_${res.status}`), { retryable, failure });
         }
 
