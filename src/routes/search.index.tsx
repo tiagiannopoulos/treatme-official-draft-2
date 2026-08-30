@@ -752,8 +752,6 @@ function SearchPage() {
                     </p>
                   </button>
                 )}
-                  </button>
-                )}
               </div>
             </section>
           )}
