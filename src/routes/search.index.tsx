@@ -640,14 +640,8 @@ function SearchPage() {
             <section className="mt-7">
               <div className="flex items-baseline justify-between gap-3">
                 <h2 className="brand-eyebrow">featured storefronts</h2>
-                <button
-                  type="button"
-                  onClick={() => setScope("medspas")}
-                  className="text-[12px] text-hot lowercase font-semibold"
-                >
-                  see all
-                </button>
               </div>
+
               <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
                 {featuredStorefronts.map((s) => (
                   <FeaturedStorefrontCard
