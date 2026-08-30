@@ -559,7 +559,7 @@ function SearchPage() {
                   className="group flex flex-col items-center gap-2 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-cream p-3 text-center transition active:scale-[0.97]"
                 >
                   <span className={`grid size-9 place-items-center rounded-xl ${c.tile}`}>
-                    <c.icon className="size-4 text-hot" strokeWidth={2} />
+                    <c.icon className="size-4 text-ink" strokeWidth={2} />
                   </span>
                   <span className="text-[11px] font-semibold lowercase text-ink leading-tight">
                     {c.label}
