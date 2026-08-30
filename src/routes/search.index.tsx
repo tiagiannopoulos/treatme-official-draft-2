@@ -606,6 +606,28 @@ function SearchPage() {
       ) : (
         /* ---------- explore state ---------- */
         <div className="px-6">
+          {/* browse by category */}
+          <section className="mt-6">
+            <h2 className="brand-eyebrow">browse by category</h2>
+            <div className="mt-3 grid grid-cols-2 min-[420px]:grid-cols-3 gap-3">
+              {BROWSE_CATEGORIES.map((c) => (
+                <Link
+                  key={c.label}
+                  to="/treatments"
+                  search={{ family: c.family }}
+                  className="group flex flex-col items-center gap-3 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-cream p-4 text-center transition active:scale-[0.97]"
+                >
+                  <span className={`grid size-11 place-items-center rounded-xl ${c.tile}`}>
+                    <c.icon className="size-5 text-ink" strokeWidth={2} />
+                  </span>
+                  <span className="text-[13px] font-semibold lowercase text-ink leading-tight">
+                    {c.label}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+
           {/* a) map card */}
           <div className="mt-5 flex items-center justify-between gap-2">
             <h2 className="brand-eyebrow">near you</h2>
