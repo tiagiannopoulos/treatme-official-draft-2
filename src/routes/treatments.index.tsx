@@ -104,10 +104,20 @@ function TreatmentsPage() {
   const { data: treatments } = useSuspenseQuery(libraryQuery);
   const { data: catalog } = useSuspenseQuery(treatmentCatalogQuery);
   const catalogBySlug = useMemo(() => new Map(catalog.map((c) => [c.slug, c])), [catalog]);
+  const router = useRouter();
+  /** optional comma-separated family filter, e.g. ?family=skin & facials,resurfacing */
+  const familyParam =
+    (router.state.location.search as { family?: string }).family?.trim() || "";
+  const familySet = useMemo(
+    () => (familyParam ? new Set(familyParam.split(",").map((f) => f.trim()).filter(Boolean)) : null),
+    [familyParam],
+  );
   const [pill, setPill] = useState<CategoryPill>("all");
   const [q, setQ] = useState("");
   const [concern, setConcern] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(
+    familySet ? new Set(familySet) : new Set(),
+  );
 
   const toggleFamily = (family: string) => {
     setExpanded((prev) => {
@@ -117,6 +127,7 @@ function TreatmentsPage() {
       return next;
     });
   };
+
 
   const concerns = useMemo(() => {
     const set = new Set<string>();
