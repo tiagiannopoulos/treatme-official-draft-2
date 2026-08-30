@@ -331,7 +331,7 @@ function SearchPage() {
                 onClick={() =>
                   navigate({
                     to: "/search",
-                    search: { q: undefined, treatment: undefined },
+                    search: { q: undefined, scope: undefined, treatment: undefined },
                   })
                 }
                 aria-label="clear the treatment filter"
