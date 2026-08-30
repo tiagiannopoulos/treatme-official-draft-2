@@ -230,7 +230,7 @@ function TreatmentDetailPage() {
           <div className="mt-3.5 text-center">
             <Link
               to="/search"
-              search={{ q: t.name, scope: "providers" }}
+              search={{ q: t.name, scope: "providers", treatment: undefined }}
               className="text-[14px] font-bold lowercase text-ink underline"
             >
               see all providers
