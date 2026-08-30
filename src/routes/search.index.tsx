@@ -556,12 +556,12 @@ function SearchPage() {
                 <a
                   key={c.label}
                   href={`/treatments?${new URLSearchParams({ family: c.family }).toString()}`}
-                  className="group flex flex-col items-center gap-3 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-cream p-4 text-center transition active:scale-[0.97]"
+                  className="group flex flex-col items-center gap-2 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-cream p-3 text-center transition active:scale-[0.97]"
                 >
-                  <span className={`grid size-11 place-items-center rounded-xl ${c.tile}`}>
-                    <c.icon className="size-5 text-ink" strokeWidth={2} />
+                  <span className={`grid size-9 place-items-center rounded-xl ${c.tile}`}>
+                    <c.icon className="size-4 text-hot" strokeWidth={2} />
                   </span>
-                  <span className="text-[13px] font-semibold lowercase text-ink leading-tight">
+                  <span className="text-[11px] font-semibold lowercase text-ink leading-tight">
                     {c.label}
                   </span>
                 </a>
