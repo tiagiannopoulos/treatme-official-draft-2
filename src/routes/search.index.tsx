@@ -586,7 +586,6 @@ function SearchPage() {
               <h2 className="brand-eyebrow">near you</h2>
               <LocationChip onClick={() => setPickingLocation(true)} />
             </div>
-          </section>
 
             {locationReady && (!location || pickingLocation) ? (
               <div className="mt-2">
