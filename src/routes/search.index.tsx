@@ -480,54 +480,30 @@ function SearchPage() {
 
               {showProviders && providerResults.length > 0 && (
                 <section className="mt-6">
-                  {scope === "all" && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="brand-eyebrow">providers</h2>
-                      {providerResults.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setScope("providers")}
-                          className="text-[12px] font-semibold text-hot lowercase"
-                        >
-                          see all {providerResults.length}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="brand-eyebrow">providers</h2>
+                  </div>
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? providerResults.slice(0, 6) : providerResults).map(
-                      ({ p, via, shops, km }) => (
-                        <ProviderCardCompact
-                          key={p.id}
-                          provider={p}
-                          via={via}
-                          km={km}
-                          shops={shops}
-                        />
-                      ),
-                    )}
+                    {providerResults.map(({ p, via, shops, km }) => (
+                      <ProviderCardCompact
+                        key={p.id}
+                        provider={p}
+                        via={via}
+                        km={km}
+                        shops={shops}
+                      />
+                    ))}
                   </div>
                 </section>
               )}
 
               {showMedspas && medspaResults.length > 0 && (
                 <section className="mt-6">
-                  {scope === "all" && (
-                    <div className="flex items-baseline justify-between gap-3">
-                      <h2 className="brand-eyebrow">medspas</h2>
-                      {medspaResults.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setScope("medspas")}
-                          className="text-[12px] font-semibold text-hot lowercase"
-                        >
-                          see all {medspaResults.length}
-                        </button>
-                      )}
-                    </div>
-                  )}
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="brand-eyebrow">medspas</h2>
+                  </div>
                   <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                    {(scope === "all" ? medspaResults.slice(0, 6) : medspaResults).map((s) => (
+                    {medspaResults.map((s) => (
                       <MedspaCardCompact
                         key={s.id}
                         storefront={s}
@@ -557,13 +533,13 @@ function SearchPage() {
                         providerCount={treatmentProviderCounts[t.slug] ?? 0}
                         onClick={() => {
                           setQ(t.name.toLowerCase());
-                          setScope("providers");
                         }}
                       />
                     ))}
                   </div>
                 </section>
               )}
+
 
               {totalResults === 0 && <EmptyResults onClear={() => setQ("")} />}
             </>
