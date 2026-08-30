@@ -245,7 +245,7 @@ function SearchPage() {
 
   const showProviders = scope === "all" || scope === "providers";
   const showMedspas = scope === "all" || scope === "medspas";
-  const showTreatments = scope === "all" || scope === "treatments";
+  const showTreatments = scope === "all";
 
   const totalResults =
     (showProviders ? providerResults.length : 0) +
