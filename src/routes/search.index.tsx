@@ -93,7 +93,8 @@ function SearchPage() {
   const { data: treatments } = useSuspenseQuery(searchTreatmentsQuery);
   const patient = usePatient();
 
-  const { q: initialQ = "", scope: initialScope } = Route.useSearch();
+  const { q: initialQ = "", scope: initialScope, treatment: treatmentSlug } = Route.useSearch();
+  const navigate = useNavigate();
   const [q, setQ] = useState(initialQ);
   const [focused, setFocused] = useState(false);
   const [scope, setScope] = useState<Scope>(
@@ -153,6 +154,28 @@ function SearchPage() {
       .map((s) => ({ ...s, km: kmById.get(s.id) as number | null }))
       .sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
   }, [data.storefronts, location, kmById]);
+
+  /** the treatment this search is pinned to, when someone arrived from a story,
+   * a scan result or a quick sheet. */
+  const filterTreatment = useMemo(
+    () => (treatmentSlug ? (treatments.find((t) => t.slug === treatmentSlug) ?? null) : null),
+    [treatments, treatmentSlug],
+  );
+
+  /**
+   * clinics that actually have a storefront_treatments row for this slug, nearest
+   * first. never a fallback to everything nearby: an empty answer is honest.
+   */
+  const offeringClinics = useMemo(() => {
+    if (!treatmentSlug) return [];
+    return storefrontsInRange.flatMap((s) => {
+      const offer = s.listed.find((o) => o.slug === treatmentSlug);
+      return offer ? [{ s, offer }] : [];
+    });
+  }, [storefrontsInRange, treatmentSlug]);
+
+  const widerRadius = RADIUS_OPTIONS.find((r) => r > radius) ?? null;
+
 
   const inRangeIds = useMemo(
     () => new Set(storefrontsInRange.map((s) => s.id)),
@@ -300,26 +323,148 @@ function SearchPage() {
           </div>
         </div>
 
-        <div className="mt-2.5 flex gap-2 overflow-x-auto no-scrollbar px-6">
-          {SCOPES.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setScope(s)}
-              className={cn(
-                "shrink-0 rounded-pill px-4 py-1.5 text-[12.5px] font-semibold lowercase transition-colors",
-                scope === s
-                  ? "bg-hot text-cream border border-hot"
-                  : "bg-transparent text-ink border border-[rgba(17,17,17,0.12)]",
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+        {/* pinned to a treatment: the scope pills would only confuse things. */}
+        {treatmentSlug ? (
+          <div className="mt-2.5 px-6">
+            <span className="inline-flex items-center gap-2 rounded-pill bg-hot px-4 py-1.5 text-[12.5px] font-semibold lowercase text-cream">
+              {(filterTreatment?.name ?? treatmentSlug.replace(/-/g, " ")).toLowerCase()}
+              <button
+                type="button"
+                onClick={() =>
+                  navigate({
+                    to: "/search",
+                    search: { q: undefined, scope: "medspas", treatment: undefined },
+                  })
+                }
+                aria-label="clear the treatment filter"
+              >
+                <X className="size-3.5" />
+              </button>
+            </span>
+          </div>
+        ) : (
+          <div className="mt-2.5 flex gap-2 overflow-x-auto no-scrollbar px-6">
+            {SCOPES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setScope(s)}
+                className={cn(
+                  "shrink-0 rounded-pill px-4 py-1.5 text-[12.5px] font-semibold lowercase transition-colors",
+                  scope === s
+                    ? "bg-hot text-cream border border-hot"
+                    : "bg-transparent text-ink border border-[rgba(17,17,17,0.12)]",
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {searching ? (
+      {treatmentSlug ? (
+        /* ---------- one treatment, clinics that list it ---------- */
+        <div className="px-6">
+          <div className="mt-1">
+            <ClientOnly
+              fallback={<div className="aspect-[4/3] rounded-[20px] border border-line bg-muted" />}
+            >
+              <SearchMap
+                storefronts={offeringClinics.map((r) => r.s)}
+                center={center}
+                radiusKm={radius}
+                selectedId={selected}
+                onSelect={setSelected}
+                providerCounts={providerCounts}
+                kmById={kmById}
+                onViewportChange={setMapBounds}
+                onMapInteraction={() => setMapInteracted(true)}
+                height="aspect-[4/3]"
+                expandable
+              />
+            </ClientOnly>
+          </div>
+
+          <p className="mt-4 text-[12px] lowercase text-ink/60">
+            {offeringClinics.length} clinic{offeringClinics.length === 1 ? "" : "s"}
+            {location ? ` within ${radius} km` : ` in ${locLabel}`} list{" "}
+            {(filterTreatment?.name ?? treatmentSlug.replace(/-/g, " ")).toLowerCase()}
+          </p>
+
+          {offeringClinics.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-line p-5 text-center">
+              <p className="brand-display text-[20px] lowercase">
+                no clinic near you lists this yet.
+              </p>
+              <p className="mt-1 text-[13px] lowercase text-ink-mute">
+                we only show clinics that actually list it. nothing else would be honest.
+              </p>
+              {widerRadius && (
+                <button
+                  type="button"
+                  onClick={() => setRadius(widerRadius)}
+                  className="mt-3 rounded-pill bg-ink px-4 py-2 text-[13px] font-semibold lowercase text-cream"
+                >
+                  widen to {widerRadius} km
+                </button>
+              )}
+              {!location && (
+                <button
+                  type="button"
+                  onClick={() => setPickingLocation(true)}
+                  className="mt-3 block w-full text-[13px] font-semibold lowercase text-hot"
+                >
+                  set your location
+                </button>
+              )}
+            </div>
+          ) : (
+            <ul className="mt-3 overflow-hidden rounded-[18px] border border-line bg-white">
+              {offeringClinics.map(({ s, offer }) => (
+                <li key={s.id} className="border-t border-line first:border-t-0">
+                  <Link
+                    to="/storefront/$id"
+                    params={{ id: s.id }}
+                    onClick={() => setSelected(s.id)}
+                    className="flex items-center gap-3 px-4 py-3.5"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1 text-[15px] font-semibold lowercase leading-tight">
+                        <span className="truncate">{s.name.toLowerCase()}</span>
+                        {s.claimed && <BadgeCheck className="size-3.5 shrink-0 text-hot" />}
+                      </span>
+                      <span className="mt-0.5 block text-[12px] lowercase text-ink/55">
+                        {s.km !== null
+                          ? `${neighbourhood(s)} · ${formatDistance(s.km)}`
+                          : neighbourhood(s)}
+                      </span>
+                      <span className="mt-1 inline-block rounded-pill bg-mint px-2 py-0.5 text-[11px] lowercase">
+                        offers {(filterTreatment?.name ?? offer.name).toLowerCase()}
+                        {offer.price_from !== null ? ` · from $${Math.round(offer.price_from)}` : ""}
+                      </span>
+                    </span>
+                    <ChevronRight className="size-4 shrink-0 text-ink/30" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {offeringClinics.some((r) => !r.offer.verified) && (
+            <p className="mt-3 text-[11px] lowercase text-ink/45">
+              listed on the clinic's own website, not confirmed with us yet
+            </p>
+          )}
+
+          {locationReady && (!location || pickingLocation) && (
+            <div className="mt-4">
+              <LocationCard onDone={() => setPickingLocation(false)} />
+            </div>
+          )}
+        </div>
+      ) : searching ? (
+
         /* ---------- results state ---------- */
         <div className="px-6">
           {/* map stays pinned at the top, pins filtered to the results */}
