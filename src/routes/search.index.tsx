@@ -779,58 +779,6 @@ function SearchPage() {
             </section>
           )}
 
-          {showMedspas && (
-            <section className="mt-6">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="brand-eyebrow">medspas near you</h2>
-                {location ? (
-                  <span className="text-[12px] text-ink-mute lowercase">
-                    {medspaResults.length} within {radius} km
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPickingLocation(true)}
-                    className="text-[12px] font-semibold text-hot lowercase"
-                  >
-                    set your location
-                  </button>
-                )}
-              </div>
-              <div className="mt-2 flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-2">
-                {medspaResults.slice(0, 8).map((s) => (
-                  <MedspaCardCompact
-                    key={s.id}
-                    storefront={s}
-                    km={s.km}
-                    providers={data.providers.filter((p) =>
-                      p.storefronts.some((x) => x.id === s.id),
-                    )}
-                    viaWebsite={s.viaWebsite}
-                    active={selected === s.id}
-                    onSelect={() => setSelected(s.id)}
-                  />
-                ))}
-                {medspaResults.length > 8 && (
-                  <button
-                    type="button"
-                    onClick={() => setQ("")}
-                    className="shrink-0 w-[220px] rounded-[20px] border border-dashed border-[rgba(17,17,17,0.25)] bg-transparent p-3.5 text-left active:scale-[0.98] transition-transform"
-                  >
-                    <span className="grid size-12 place-items-center rounded-full border border-dashed border-[rgba(17,17,17,0.25)]">
-                      <ChevronRight className="size-5 text-ink" />
-                    </span>
-                    <p className="mt-3 text-[14px] font-semibold lowercase leading-tight">
-                      see all medspas
-                    </p>
-                    <p className="text-[12px] text-ink/60 lowercase">
-                      browse all {medspaResults.length} within {radius} km
-                    </p>
-                  </button>
-                )}
-              </div>
-            </section>
-          )}
 
 
           {((showProviders && providerResults.length === 0) ||
