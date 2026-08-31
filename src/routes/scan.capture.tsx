@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Image as ImageIcon, RefreshCw, CameraOff, RotateCcw } from "lucide-react";
+import { RefreshCw, CameraOff, RotateCcw } from "lucide-react";
 import { PillButton } from "@/components/treatme/PillButton";
 import { useScan } from "@/lib/scan-store";
 import { detectVideoFrame, facemeshReady } from "@/lib/facemesh";
@@ -372,14 +372,10 @@ function CapturePage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-ink">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-ink">
       {picker}
 
-      {/* the stream, this box and the capture canvas all share one 3:4 shape */}
-      <div
-        className="relative w-full max-w-[460px] overflow-hidden bg-ink"
-        style={{ aspectRatio: "3 / 4" }}
-      >
+      <div className="absolute inset-0 overflow-hidden bg-ink">
         {still ? (
           <img src={still} alt="your scan photo" className="absolute inset-0 size-full object-cover" />
         ) : (
@@ -423,7 +419,7 @@ function CapturePage() {
               <Chip label={CHIP_COPY.still[steady]} state={steady} />
             </div>
 
-            <p className="absolute inset-x-0 bottom-4 text-center text-[13px] font-semibold lowercase text-cream/80">
+            <p className="absolute inset-x-0 bottom-36 px-6 text-center text-[13px] font-semibold lowercase text-cream/80">
               fill the oval, face the light
             </p>
           </>
@@ -434,16 +430,8 @@ function CapturePage() {
         <>
 
 
-          <div className="absolute inset-x-0 bottom-20 flex items-center justify-center gap-8 p-6">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              aria-label="upload a photo"
-              className="grid size-11 place-items-center rounded-full bg-cream/15 text-cream"
-            >
-              <ImageIcon className="size-5" aria-hidden="true" />
-            </button>
-
+          <div className="absolute inset-x-0 bottom-8 grid grid-cols-[44px_86px_44px] items-center justify-center gap-8 px-6 pb-[env(safe-area-inset-bottom)]">
+            <span className="size-11" aria-hidden="true" />
             <button
               type="button"
               onClick={onShutter}
@@ -491,7 +479,7 @@ function CapturePage() {
       )}
 
       {still && (
-        <div className="absolute inset-x-0 bottom-20 flex flex-col items-center gap-4 p-6">
+        <div className="absolute inset-x-0 bottom-8 flex flex-col items-center gap-4 px-6 pb-[env(safe-area-inset-bottom)]">
           <PillButton fullWidth onClick={useThis}>
             use this
           </PillButton>
