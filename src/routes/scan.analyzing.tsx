@@ -14,6 +14,7 @@ import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
 import { updateProfile, type Fitzpatrick } from "@/lib/patient-store";
 import { SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { isPhotoReason, photoReasonMessages, type PhotoReason } from "@/lib/photo-check";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/scan/analyzing")({
   head: () => ({
@@ -48,17 +49,23 @@ const STAGES = [
 ];
 
 const TIMEOUT_MS = 60_000;
-const RETRY_DELAYS = [2000, 5000];
+const RETRY_DELAYS = [15000];
 
 type Phase = "working" | "quality" | "photo" | "timeout" | "failed";
-type Failure = "face" | "image" | "service" | "config";
+type Failure = "face" | "image" | "service" | "config" | "auth" | "limit" | "rate";
 
 const FAILURE_COPY: Record<Failure, string> = {
   face: "we could not find a face in that one. try again in better light, facing the camera.",
   image: "that photo did not upload properly. try taking a new one.",
   service: "our end had a problem. try again in a moment.",
   config: "scanning isn't configured on this deployment yet.",
+  auth: "you need an account to scan. sign in and try again.",
+  limit: "you've used your scans for today. try again tomorrow.",
+  rate: "too many scans at once. wait a minute and try again.",
 };
+
+/** failures where hammering "try again" can never help. */
+const NO_RETRY: ReadonlySet<Failure> = new Set(["config", "auth", "limit"]);
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
