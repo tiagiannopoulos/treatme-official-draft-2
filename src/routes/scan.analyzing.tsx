@@ -154,9 +154,14 @@ function AnalyzingPage() {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
         const res = await fetch("/api/public/analyze", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ imageDataUrl: photoDataUrl, skipValidation: forceRef.current }),
           signal: controller.signal,
         });
@@ -168,10 +173,14 @@ function AnalyzingPage() {
             throw Object.assign(new Error("photo_check_failed"), { retryable: false, photoReasons: reasons });
           }
           console.error("scan analysis rejected", res.status, body.code, body.detail);
-          // a missing server key is not something a retry can fix.
-          const isConfig = body.code === "config";
-          const retryable = !isConfig && (res.status === 429 || res.status >= 500);
-          const failure: Failure = isConfig ? "config" : body.code === "image" ? "image" : "service";
+          // auth, limits, rate limiting, and a missing server key are not
+          // something a retry can fix. only genuine 5xx failures retry.
+          const code = body.code;
+          const retryable = res.status >= 500 && code !== "config";
+          const failure: Failure =
+            code === "config" || code === "auth" || code === "limit" || code === "rate" || code === "image"
+              ? code
+              : "service";
           const raw = body.detail ?? (body as { error?: string }).error;
           const detail = `${res.status}${raw ? ` · ${raw}` : ""}`;
           throw Object.assign(new Error(body.detail ?? `status_${res.status}`), {
