@@ -7,14 +7,16 @@ export const MAX_BYTES = 3_500_000;
 /** every small scan image in the app (list rows, 44px maps) uses this copy */
 export const THUMB_EDGE = 320;
 export const THUMB_QUALITY = 0.7;
-/** the one shape the stream, the preview and the capture all agree on */
-export const CAPTURE_ASPECT = 3 / 4;
-/** modest digital zoom: front cameras are wide, so a face sits small */
-export const CAPTURE_ZOOM = 1.2;
+/** the one shape the stream, the preview and the capture all agree on.
+ *  9:16 matches a phone screen, so the fullscreen preview crops almost
+ *  nothing off the sides and the camera stops looking zoomed in. */
+export const CAPTURE_ASPECT = 9 / 16;
+/** no digital zoom: what you see in the preview is what gets captured */
+export const CAPTURE_ZOOM = 1;
 const QUALITIES = [0.85, 0.7, 0.55, 0.4];
 
 
-/** the exact cover crop the 3:4 preview shows, with the same zoom applied */
+/** the exact cover crop the preview shows (capture shape, no extra zoom) */
 export function coverCrop(srcW: number, srcH: number) {
   const srcAspect = srcW / srcH;
   let w = srcW;
