@@ -20,8 +20,12 @@ interface ClinicSeo {
   treatments: { name: string; price_from: number | null }[];
 }
 
+interface StorefrontSearch {
+  treatment?: string;
+}
+
 export const Route = createFileRoute("/storefront/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): StorefrontSearch => ({
     treatment: typeof search.treatment === "string" ? search.treatment : undefined,
   }),
   head: ({
