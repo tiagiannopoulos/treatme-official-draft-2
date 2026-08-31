@@ -1,0 +1,2 @@
+ALTER TABLE public.booking_requests DROP CONSTRAINT IF EXISTS booking_requests_status_check;
+ALTER TABLE public.booking_requests ADD CONSTRAINT booking_requests_status_check CHECK (status = ANY (ARRAY['new'::text, 'contacting'::text, 'pending'::text, 'confirmed'::text, 'declined'::text]));
