@@ -82,6 +82,7 @@ function AnalyzingPage() {
   const [phase, setPhase] = useState<Phase>("working");
   const [progress, setProgress] = useState(6);
   const [failure, setFailure] = useState<Failure>("service");
+  const [detail, setDetail] = useState<string | null>(null);
   const [photoReasons, setPhotoReasons] = useState<PhotoReason[]>([]);
   // set by "use anyway": skips the gate and flags the read as low quality.
   const forceRef = useRef(false);
@@ -164,7 +165,13 @@ function AnalyzingPage() {
           const isConfig = body.code === "config";
           const retryable = !isConfig && (res.status === 429 || res.status >= 500);
           const failure: Failure = isConfig ? "config" : body.code === "image" ? "image" : "service";
-          throw Object.assign(new Error(body.detail ?? `status_${res.status}`), { retryable, failure });
+          const raw = body.detail ?? (body as { error?: string }).error;
+          const detail = `${res.status}${raw ? ` · ${raw}` : ""}`;
+          throw Object.assign(new Error(body.detail ?? `status_${res.status}`), {
+            retryable,
+            failure,
+            detail,
+          });
         }
 
         const json = (await res.json()) as { analysis?: unknown };
