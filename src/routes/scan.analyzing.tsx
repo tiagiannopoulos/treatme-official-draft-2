@@ -82,6 +82,7 @@ function AnalyzingPage() {
   const [phase, setPhase] = useState<Phase>("working");
   const [progress, setProgress] = useState(6);
   const [failure, setFailure] = useState<Failure>("service");
+  const [detail, setDetail] = useState<string | null>(null);
   const [photoReasons, setPhotoReasons] = useState<PhotoReason[]>([]);
   // set by "use anyway": skips the gate and flags the read as low quality.
   const forceRef = useRef(false);
@@ -164,7 +165,13 @@ function AnalyzingPage() {
           const isConfig = body.code === "config";
           const retryable = !isConfig && (res.status === 429 || res.status >= 500);
           const failure: Failure = isConfig ? "config" : body.code === "image" ? "image" : "service";
-          throw Object.assign(new Error(body.detail ?? `status_${res.status}`), { retryable, failure });
+          const raw = body.detail ?? (body as { error?: string }).error;
+          const detail = `${res.status}${raw ? ` · ${raw}` : ""}`;
+          throw Object.assign(new Error(body.detail ?? `status_${res.status}`), {
+            retryable,
+            failure,
+            detail,
+          });
         }
 
         const json = (await res.json()) as { analysis?: unknown };
@@ -230,8 +237,9 @@ function AnalyzingPage() {
         return;
       }
       const aborted = err instanceof DOMException && err.name === "AbortError";
-      const meta = err as { failure?: Failure };
+      const meta = err as { failure?: Failure; detail?: string };
       const message = err instanceof Error ? err.message.toLowerCase() : "";
+      setDetail(meta.detail ?? (aborted ? "the request timed out." : message || null));
       setFailure(
         aborted
           ? "service"
@@ -347,6 +355,9 @@ function AnalyzingPage() {
           <h1 className="brand-display text-[26px]">
             {phase === "timeout" ? FAILURE_COPY.service : FAILURE_COPY[failure]}
           </h1>
+          {detail && (
+            <p className="mt-2 text-[12px] lowercase leading-relaxed text-ink/50 break-words">{detail}</p>
+          )}
           <div className="mt-6 space-y-3">
             {!(phase === "failed" && failure === "config") && (
               <PillButton fullWidth onClick={() => void run()}>

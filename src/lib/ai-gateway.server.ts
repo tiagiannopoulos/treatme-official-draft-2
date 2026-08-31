@@ -52,3 +52,35 @@ export function createLovableAiGatewayProvider(lovableApiKey: string, initialRun
 export function getLovableAiGatewayRunId(request: Request) {
   return request.headers.get(LOVABLE_AIG_RUN_ID_HEADER)?.trim() || undefined;
 }
+
+export type VisionModel = ReturnType<ReturnType<typeof createOpenAICompatible>>;
+
+/**
+ * the vision model used for scan reads. prefers a direct google key when the
+ * deployment has one, otherwise falls back to the lovable gateway.
+ */
+export function createVisionModel(): { model: VisionModel; source: "google" | "lovable" } | null {
+  const googleKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (googleKey) {
+    const provider = createOpenAICompatible({
+      name: "google",
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai",
+      headers: { Authorization: `Bearer ${googleKey}` },
+    });
+    return {
+      model: provider(process.env.VISION_MODEL_ID || "gemini-3-flash-preview"),
+      source: "google",
+    };
+  }
+
+  const lovableKey = process.env.LOVABLE_API_KEY;
+  if (lovableKey) {
+    const gateway = createLovableAiGatewayProvider(lovableKey);
+    return {
+      model: gateway(process.env.VISION_MODEL_ID || "google/gemini-3-flash-preview"),
+      source: "lovable",
+    };
+  }
+
+  return null;
+}

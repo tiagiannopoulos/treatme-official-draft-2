@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PillButton } from "@/components/treatme/PillButton";
 import { saveMyProfile } from "@/lib/profile";
 
-type Mode = "signup" | "login" | "forgot" | "confirm" | "setup";
+type Mode = "signup" | "login" | "forgot" | "setup";
 
 
 const INK = "#111111";
@@ -82,17 +82,13 @@ export function AuthSheet({
     setBusy(true);
     try {
       if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
+        const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        if (data.session) {
-          setMode("setup");
-        } else {
-          setMode("confirm");
+        if (!data.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+          if (signInError) throw signInError;
         }
+        setMode("setup");
       } else if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -127,11 +123,9 @@ export function AuthSheet({
       ? emailOk
       : mode === "setup"
         ? firstName.trim().length > 1
-        : mode === "confirm"
-          ? true
-          : mode === "signup"
-            ? emailOk && password.length >= 6 && adult
-            : emailOk && password.length >= 6;
+        : mode === "signup"
+          ? emailOk && password.length >= 6 && adult
+          : emailOk && password.length >= 6;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end bg-ink/45" onClick={onClose}>
@@ -146,18 +140,14 @@ export function AuthSheet({
                 ? "a couple of details"
                 : mode === "forgot"
                   ? "reset your password"
-                  : mode === "confirm"
-                    ? "check your email"
-                    : (headline ?? "save your results")}
+                  : (headline ?? "save your results")}
             </h2>
             <p className="mt-2 text-[13px] lowercase leading-relaxed text-ink/60">
               {mode === "setup"
                 ? "so we don't ask you to type them again when you book."
                 : mode === "forgot"
                   ? "we'll email you a link to set a new password."
-                  : mode === "confirm"
-                    ? "tap the link we sent to finish setting up, then come back here."
-                    : (reason ?? "you'll need an account to scan and to book. takes a second.")}
+                  : (reason ?? "you'll need an account to scan and to book. takes a second.")}
             </p>
           </div>
           <button
@@ -203,15 +193,9 @@ export function AuthSheet({
             </button>
           )}
 
-          {mode === "confirm" ? (
-            <PillButton fullWidth onClick={onClose}>
-              got it
-            </PillButton>
-          ) : (
-            <PillButton fullWidth disabled={busy || !canSubmit} onClick={submit} style={{ backgroundColor: INK }}>
-              {busy ? "one sec" : mode === "setup" ? "done" : mode === "forgot" ? "send reset link" : "continue"}
-            </PillButton>
-          )}
+          <PillButton fullWidth disabled={busy || !canSubmit} onClick={submit} style={{ backgroundColor: INK }}>
+            {busy ? "one sec" : mode === "setup" ? "done" : mode === "forgot" ? "send reset link" : "continue"}
+          </PillButton>
 
           {mode === "login" && (
             <button
