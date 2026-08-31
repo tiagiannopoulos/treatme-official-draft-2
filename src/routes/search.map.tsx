@@ -92,12 +92,6 @@ function MapView() {
       );
   }, [visiblePins, viewport]);
 
-  const areaLabel = useMemo(() => {
-    const cities = new Set(inView.map((s) => s.city.toLowerCase()).filter(Boolean));
-    if (cities.size === 0) return "this area";
-    if (cities.size <= 2) return [...cities].join(" and ");
-    return `${cities.size} areas`;
-  }, [inView]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background">
