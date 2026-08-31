@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { ArrowLeft, BadgeCheck, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Star } from "lucide-react";
 
 import { useScan } from "@/lib/scan-store";
 import { usePatientLocation } from "@/lib/patient-location";
@@ -104,6 +104,17 @@ function MatchScreen() {
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft lowercase">
           {isLoading ? "pulling providers near you." : subline}
         </p>
+      </div>
+
+      <div className="mt-6 px-6">
+        <Link
+          to="/treatment/$slug"
+          params={{ slug }}
+          className="flex h-12 w-full items-center justify-between rounded-full border border-ink bg-cream px-5 text-[14px] font-semibold lowercase text-ink"
+        >
+          view treatment details
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
       </div>
 
       {/* clinics people can act on now */}
