@@ -435,17 +435,17 @@ export const Route = createFileRoute("/api/public/analyze")({
           console.error("analyze error:", { status, msg, bytes, mediaType });
           void logScanError({ request, status, message: msg, bytes, mediaType });
 
-          const code = badImage ? "image" : status === 402 ? "credits" : "service";
+          const code = badImage ? "image" : rateLimited ? "rate" : status === 402 ? "credits" : "service";
 
           return Response.json(
             {
               code,
-              detail: msg,
+              detail: rateLimited ? "the ai provider is rate limiting us. wait a minute and try again." : msg,
               error:
                 status === 400
                   ? "that photo did not upload properly. try taking a new one."
-                  : status === 429
-                    ? "our end had a problem. try again in a moment."
+                  : rateLimited
+                    ? "the ai provider is rate limiting us. wait a minute and try again."
                     : status === 402
                       ? "ai credits exhausted. add credits in workspace settings."
                       : "our end had a problem. try again in a moment.",
