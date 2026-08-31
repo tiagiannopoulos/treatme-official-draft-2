@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { createVisionModel, type VisionModel } from "@/lib/ai-gateway.server";
@@ -422,9 +423,10 @@ export const Route = createFileRoute("/api/public/analyze")({
             msg.startsWith("invalid_image_data_url") ||
             msg.startsWith("unsupported_media_type") ||
             msg.startsWith("image_too_large");
+          const rateLimited = /\b429\b/.test(msg) || /too many requests/i.test(msg);
           const status = badImage
             ? 400
-            : /\b429\b/.test(msg)
+            : rateLimited
               ? 429
               : /\b402\b/.test(msg)
                 ? 402
