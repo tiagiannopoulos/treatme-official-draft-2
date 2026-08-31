@@ -143,12 +143,13 @@ function MapView() {
             </p>
           )}
           {inView.map((s) => (
-            <button
+            <Link
               key={s.id}
-              type="button"
+              to="/storefront/$id"
+              params={{ id: s.id }}
               onClick={() => setSelected(s.id)}
               className={cn(
-                "w-full text-left rounded-2xl border p-3.5 bg-white",
+                "block w-full text-left rounded-2xl border p-3.5 bg-white",
                 selected === s.id ? "border-hot" : "border-line",
               )}
             >
@@ -170,15 +171,9 @@ function MapView() {
                 {neighbourhood(s)} · {s.listed.length} treatment
                 {s.listed.length === 1 ? "" : "s"}
               </p>
-              <Link
-                to="/storefront/$id"
-                params={{ id: s.id }}
-                className="mt-1.5 inline-block text-[12px] font-semibold text-hot lowercase"
-              >
-                view storefront
-              </Link>
-            </button>
+            </Link>
           ))}
+
         </div>
       </div>
     </div>
