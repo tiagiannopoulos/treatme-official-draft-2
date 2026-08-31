@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createVisionModel, type VisionModel } from "@/lib/ai-gateway.server";
 import { AnalysisSchema, FACE_ZONES, MARKER_KEYS, type FaceZone } from "@/lib/skin-analysis";
 import { TREATMENTS } from "@/lib/treatments-data";
 import { PHOTO_REASONS, isPhotoReason, type PhotoCheck, type PhotoReason } from "@/lib/photo-check";
@@ -229,7 +229,7 @@ function extractJson(text: string): unknown {
   throw new Error("invalid_json_fallback_response");
 }
 
-async function runAnalysis(model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>, imageDataUrl: string) {
+async function runAnalysis(model: VisionModel, imageDataUrl: string) {
   const image = parseImageDataUrl(imageDataUrl);
   const userMessage = [
     {
@@ -276,7 +276,7 @@ async function runAnalysis(model: ReturnType<ReturnType<typeof createLovableAiGa
 
 /** the cheap gate. one small call, strict json, no skin analysis. */
 async function runPhotoCheck(
-  model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>,
+  model: VisionModel,
   imageDataUrl: string,
 ): Promise<PhotoCheck> {
   const image = parseImageDataUrl(imageDataUrl);
@@ -366,17 +366,17 @@ export const Route = createFileRoute("/api/public/analyze")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) {
+        const vision = createVisionModel();
+        if (!vision) {
           console.error(
-            "scan analysis unavailable: LOVABLE_API_KEY is not set in this deployment's environment",
+            "scan analysis unavailable: GOOGLE_GENERATIVE_AI_API_KEY is not set in this deployment's environment",
           );
-          await logScanErrorViaRest(500, "missing LOVABLE_API_KEY in deployment environment");
+          await logScanErrorViaRest(500, "missing GOOGLE_GENERATIVE_AI_API_KEY in deployment environment");
           return Response.json(
             {
-              error: "Missing LOVABLE_API_KEY",
+              error: "Missing GOOGLE_GENERATIVE_AI_API_KEY",
               code: "config",
-              detail: "the deployment is missing LOVABLE_API_KEY",
+              detail: "the deployment is missing GOOGLE_GENERATIVE_AI_API_KEY",
             },
             { status: 500 },
           );
@@ -392,8 +392,7 @@ export const Route = createFileRoute("/api/public/analyze")({
         let bytes: number | null = null;
         let mediaType: string | null = null;
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const model = vision.model;
 
         try {
           const image = parseImageDataUrl(body.imageDataUrl);
