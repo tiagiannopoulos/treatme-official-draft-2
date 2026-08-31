@@ -21,6 +21,9 @@ interface ClinicSeo {
 }
 
 export const Route = createFileRoute("/storefront/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    treatment: typeof search.treatment === "string" ? search.treatment : undefined,
+  }),
   head: ({
     params,
     loaderData,
@@ -169,5 +172,6 @@ export const Route = createFileRoute("/storefront/$id")({
 
 function StorefrontByIdRoute() {
   const { id } = Route.useParams();
-  return <StorefrontView match={(s) => s.id === id || s.slug === id} />;
+  const { treatment } = Route.useSearch();
+  return <StorefrontView match={(s) => s.id === id || s.slug === id} recommendedTreatment={treatment} />;
 }

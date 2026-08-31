@@ -64,9 +64,11 @@ function MatchScreen() {
   );
 
   function book(providerId?: string, storefrontId?: string) {
+    if (!storefrontId) return;
     navigate({
-      to: "/book/consult",
-      search: { treatmentSlug: slug, providerId, storefrontId },
+      to: "/storefront/$id/request",
+      params: { id: storefrontId },
+      search: { treatment: slug },
     });
   }
 
@@ -104,39 +106,39 @@ function MatchScreen() {
         </p>
       </div>
 
-      {/* providers */}
+      {/* clinics people can act on now */}
       <section className="mt-7 px-6">
-        <h2 className="brand-display text-[22px] lowercase">providers</h2>
-
-        {isLoading ? (
-          <p className="mt-3 text-[14px] text-ink-mute lowercase">looking.</p>
-        ) : !data?.providers.length ? (
-          <p className="mt-3 text-[14px] leading-relaxed text-ink-soft lowercase">
-            no one near you lists this yet. worth raising at a consult.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {data.providers.map((p) => (
-              <ProviderCard key={p.id} provider={p} onBook={() => book(p.id, p.clinicId)} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* clinics */}
-      <section className="mt-8 px-6">
-        <h2 className="brand-display text-[22px] lowercase">clinics</h2>
+        <h2 className="brand-display text-[22px] lowercase">clinics near you</h2>
 
         {isLoading ? (
           <p className="mt-3 text-[14px] text-ink-mute lowercase">looking.</p>
         ) : !data?.clinics.length ? (
           <p className="mt-3 text-[14px] leading-relaxed text-ink-soft lowercase">
-            nowhere near you lists this yet.
+            no clinic near you lists this yet.
           </p>
         ) : (
           <div className="mt-4 space-y-3">
             {data.clinics.map((c) => (
-              <ClinicCard key={c.id} clinic={c} onBook={() => book(undefined, c.id)} />
+              <ClinicCard key={c.id} clinic={c} treatmentSlug={slug} onBook={() => book(undefined, c.id)} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* provider previews stay in place for the future provider matching layer */}
+      <section className="mt-8 px-6">
+        <h2 className="brand-display text-[22px] lowercase">recommended providers</h2>
+
+        {isLoading ? (
+          <p className="mt-3 text-[14px] text-ink-mute lowercase">looking.</p>
+        ) : !data?.providers.length ? (
+          <p className="mt-3 text-[14px] leading-relaxed text-ink-soft lowercase">
+            provider matches are coming soon.
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {data.providers.map((p) => (
+              <ProviderCard key={p.id} provider={p} onBook={() => book(p.id, p.clinicId)} />
             ))}
           </div>
         )}
@@ -164,7 +166,7 @@ function BookPill({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="mt-4 h-11 w-full rounded-full bg-ink text-white text-[14px] font-semibold lowercase"
     >
-      book consult
+      request this treatment
     </button>
   );
 }
@@ -220,13 +222,22 @@ function ProviderCard({ provider, onBook }: { provider: MatchProvider; onBook: (
   );
 }
 
-function ClinicCard({ clinic, onBook }: { clinic: MatchClinic; onBook: () => void }) {
+function ClinicCard({
+  clinic,
+  treatmentSlug,
+  onBook,
+}: {
+  clinic: MatchClinic;
+  treatmentSlug: string;
+  onBook: () => void;
+}) {
   return (
     <article className="rounded-3xl border border-ink/10 bg-white p-5">
       <div className="flex items-start justify-between gap-3">
         <Link
           to="/storefront/$id"
           params={{ id: clinic.id }}
+           search={{ treatment: treatmentSlug }}
           className="min-w-0 font-bold text-[17px] lowercase leading-tight break-words"
         >
           {clinic.name}

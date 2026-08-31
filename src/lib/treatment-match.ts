@@ -82,15 +82,20 @@ export const treatmentMatchQuery = (slug: string, input: MatchInput) =>
   });
 
 async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMatch | null> {
-  const [tRes, ptRes] = await Promise.all([
+  const [tRes, ptRes, listedRes] = await Promise.all([
     supabase.from("treatments").select("slug, name, price_from").eq("slug", slug).maybeSingle(),
     supabase
       .from("provider_treatments")
       .select("provider_id, price_from")
       .eq("treatment_slug", slug),
+    supabase
+      .from("storefront_treatments")
+      .select("storefront_id, price_from")
+      .eq("treatment_slug", slug),
   ]);
   if (tRes.error) throw new Error(tRes.error.message);
   if (ptRes.error) throw new Error(ptRes.error.message);
+  if (listedRes.error) throw new Error(listedRes.error.message);
   const treatment = tRes.data;
   if (!treatment) return null;
 
@@ -99,8 +104,41 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
 
   const offers = ptRes.data ?? [];
   const providerIds = Array.from(new Set(offers.map((o) => o.provider_id)));
+  const listedOffers = listedRes.data ?? [];
+  const listedStorefrontIds = Array.from(new Set(listedOffers.map((o) => o.storefront_id)));
+  const listedStoresRes = listedStorefrontIds.length
+    ? await supabase
+        .from("storefronts")
+        .select("id, name, neighbourhood, city, lat, lng, claimed")
+        .in("id", listedStorefrontIds)
+    : { data: [], error: null as null | { message: string } };
+  if (listedStoresRes.error) throw new Error(listedStoresRes.error.message);
+
+  const listedPrice = new Map(
+    listedOffers.map((offer) => [
+      offer.storefront_id,
+      offer.price_from === null ? null : Number(offer.price_from),
+    ]),
+  );
+  const listedClinics: MatchClinic[] = (listedStoresRes.data ?? [])
+    .map((shop) => {
+      const km = input.center
+        ? distanceKm(input.center, { lat: shop.lat, lng: shop.lng })
+        : null;
+      return {
+        id: shop.id,
+        name: shop.name.toLowerCase(),
+        neighbourhood: (shop.neighbourhood ?? shop.city).toLowerCase(),
+        distanceKm: km,
+        priceFrom: listedPrice.get(shop.id) ?? treatmentPriceFrom,
+        claimed: shop.claimed,
+      };
+    })
+    .filter((clinic) => clinic.distanceKm === null || clinic.distanceKm <= input.radiusKm)
+    .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+
   if (!providerIds.length) {
-    return { treatmentName, treatmentPriceFrom, providers: [], clinics: [] };
+    return { treatmentName, treatmentPriceFrom, providers: [], clinics: listedClinics.slice(0, 12) };
   }
 
   const priceByProvider = new Map<string, number | null>();
@@ -254,7 +292,8 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     }
   }
 
-  const clinics: MatchClinic[] = Array.from(clinicRank.values())
+  const providerClinics: MatchClinic[] = Array.from(clinicRank.values())
+    .filter((clinic) => !input.center || clinic.km <= input.radiusKm)
     .sort((a, b) => {
       const aFits = a.price === null || a.price <= budgetCeiling ? 0 : 1;
       const bFits = b.price === null || b.price <= budgetCeiling ? 0 : 1;
@@ -270,6 +309,22 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
       priceFrom: c.price,
       claimed: c.shop.claimed,
     }));
+
+  const clinicsById = new Map<string, MatchClinic>();
+  for (const clinic of [...listedClinics, ...providerClinics]) {
+    const existing = clinicsById.get(clinic.id);
+    if (!existing) {
+      clinicsById.set(clinic.id, clinic);
+    } else if (
+      clinic.priceFrom !== null &&
+      (existing.priceFrom === null || clinic.priceFrom < existing.priceFrom)
+    ) {
+      existing.priceFrom = clinic.priceFrom;
+    }
+  }
+  const clinics = [...clinicsById.values()]
+    .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity))
+    .slice(0, 12);
 
   return { treatmentName, treatmentPriceFrom, providers, clinics };
 }
