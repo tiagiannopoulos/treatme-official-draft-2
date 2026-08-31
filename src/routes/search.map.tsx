@@ -92,12 +92,6 @@ function MapView() {
       );
   }, [visiblePins, viewport]);
 
-  const areaLabel = useMemo(() => {
-    const cities = new Set(inView.map((s) => s.city.toLowerCase()).filter(Boolean));
-    if (cities.size === 0) return "this area";
-    if (cities.size <= 2) return [...cities].join(" and ");
-    return `${cities.size} areas`;
-  }, [inView]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background">
@@ -134,15 +128,7 @@ function MapView() {
           className="mx-auto mb-3 block h-1 w-10 rounded-pill bg-[rgba(17,17,17,0.15)]"
         />
         <h1 className="brand-eyebrow">in this area</h1>
-        <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-          {viewportData?.total ?? inView.length} medspa{(viewportData?.total ?? inView.length) === 1 ? "" : "s"} in {areaLabel} · move the map to
-          search elsewhere
-        </p>
-        {viewportData?.capped && (
-          <p className="mt-1 text-[11px] font-semibold text-hot lowercase">
-            showing 300 pins · zoom in to see every medspa
-          </p>
-        )}
+
 
         <div className="mt-3 space-y-2">
           {inView.length === 0 && (
@@ -151,12 +137,13 @@ function MapView() {
             </p>
           )}
           {inView.map((s) => (
-            <button
+            <Link
               key={s.id}
-              type="button"
+              to="/storefront/$id"
+              params={{ id: s.id }}
               onClick={() => setSelected(s.id)}
               className={cn(
-                "w-full text-left rounded-2xl border p-3.5 bg-white",
+                "block w-full text-left rounded-2xl border p-3.5 bg-white",
                 selected === s.id ? "border-hot" : "border-line",
               )}
             >
@@ -178,15 +165,9 @@ function MapView() {
                 {neighbourhood(s)} · {s.listed.length} treatment
                 {s.listed.length === 1 ? "" : "s"}
               </p>
-              <Link
-                to="/storefront/$id"
-                params={{ id: s.id }}
-                className="mt-1.5 inline-block text-[12px] font-semibold text-hot lowercase"
-              >
-                view storefront
-              </Link>
-            </button>
+            </Link>
           ))}
+
         </div>
       </div>
     </div>
