@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { createClient } from "@supabase/supabase-js";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { createVisionModel, type VisionModel } from "@/lib/ai-gateway.server";
@@ -362,10 +363,64 @@ async function logScanErrorViaRest(status: number, message: string) {
   }
 }
 
+const DAILY_SCAN_LIMIT = 5;
+
+/** a supabase client whose requests run as the bearer-token user. */
+function createAuthedClient(url: string, key: string, token: string) {
+  return createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+}
+type AuthedClient = ReturnType<typeof createAuthedClient>;
+
+/** verifies the bearer token and returns a client that queries as that user. */
+async function verifyUser(request: Request) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!token || !url || !key) return null;
+
+  const client = createAuthedClient(url, key, token);
+  const { data, error } = await client.auth.getUser(token);
+  if (error || !data.user) return null;
+  return { userId: data.user.id, client };
+}
+
+/** true when this user has hit the daily scan cap. */
+async function overDailyLimit(client: AuthedClient, userId: string) {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const { count, error } = await client
+    .from("scans")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", midnight.toISOString());
+  if (error) {
+    console.error("daily scan count failed:", error.message);
+    return false;
+  }
+  return (count ?? 0) >= DAILY_SCAN_LIMIT;
+}
+
 export const Route = createFileRoute("/api/public/analyze")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const authed = await verifyUser(request);
+        if (!authed) {
+          return Response.json(
+            { code: "auth", detail: "you need an account to scan. sign in and try again." },
+            { status: 401 },
+          );
+        }
+        if (await overDailyLimit(authed.client, authed.userId)) {
+          return Response.json(
+            { code: "limit", detail: "you've used your scans for today. try again tomorrow." },
+            { status: 429 },
+          );
+        }
+
         const vision = createVisionModel();
         if (!vision) {
           console.error(
@@ -422,9 +477,10 @@ export const Route = createFileRoute("/api/public/analyze")({
             msg.startsWith("invalid_image_data_url") ||
             msg.startsWith("unsupported_media_type") ||
             msg.startsWith("image_too_large");
+          const rateLimited = /\b429\b/.test(msg) || /too many requests/i.test(msg);
           const status = badImage
             ? 400
-            : /\b429\b/.test(msg)
+            : rateLimited
               ? 429
               : /\b402\b/.test(msg)
                 ? 402
@@ -433,17 +489,17 @@ export const Route = createFileRoute("/api/public/analyze")({
           console.error("analyze error:", { status, msg, bytes, mediaType });
           void logScanError({ request, status, message: msg, bytes, mediaType });
 
-          const code = badImage ? "image" : status === 402 ? "credits" : "service";
+          const code = badImage ? "image" : rateLimited ? "rate" : status === 402 ? "credits" : "service";
 
           return Response.json(
             {
               code,
-              detail: msg,
+              detail: rateLimited ? "the ai provider is rate limiting us. wait a minute and try again." : msg,
               error:
                 status === 400
                   ? "that photo did not upload properly. try taking a new one."
-                  : status === 429
-                    ? "our end had a problem. try again in a moment."
+                  : rateLimited
+                    ? "the ai provider is rate limiting us. wait a minute and try again."
                     : status === 402
                       ? "ai credits exhausted. add credits in workspace settings."
                       : "our end had a problem. try again in a moment.",

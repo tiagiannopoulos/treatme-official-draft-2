@@ -14,6 +14,7 @@ import { AnalysisSchema, type SkinAnalysis } from "@/lib/skin-analysis";
 import { updateProfile, type Fitzpatrick } from "@/lib/patient-store";
 import { SCAN_CONCERN_LABEL } from "@/lib/scan-concerns";
 import { isPhotoReason, photoReasonMessages, type PhotoReason } from "@/lib/photo-check";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/scan/analyzing")({
   head: () => ({
@@ -48,17 +49,23 @@ const STAGES = [
 ];
 
 const TIMEOUT_MS = 60_000;
-const RETRY_DELAYS = [2000, 5000];
+const RETRY_DELAYS = [15000];
 
 type Phase = "working" | "quality" | "photo" | "timeout" | "failed";
-type Failure = "face" | "image" | "service" | "config";
+type Failure = "face" | "image" | "service" | "config" | "auth" | "limit" | "rate";
 
 const FAILURE_COPY: Record<Failure, string> = {
   face: "we could not find a face in that one. try again in better light, facing the camera.",
   image: "that photo did not upload properly. try taking a new one.",
   service: "our end had a problem. try again in a moment.",
   config: "scanning isn't configured on this deployment yet.",
+  auth: "you need an account to scan. sign in and try again.",
+  limit: "you've used your scans for today. try again tomorrow.",
+  rate: "too many scans at once. wait a minute and try again.",
 };
+
+/** failures where hammering "try again" can never help. */
+const NO_RETRY: ReadonlySet<Failure> = new Set(["config", "auth", "limit"]);
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -147,9 +154,14 @@ function AnalyzingPage() {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
         const res = await fetch("/api/public/analyze", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ imageDataUrl: photoDataUrl, skipValidation: forceRef.current }),
           signal: controller.signal,
         });
@@ -161,10 +173,14 @@ function AnalyzingPage() {
             throw Object.assign(new Error("photo_check_failed"), { retryable: false, photoReasons: reasons });
           }
           console.error("scan analysis rejected", res.status, body.code, body.detail);
-          // a missing server key is not something a retry can fix.
-          const isConfig = body.code === "config";
-          const retryable = !isConfig && (res.status === 429 || res.status >= 500);
-          const failure: Failure = isConfig ? "config" : body.code === "image" ? "image" : "service";
+          // auth, limits, rate limiting, and a missing server key are not
+          // something a retry can fix. only genuine 5xx failures retry.
+          const code = body.code;
+          const retryable = res.status >= 500 && code !== "config";
+          const failure: Failure =
+            code === "config" || code === "auth" || code === "limit" || code === "rate" || code === "image"
+              ? code
+              : "service";
           const raw = body.detail ?? (body as { error?: string }).error;
           const detail = `${res.status}${raw ? ` · ${raw}` : ""}`;
           throw Object.assign(new Error(body.detail ?? `status_${res.status}`), {
@@ -359,7 +375,7 @@ function AnalyzingPage() {
             <p className="mt-2 text-[12px] lowercase leading-relaxed text-ink/50 break-words">{detail}</p>
           )}
           <div className="mt-6 space-y-3">
-            {!(phase === "failed" && failure === "config") && (
+            {!(phase === "failed" && NO_RETRY.has(failure)) && (
               <PillButton fullWidth onClick={() => void run()}>
                 try again
               </PillButton>
