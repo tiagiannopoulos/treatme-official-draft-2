@@ -134,15 +134,7 @@ function MapView() {
           className="mx-auto mb-3 block h-1 w-10 rounded-pill bg-[rgba(17,17,17,0.15)]"
         />
         <h1 className="brand-eyebrow">in this area</h1>
-        <p className="text-[12px] text-ink-mute lowercase mt-0.5">
-          {viewportData?.total ?? inView.length} medspa{(viewportData?.total ?? inView.length) === 1 ? "" : "s"} in {areaLabel} · move the map to
-          search elsewhere
-        </p>
-        {viewportData?.capped && (
-          <p className="mt-1 text-[11px] font-semibold text-hot lowercase">
-            showing 300 pins · zoom in to see every medspa
-          </p>
-        )}
+
 
         <div className="mt-3 space-y-2">
           {inView.length === 0 && (
