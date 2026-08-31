@@ -237,8 +237,9 @@ function AnalyzingPage() {
         return;
       }
       const aborted = err instanceof DOMException && err.name === "AbortError";
-      const meta = err as { failure?: Failure };
+      const meta = err as { failure?: Failure; detail?: string };
       const message = err instanceof Error ? err.message.toLowerCase() : "";
+      setDetail(meta.detail ?? (aborted ? "the request timed out." : message || null));
       setFailure(
         aborted
           ? "service"
@@ -354,6 +355,9 @@ function AnalyzingPage() {
           <h1 className="brand-display text-[26px]">
             {phase === "timeout" ? FAILURE_COPY.service : FAILURE_COPY[failure]}
           </h1>
+          {detail && (
+            <p className="mt-2 text-[12px] lowercase leading-relaxed text-ink/50 break-words">{detail}</p>
+          )}
           <div className="mt-6 space-y-3">
             {!(phase === "failed" && failure === "config") && (
               <PillButton fullWidth onClick={() => void run()}>
