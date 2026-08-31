@@ -375,7 +375,7 @@ function AnalyzingPage() {
             <p className="mt-2 text-[12px] lowercase leading-relaxed text-ink/50 break-words">{detail}</p>
           )}
           <div className="mt-6 space-y-3">
-            {!(phase === "failed" && failure === "config") && (
+            {!(phase === "failed" && NO_RETRY.has(failure)) && (
               <PillButton fullWidth onClick={() => void run()}>
                 try again
               </PillButton>
