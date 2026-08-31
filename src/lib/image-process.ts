@@ -16,7 +16,7 @@ export const CAPTURE_ZOOM = 1;
 const QUALITIES = [0.85, 0.7, 0.55, 0.4];
 
 
-/** the exact cover crop the 3:4 preview shows, with the same zoom applied */
+/** the exact cover crop the preview shows (capture shape, no extra zoom) */
 export function coverCrop(srcW: number, srcH: number) {
   const srcAspect = srcW / srcH;
   let w = srcW;
