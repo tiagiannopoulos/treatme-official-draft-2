@@ -363,10 +363,58 @@ async function logScanErrorViaRest(status: number, message: string) {
   }
 }
 
+const DAILY_SCAN_LIMIT = 5;
+
+/** verifies the bearer token and returns a client that queries as that user. */
+async function verifyUser(request: Request) {
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!token || !url || !key) return null;
+
+  const client = createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await client.auth.getUser(token);
+  if (error || !data.user) return null;
+  return { userId: data.user.id, client };
+}
+
+/** true when this user has hit the daily scan cap. */
+async function overDailyLimit(client: ReturnType<typeof createClient>, userId: string) {
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0);
+  const { count, error } = await client
+    .from("scans")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", midnight.toISOString());
+  if (error) {
+    console.error("daily scan count failed:", error.message);
+    return false;
+  }
+  return (count ?? 0) >= DAILY_SCAN_LIMIT;
+}
+
 export const Route = createFileRoute("/api/public/analyze")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const authed = await verifyUser(request);
+        if (!authed) {
+          return Response.json(
+            { code: "auth", detail: "you need an account to scan. sign in and try again." },
+            { status: 401 },
+          );
+        }
+        if (await overDailyLimit(authed.client, authed.userId)) {
+          return Response.json(
+            { code: "limit", detail: "you've used your scans for today. try again tomorrow." },
+            { status: 429 },
+          );
+        }
+
         const vision = createVisionModel();
         if (!vision) {
           console.error(
