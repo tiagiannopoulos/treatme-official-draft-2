@@ -17,7 +17,7 @@ export interface BackfillResult {
   errors: string[];
 }
 
-const REFERER = "https://id-preview--c243e9e9-f41e-403c-830f-ae4f44358a6d.lovable.app/";
+const REFERER = "https://treatmeapp.com/";
 const MAX_ERRORS = 5;
 const PROBE_PLACE = "ChIJN1t_tDeuEmsRUsoyG83frY4";
 
@@ -35,7 +35,9 @@ function keyCandidates(): PlacesKey[] {
     if (key && !out.some((c) => c.key === key)) out.push({ key, referrer_restricted, label });
   };
   push(process.env["GOOGLE_MAPS_API_KEY"], false, "GOOGLE_MAPS_API_KEY");
+  push(process.env["GOOGLE_MAPS_API_KEY_1"], false, "GOOGLE_MAPS_API_KEY_1");
   push(process.env["GOOGLE_MAPS_BROWSER_KEY"], true, "GOOGLE_MAPS_BROWSER_KEY");
+  push(process.env["GOOGLE_MAPS_BROWSER_KEY_1"], true, "GOOGLE_MAPS_BROWSER_KEY_1");
   push(process.env["VITE_GOOGLE_MAPS_API_KEY"], true, "VITE_GOOGLE_MAPS_API_KEY");
   push(
     process.env["VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY"],
