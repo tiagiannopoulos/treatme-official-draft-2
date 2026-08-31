@@ -365,6 +365,15 @@ async function logScanErrorViaRest(status: number, message: string) {
 
 const DAILY_SCAN_LIMIT = 5;
 
+/** a supabase client whose requests run as the bearer-token user. */
+function createAuthedClient(url: string, key: string, token: string) {
+  return createClient(url, key, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+}
+type AuthedClient = ReturnType<typeof createAuthedClient>;
+
 /** verifies the bearer token and returns a client that queries as that user. */
 async function verifyUser(request: Request) {
   const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -372,17 +381,14 @@ async function verifyUser(request: Request) {
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!token || !url || !key) return null;
 
-  const client = createClient(url, key, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-  });
+  const client = createAuthedClient(url, key, token);
   const { data, error } = await client.auth.getUser(token);
   if (error || !data.user) return null;
   return { userId: data.user.id, client };
 }
 
 /** true when this user has hit the daily scan cap. */
-async function overDailyLimit(client: ReturnType<typeof createClient>, userId: string) {
+async function overDailyLimit(client: AuthedClient, userId: string) {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const { count, error } = await client
