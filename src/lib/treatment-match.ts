@@ -138,7 +138,7 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
     .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
 
   if (!providerIds.length) {
-    return { treatmentName, treatmentPriceFrom, providers: [], clinics: listedClinics.slice(0, 12) };
+    return { treatmentName, treatmentPriceFrom, providers: [], clinics: listedClinics.slice(0, 3) };
   }
 
   const priceByProvider = new Map<string, number | null>();
@@ -324,7 +324,7 @@ async function fetchMatch(slug: string, input: MatchInput): Promise<TreatmentMat
   }
   const clinics = [...clinicsById.values()]
     .sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity))
-    .slice(0, 12);
+    .slice(0, 3);
 
   return { treatmentName, treatmentPriceFrom, providers, clinics };
 }
