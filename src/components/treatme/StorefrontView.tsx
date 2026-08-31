@@ -47,7 +47,13 @@ import { useNearbyKm } from "@/lib/nearby";
 import { useTreatmentSheet } from "@/lib/treatment-sheet-store";
 
 /** the clinic's own branded store inside treatme. accent and logo carry the identity. */
-export function StorefrontView({ match }: { match: (s: Storefront) => boolean }) {
+export function StorefrontView({
+  match,
+  recommendedTreatment,
+}: {
+  match: (s: Storefront) => boolean;
+  recommendedTreatment?: string;
+}) {
   const router = useRouter();
   const { data } = useSuspenseQuery(directoryQuery);
   const storefront = data.storefronts.find(match) ?? null;
@@ -437,6 +443,20 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
       {/* what they offer, directly under the roster */}
       <StorefrontOffers rows={treatments} onOpen={openTreatment} />
 
+      {recommendedTreatment && treatments.some((t) => t.slug === recommendedTreatment) && (
+        <div className="px-5 pt-4">
+          <Link
+            to="/storefront/$id/request"
+            params={{ id: storefront.id }}
+            search={{ treatment: recommendedTreatment }}
+            className="block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
+            style={{ backgroundColor: accent, color: onAccent }}
+          >
+            request {noDash(treatments.find((t) => t.slug === recommendedTreatment)?.name ?? "this treatment")}
+          </Link>
+        </div>
+      )}
+
       {/* section 5, what they have on site */}
       {pillGroups.length > 0 && (
         <section className="px-5 pt-8">
@@ -506,7 +526,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
         <Link
           to="/storefront/$id/request"
           params={{ id: storefront.id }}
-          search={{ treatment: undefined }}
+          search={{ treatment: recommendedTreatment }}
           className="mt-3.5 block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
           style={{ backgroundColor: accent, color: onAccent }}
         >
@@ -558,7 +578,7 @@ export function StorefrontView({ match }: { match: (s: Storefront) => boolean })
           <Link
             to="/storefront/$id/request"
             params={{ id: storefront.id }}
-            search={{ treatment: undefined }}
+            search={{ treatment: recommendedTreatment }}
             className="block w-full rounded-pill py-3.5 text-center text-[15px] font-semibold lowercase"
             style={{ backgroundColor: accent, color: onAccent }}
           >
