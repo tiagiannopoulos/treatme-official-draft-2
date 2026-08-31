@@ -17,7 +17,7 @@ export interface BackfillResult {
   errors: string[];
 }
 
-const REFERER = "https://id-preview--c243e9e9-f41e-403c-830f-ae4f44358a6d.lovable.app/";
+const REFERER = "https://treatmeapp.com/";
 const MAX_ERRORS = 5;
 const PROBE_PLACE = "ChIJN1t_tDeuEmsRUsoyG83frY4";
 
