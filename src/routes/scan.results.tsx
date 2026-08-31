@@ -236,18 +236,20 @@ function ResultsPage() {
                   onClick={() => navigate({ to: "/scan/concern/$key", params: { key: ind?.slug ?? row.concern_key } })}
                   className="text-left shrink-0 w-[112px]"
                 >
-                  {drawing.shapes.length > 0 && photoSource.url ? (
+                  {photoSource.url ? (
                     <ScanPhoto
                       source={photoSource}
                       alt={`your photo with ${ind?.name ?? row.concern_key} marked`}
                       className="w-[112px] aspect-[3/4] rounded-2xl border border-ink/10"
                     >
-                      <MarkerOverlay
-                        regions={row.regions}
-                        accent={ind?.accent ?? "#F8A1C6"}
-                        overlayKind={ind?.overlayKind ?? "patches_soft"}
-                        drawing={drawing}
-                      />
+                      {drawing.shapes.length > 0 && (
+                        <MarkerOverlay
+                          regions={row.regions}
+                          accent={ind?.accent ?? "#F8A1C6"}
+                          overlayKind={ind?.overlayKind ?? "patches_soft"}
+                          drawing={drawing}
+                        />
+                      )}
                     </ScanPhoto>
                   ) : (
                     <FaceMap
