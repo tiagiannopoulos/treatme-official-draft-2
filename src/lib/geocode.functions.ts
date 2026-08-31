@@ -9,10 +9,12 @@ export const geocodePlace = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ query: z.string().min(2).max(120) }).parse(data))
   .handler(async ({ data }) => {
     const key =
-      process.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_API_KEY ??
       process.env.GOOGLE_MAPS_API_KEY ??
-      process.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ??
+      process.env.GOOGLE_MAPS_API_KEY_1 ??
+      process.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_API_KEY ??
       process.env.GOOGLE_MAPS_BROWSER_KEY ??
+      process.env.GOOGLE_MAPS_BROWSER_KEY_1 ??
+      process.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY ??
       null;
     if (!key) return { ok: false as const, reason: "no_key" as const };
 

@@ -13,6 +13,7 @@ export const getGoogleRating = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ rating: number | null; count: number | null }> => {
     const key =
       process.env["GOOGLE_MAPS_API_KEY"] ??
+      process.env["GOOGLE_MAPS_API_KEY_1"] ??
       process.env["VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY"] ??
       null;
     if (!key) return { rating: null, count: null };
