@@ -700,7 +700,7 @@ function SearchPage() {
                   href={`/treatments?${new URLSearchParams({ family: c.family }).toString()}`}
                   className="group flex flex-col items-center gap-2 rounded-2xl border border-[rgba(17,17,17,0.08)] bg-cream p-3 text-center transition active:scale-[0.97]"
                 >
-                  <span className={`grid size-9 place-items-center rounded-xl ${c.tile}`}>
+                  <span className="grid size-9 place-items-center rounded-xl border border-[rgba(17,17,17,0.08)] bg-white">
                     <c.icon className="size-4 text-ink" strokeWidth={2} />
                   </span>
                   <span className="text-[11px] font-semibold lowercase text-ink leading-tight">
