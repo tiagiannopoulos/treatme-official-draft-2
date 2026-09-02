@@ -11,9 +11,9 @@ import { scanPicksQuery } from "@/lib/home-recommendations";
 
 export const Route = createFileRoute("/")({
   head: () => {
-    const title = "free ai skin scan & treatment matches | treatme";
+    const title = "treatme | skin analysis and medspa treatment booking";
     const description =
-      "scan your skin in a minute, see what's actually going on, and get matched to the botox, filler or laser treatment for it at a verified toronto clinic.";
+      "scan your skin free, see what's actually going on, and book the treatment for it at a verified medspa. botox, filler, lasers and more, matched to your skin.";
     return {
       meta: [
         { title },
