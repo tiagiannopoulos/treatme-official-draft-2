@@ -73,9 +73,11 @@ export const Route = createFileRoute("/search/")({
         content:
           "search clinics near you by the treatment you want, and see what each one lists on their own site.",
       },
+      { property: "og:url", content: "https://treatmeapp.com/search" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://treatmeapp.com/search" }],
   }),
 
   loader: ({ context }) => {
