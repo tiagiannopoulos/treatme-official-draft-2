@@ -10,12 +10,23 @@ import { scanPicksQuery } from "@/lib/home-recommendations";
 
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "treatme | ai skin analysis & med spa booking in toronto" },
-      { name: "description", content: "scan your skin free, see what's actually going on, and book the treatment for it at a verified toronto clinic. botox, filler, lasers and more, mapped to your skin." },
-    ],
-  }),
+  head: () => {
+    const title = "free ai skin scan & treatment matches | treatme";
+    const description =
+      "scan your skin in a minute, see what's actually going on, and get matched to the botox, filler or laser treatment for it at a verified toronto clinic.";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: "https://treatmeapp.com/" },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
+      ],
+      links: [{ rel: "canonical", href: "https://treatmeapp.com/" }],
+    };
+  },
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(searchTreatmentsQuery);
     context.queryClient.ensureQueryData(eduStoriesQuery);
