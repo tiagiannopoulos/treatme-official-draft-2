@@ -1959,6 +1959,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       clinics: {
@@ -2030,6 +2051,13 @@ export type Database = {
     Functions: {
       generate_share_token: { Args: never; Returns: string }
       get_shared_report: { Args: { token: string }; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       km_between: {
         Args: { lat1: number; lat2: number; lng1: number; lng2: number }
         Returns: number
@@ -2062,6 +2090,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       education_slide_type:
         | "hook"
         | "concept"
@@ -2214,6 +2243,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       education_slide_type: [
         "hook",
         "concept",
