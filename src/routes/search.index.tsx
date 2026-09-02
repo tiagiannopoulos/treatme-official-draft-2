@@ -294,6 +294,7 @@ function SearchPage() {
 
   return (
     <div className="pb-28">
+      <h1 className="sr-only">find a skin specialist near you</h1>
       {/* sticky search + scope pills */}
       <div className="sticky top-0 z-30 bg-background pt-1 pb-3">
         <div className="px-6">
