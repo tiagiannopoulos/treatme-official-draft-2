@@ -5,14 +5,36 @@ import { ProviderProfileView } from "@/components/treatme/ProviderProfileView";
 export const Route = createFileRoute("/providers/$slug")({
   head: ({ params }) => {
     const name = params.slug.replace(/-/g, " ");
+    const description = `book ${name} at their medspa. credentials, treatments and real before and afters.`;
+    const url = `https://treatmeapp.com/providers/${params.slug}`;
     return {
       meta: [
         { title: `${name} · treatme` },
-        { name: "description", content: `book ${name} at their medspa. credentials, treatments and real before and afters.` },
+        { name: "description", content: description },
         { property: "og:title", content: `${name} · treatme` },
-        { property: "og:description", content: `book ${name} at their medspa. credentials, treatments and real before and afters.` },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
         { property: "og:type", content: "profile" },
         { name: "twitter:card", content: "summary" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "MedicalBusiness",
+            name,
+            description,
+            url,
+            areaServed: { "@type": "City", name: "Toronto" },
+            parentOrganization: {
+              "@type": "Organization",
+              name: "treatme",
+              url: "https://treatmeapp.com",
+            },
+          }),
+        },
       ],
     };
   },

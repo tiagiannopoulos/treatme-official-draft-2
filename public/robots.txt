@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /dev/
+Disallow: /api/
+Disallow: /profile
+Disallow: /saved
+
+Sitemap: https://treatmeapp.com/sitemap.xml

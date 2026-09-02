@@ -14,14 +14,33 @@ export const Route = createFileRoute("/treatment/$slug/")({
     const pretty = params.slug.replace(/-/g, " ");
     const title = `${pretty} · treatme`;
     const description = `what ${pretty} does, the downtime, the typical range, and the verified providers near you who offer it.`;
+    const url = `https://treatmeapp.com/treatment/${params.slug}`;
     return {
       meta: [
         { title },
         { name: "description", content: description },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
+        { property: "og:url", content: url },
         { property: "og:type", content: "article" },
         { name: "twitter:card", content: "summary" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Service",
+            name: pretty,
+            description,
+            url,
+            serviceType: pretty,
+            category: "medical aesthetics",
+            areaServed: { "@type": "City", name: "Toronto" },
+            provider: { "@type": "Organization", name: "treatme", url: "https://treatmeapp.com" },
+          }),
+        },
       ],
     };
   },

@@ -73,9 +73,11 @@ export const Route = createFileRoute("/search/")({
         content:
           "search clinics near you by the treatment you want, and see what each one lists on their own site.",
       },
+      { property: "og:url", content: "https://treatmeapp.com/search" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
+    links: [{ rel: "canonical", href: "https://treatmeapp.com/search" }],
   }),
 
   loader: ({ context }) => {
@@ -292,6 +294,7 @@ function SearchPage() {
 
   return (
     <div className="pb-28">
+      <h1 className="sr-only">find a skin specialist near you</h1>
       {/* sticky search + scope pills */}
       <div className="sticky top-0 z-30 bg-background pt-1 pb-3">
         <div className="px-6">
