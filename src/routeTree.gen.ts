@@ -32,6 +32,7 @@ import { Route as MatchSlugRouteImport } from './routes/match.$slug'
 import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LearnSlugRouteImport } from './routes/learn.$slug'
+import { Route as DevTreatmentImagesRouteImport } from './routes/dev.treatment-images'
 import { Route as DevRecommendationsRouteImport } from './routes/dev.recommendations'
 import { Route as DevFacemapsRouteImport } from './routes/dev.facemaps'
 import { Route as DevCrawlRouteImport } from './routes/dev.crawl'
@@ -164,6 +165,11 @@ const LearnSlugRoute = LearnSlugRouteImport.update({
   path: '/learn/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevTreatmentImagesRoute = DevTreatmentImagesRouteImport.update({
+  id: '/dev/treatment-images',
+  path: '/dev/treatment-images',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevRecommendationsRoute = DevRecommendationsRouteImport.update({
   id: '/dev/recommendations',
   path: '/dev/recommendations',
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/dev/crawl': typeof DevCrawlRoute
   '/dev/facemaps': typeof DevFacemapsRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
+  '/dev/treatment-images': typeof DevTreatmentImagesRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/dev/crawl': typeof DevCrawlRoute
   '/dev/facemaps': typeof DevFacemapsRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
+  '/dev/treatment-images': typeof DevTreatmentImagesRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -343,6 +351,7 @@ export interface FileRoutesById {
   '/dev/crawl': typeof DevCrawlRoute
   '/dev/facemaps': typeof DevFacemapsRoute
   '/dev/recommendations': typeof DevRecommendationsRoute
+  '/dev/treatment-images': typeof DevTreatmentImagesRoute
   '/learn/$slug': typeof LearnSlugRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
@@ -386,6 +395,7 @@ export interface FileRouteTypes {
     | '/dev/crawl'
     | '/dev/facemaps'
     | '/dev/recommendations'
+    | '/dev/treatment-images'
     | '/learn/$slug'
     | '/legal/privacy'
     | '/legal/terms'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/dev/crawl'
     | '/dev/facemaps'
     | '/dev/recommendations'
+    | '/dev/treatment-images'
     | '/learn/$slug'
     | '/legal/privacy'
     | '/legal/terms'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/dev/crawl'
     | '/dev/facemaps'
     | '/dev/recommendations'
+    | '/dev/treatment-images'
     | '/learn/$slug'
     | '/legal/privacy'
     | '/legal/terms'
@@ -510,6 +522,7 @@ export interface RootRouteChildren {
   DevCrawlRoute: typeof DevCrawlRoute
   DevFacemapsRoute: typeof DevFacemapsRoute
   DevRecommendationsRoute: typeof DevRecommendationsRoute
+  DevTreatmentImagesRoute: typeof DevTreatmentImagesRoute
   LearnSlugRoute: typeof LearnSlugRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
@@ -700,6 +713,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LearnSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/treatment-images': {
+      id: '/dev/treatment-images'
+      path: '/dev/treatment-images'
+      fullPath: '/dev/treatment-images'
+      preLoaderRoute: typeof DevTreatmentImagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/recommendations': {
       id: '/dev/recommendations'
       path: '/dev/recommendations'
@@ -830,6 +850,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevCrawlRoute: DevCrawlRoute,
   DevFacemapsRoute: DevFacemapsRoute,
   DevRecommendationsRoute: DevRecommendationsRoute,
+  DevTreatmentImagesRoute: DevTreatmentImagesRoute,
   LearnSlugRoute: LearnSlugRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
