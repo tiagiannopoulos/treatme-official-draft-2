@@ -4,11 +4,12 @@ function titleFor(pathname: string) {
   if (pathname.startsWith("/search")) return "search";
   if (pathname.startsWith("/treatments") || pathname.startsWith("/treatment/")) return "treatments";
   if (pathname.startsWith("/profile")) return "profile";
+  if (pathname.startsWith("/scan/chat")) return "ai consult";
   if (pathname.startsWith("/scan/results")) return "analysis results";
   if (pathname.startsWith("/scan")) return "scan";
   if (pathname.startsWith("/storefront") || pathname.startsWith("/medspas")) return "clinic";
 
-  return "menu";
+  return "treatme";
 }
 
 export function TopBar() {

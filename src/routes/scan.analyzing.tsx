@@ -52,7 +52,7 @@ const TIMEOUT_MS = 60_000;
 const RETRY_DELAYS = [15000];
 
 type Phase = "working" | "quality" | "photo" | "timeout" | "failed";
-type Failure = "face" | "image" | "service" | "config" | "auth" | "limit" | "rate";
+type Failure = "face" | "image" | "service" | "config" | "auth" | "limit" | "rate" | "incomplete";
 
 const FAILURE_COPY: Record<Failure, string> = {
   face: "we could not find a face in that one. try again in better light, facing the camera.",
@@ -62,6 +62,7 @@ const FAILURE_COPY: Record<Failure, string> = {
   auth: "you need an account to scan. sign in and try again.",
   limit: "you've used your scans for today. try again tomorrow.",
   rate: "too many scans at once. wait a minute and try again.",
+  incomplete: "we couldn't complete your analysis. please try again to get your results.",
 };
 
 /** failures where hammering "try again" can never help. */
@@ -178,7 +179,7 @@ function AnalyzingPage() {
           const code = body.code;
           const retryable = res.status >= 500 && code !== "config";
           const failure: Failure =
-            code === "config" || code === "auth" || code === "limit" || code === "rate" || code === "image"
+            code === "config" || code === "auth" || code === "limit" || code === "rate" || code === "image" || code === "incomplete"
               ? code
               : "service";
           const raw = body.detail ?? (body as { error?: string }).error;

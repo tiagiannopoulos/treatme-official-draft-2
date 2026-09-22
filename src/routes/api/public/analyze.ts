@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import { createVisionModel, type VisionModel } from "@/lib/ai-gateway.server";
-import { AnalysisSchema, FACE_ZONES, MARKER_KEYS, type FaceZone } from "@/lib/skin-analysis";
+import { AnalysisSchema, FACE_ZONES, MARKER_KEYS } from "@/lib/skin-analysis";
+import { IncompleteAnalysisError, parseAnalysisResponse } from "@/lib/analysis-response";
 import { TREATMENTS } from "@/lib/treatments-data";
 import { PHOTO_REASONS, isPhotoReason, type PhotoCheck, type PhotoReason } from "@/lib/photo-check";
 
@@ -28,7 +29,6 @@ be practical: a normal selfie in ordinary indoor light is usable.`;
 
 const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const VALID_TREATMENT_SLUGS = new Set(TREATMENTS.map((t) => t.slug));
-const DEFAULT_TREATMENTS = ["hydrafacial", "skin-booster", "microneedling-rf"];
 
 const SYSTEM = `you are treatme's vision analysis engine — a medical aesthetics expert.
 look at the user's face photo and return a structured skin assessment.
@@ -68,8 +68,6 @@ required keys:
 - photoQuality: one of good, fair, poor
 - medicalFlag: null, or a short lowercase phrase if something should be seen by a doctor`;
 
-type Analysis = z.infer<typeof AnalysisSchema>;
-
 const MAX_IMAGE_BYTES = 5_000_000;
 
 /** decoded byte size of a base64 payload, without allocating it */
@@ -104,108 +102,6 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function toStringValue(value: unknown, fallback: string) {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
-}
-
-function toNumberValue(value: unknown, fallback: number, min: number, max: number) {
-  const numeric = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(numeric)) return fallback;
-  return Math.min(max, Math.max(min, numeric));
-}
-
-function normalizeZones(value: unknown): FaceZone[] {
-  if (!Array.isArray(value)) return [];
-
-  return value
-    .map((zone) => (typeof zone === "string" ? zone.trim() : ""))
-    .filter((zone): zone is FaceZone => FACE_ZONES.includes(zone as FaceZone))
-    .slice(0, 6);
-}
-
-/** coordinates from a vision model are approximate, so we only clamp them into range. */
-function normalizeRegions(value: unknown) {
-  if (!Array.isArray(value)) return [];
-  const out: Array<{ x: number; y: number; r: number; intensity: number }> = [];
-  for (const item of value) {
-    const record = asRecord(item);
-    if (!record) continue;
-    const x = Number(record.x);
-    const y = Number(record.y);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-    out.push({
-      x: Math.min(1, Math.max(0, x)),
-      y: Math.min(1, Math.max(0, y)),
-      r: toNumberValue(record.r, 0.05, 0.005, 0.4),
-      intensity: toNumberValue(record.intensity, 0.6, 0, 1),
-    });
-    if (out.length === 40) break;
-  }
-  return out;
-}
-
-function normalizeMarker(key: string, value: unknown) {
-  const record = asRecord(value);
-  return {
-    score: Math.round(toNumberValue(record?.score, 62, 0, 100)),
-    note: toStringValue(record?.note, `${key} looks fairly balanced in this photo.`).slice(0, 160),
-    zones: normalizeZones(record?.zones),
-    regions: normalizeRegions(record?.regions),
-  };
-}
-
-function normalizeStringList(value: unknown, fallback: string[]) {
-  const next = Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
-      .map((item) => item.trim())
-    : fallback;
-
-  return next.length > 0 ? next : fallback;
-}
-
-function sanitizeTreatments(value: unknown) {
-  const filtered = Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string" && VALID_TREATMENT_SLUGS.has(item))
-    : [];
-
-  return filtered.length >= 2 ? filtered.slice(0, 6) : DEFAULT_TREATMENTS;
-}
-
-function normalizeAnalysis(raw: unknown): Analysis {
-  const record = asRecord(raw) ?? {};
-  const markersRecord = asRecord(record.markers) ?? {};
-
-  const markers = Object.fromEntries(
-    MARKER_KEYS.map((key) => [key, normalizeMarker(key, markersRecord[key])]),
-  );
-
-  const strengths = normalizeStringList(record.strengths, ["balanced overall tone", "good baseline skin quality"]);
-  const weaknesses = normalizeStringList(record.weaknesses, ["a little uneven texture", "some areas that would benefit from hydration"]);
-
-  const analysis = {
-    skinType: (["oily", "dry", "combination", "normal", "sensitive"] as const).includes(record.skinType as never)
-      ? record.skinType
-      : "combination",
-    fitzpatrick: (["I", "II", "III", "IV", "V", "VI"] as const).includes(record.fitzpatrick as never)
-      ? record.fitzpatrick
-      : "III",
-    skinAge: Math.round(toNumberValue(record.skinAge, 30, 10, 90)),
-    markers,
-    blurb: toStringValue(
-      record.blurb,
-      "your skin looks fairly balanced overall. this is a best-effort read from one photo, so use it as directional guidance. the clearest opportunities seem to be hydration, texture, and tone evenness.",
-    ).slice(0, 600),
-    strengths: strengths.slice(0, 5),
-    weaknesses: weaknesses.slice(0, 5),
-    recommendedTreatments: sanitizeTreatments(record.recommendedTreatments),
-    photoQuality: (["good", "fair", "poor"] as const).includes(record.photoQuality as never)
-      ? record.photoQuality
-      : "good",
-    medicalFlag:
-      typeof record.medicalFlag === "string" && record.medicalFlag.trim()
-        ? record.medicalFlag.trim().slice(0, 240)
-        : null,
-  };
-
-  return AnalysisSchema.parse(analysis);
 }
 
 function extractJson(text: string): unknown {
@@ -252,7 +148,7 @@ async function runAnalysis(model: VisionModel, imageDataUrl: string) {
       messages: [{ role: "user", content: userMessage }],
     });
 
-    return normalizeAnalysis(object);
+    return parseAnalysisResponse(object, VALID_TREATMENT_SLUGS);
   } catch (structuredError) {
     const structuredMessage = structuredError instanceof Error ? structuredError.message : "unknown";
     console.error("analyze structured error:", structuredMessage);
@@ -271,7 +167,13 @@ async function runAnalysis(model: VisionModel, imageDataUrl: string) {
       ],
     });
 
-    return normalizeAnalysis(extractJson(text));
+    let raw: unknown;
+    try {
+      raw = extractJson(text);
+    } catch {
+      throw new IncompleteAnalysisError();
+    }
+    return parseAnalysisResponse(raw, VALID_TREATMENT_SLUGS);
   }
 }
 
@@ -472,6 +374,13 @@ export const Route = createFileRoute("/api/public/analyze")({
           const analysis = await runAnalysis(model, body.imageDataUrl);
           return Response.json({ analysis });
         } catch (err) {
+          if (err instanceof IncompleteAnalysisError) {
+            void logScanError({ request, status: 502, message: err.message, bytes, mediaType });
+            return Response.json(
+              { code: "incomplete", detail: err.message },
+              { status: 502 },
+            );
+          }
           const msg = err instanceof Error ? err.message : "unknown error";
           const badImage =
             msg.startsWith("invalid_image_data_url") ||

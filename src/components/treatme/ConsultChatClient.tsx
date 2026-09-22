@@ -157,10 +157,10 @@ export function ConsultChatClient({ treatmentSlug }: { treatmentSlug?: string } 
     >
       <div className="px-6 pt-4 pb-2 flex items-center justify-between">
         <Link
-          to="/scan/results"
+          to={result ? "/scan/results" : "/"}
           className="inline-flex items-center gap-1 text-[13px] font-semibold lowercase text-ink-mute"
         >
-          <ArrowLeft className="size-4" /> back to results
+          <ArrowLeft className="size-4" /> {result ? "back to results" : "back home"}
         </Link>
         <h1 className="brand-eyebrow">consult</h1>
       </div>
