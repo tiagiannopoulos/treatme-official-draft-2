@@ -29,7 +29,7 @@ interface LoadedReport {
 function ReportPage() {
   const { scanId } = Route.useParams();
   const navigate = useNavigate();
-  const { result: liveResult, photos, frontLandmarks } = useScan();
+  const { result: liveResult, scanId: liveScanId, photos, frontLandmarks } = useScan();
   const [loaded, setLoaded] = useState<LoadedReport | null>(null);
   const [missing, setMissing] = useState(false);
   const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
@@ -37,7 +37,7 @@ function ReportPage() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (scanId === "latest") {
+      if (scanId === "latest" || (liveResult && liveScanId === scanId)) {
         if (liveResult) {
           setLoaded({ result: liveResult, frontPhoto: photos.front, createdAt: null });
         } else {
@@ -67,8 +67,10 @@ function ReportPage() {
           top_priorities: data.top_priorities as ConcernKey[],
           summary: data.summary as string,
           fitzpatrick: data.fitzpatrick ?? undefined,
+          medical_flag: data.medical_flag ?? null,
         },
-        frontPhoto: (data.front_photo as string | null) ?? null,
+        // photos are intentionally not stored; the face overlay is available during the current scan session.
+        frontPhoto: null,
         createdAt: data.created_at as string,
       });
     }
@@ -76,13 +78,13 @@ function ReportPage() {
     return () => {
       cancelled = true;
     };
-  }, [scanId, liveResult, photos.front]);
+  }, [scanId, liveResult, liveScanId, photos.front]);
 
   // landmark pipeline: live store landmarks for the fresh scan, otherwise
   // detect on report mount; final fallback is the fractional zones.
   useEffect(() => {
     if (!loaded?.frontPhoto) return;
-    if (scanId === "latest") {
+    if (scanId === "latest" || scanId === liveScanId) {
       setLandmarks(frontLandmarks);
       return;
     }
@@ -94,7 +96,7 @@ function ReportPage() {
     return () => {
       cancelled = true;
     };
-  }, [loaded?.frontPhoto, scanId, frontLandmarks]);
+  }, [loaded?.frontPhoto, scanId, liveScanId, frontLandmarks]);
 
   if (missing) {
     return (

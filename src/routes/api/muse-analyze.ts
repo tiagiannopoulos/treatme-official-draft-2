@@ -291,6 +291,7 @@ export const Route = createFileRoute("/api/muse-analyze")({
               top_priorities: result.top_priorities,
               summary: result.summary,
               fitzpatrick: result.fitzpatrick ?? null,
+              medical_flag: result.medical_flag ?? null,
               email: meta.data.email,
               photo_count: photos.length,
             })

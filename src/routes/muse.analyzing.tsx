@@ -156,6 +156,7 @@ function AnalyzingPage() {
         token = data.session?.access_token ?? null;
         if (!token) {
           setAuthState("blocked");
+          setSending(false);
           return;
         }
       }
@@ -182,6 +183,7 @@ function AnalyzingPage() {
       } else if (res.status === 401) {
         // session did not survive — route through sign in and come back.
         setAuthState("blocked");
+        setSending(false);
         return;
       } else if (!res.ok) {
         setError(body.detail || body.error || "the scan could not be completed. please try again.");
@@ -313,10 +315,9 @@ function AnalyzingPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="tm-display text-2xl">where should we send your report</h2>
+        <h2 className="tm-display text-2xl">email for your saved report</h2>
         <p className="mt-1 text-sm text-ink-mute">
-          your email unlocks the full report. only used to send it. no spam,
-          ever.
+          your email identifies your saved report. the results open in treatme; no email is automatically sent.
         </p>
         <input
           type="email"

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.muse_scan_reports (
   top_priorities text[] NOT NULL DEFAULT '{}',
   summary text NOT NULL,
   fitzpatrick text,
+  medical_flag text,
   email text NOT NULL,
   photo_count integer NOT NULL DEFAULT 3
 );

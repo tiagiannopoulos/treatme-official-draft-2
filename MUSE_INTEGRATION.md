@@ -16,6 +16,9 @@ The original single-photo scan, map, provider storefronts and consultation reque
 - Apply new `muse_scan_reports` migration to a separate staging Supabase instance before evaluating. It does not modify existing `scans`.
 - Confirm 3-photo session data is not leaked and verify privacy/consent notices.
 - Test signed-in and signed-out states, image validation, error conditions, report persistence, and /search CTA.
+- The face overlay displays on newly generated reports in the current browser session; historical reports store structured scores only, not facial photographs.
+- Confirm report text and storage have consent appropriate to the jurisdictions served.
+- Do not advertise results as medically validated without independent testing.
 - Ensure no changes deploy to main until smoke tests, medical-device/regulatory/privacy review, and explicit approval.
 
 This is an integration candidate, not a clinically validated analysis engine. Model-derived skin scores and Fitzpatrick labels require validation and appropriate limitations.
