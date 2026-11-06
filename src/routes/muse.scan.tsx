@@ -483,7 +483,8 @@ function ScanPage() {
     setConsent,
     setClinicSlug,
   } = useScan();
-  useEffect(() => { setClinicSlug(clinic ?? null); }, [clinic, setClinicSlug]);
+  // A redirect back from sign-in may omit the clinic query. Preserve the original branded journey.
+  useEffect(() => { if (clinic) setClinicSlug(clinic); }, [clinic, setClinicSlug]);
   const [step, setStep] = useState(0);
 
   const angle = ANGLES[step];
