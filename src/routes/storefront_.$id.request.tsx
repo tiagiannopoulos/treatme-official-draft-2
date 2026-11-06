@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, ChevronDown, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { directoryQuery } from "@/lib/search-data";
 import { storefrontTreatmentsQuery } from "@/lib/storefront-treatments";
 import { submitBookingRequest, slotDateLabel, type Flexibility, type PreferredSlot, type TimeOfDay } from "@/lib/booking";
@@ -53,6 +54,7 @@ function RequestPage() {
   const { id } = Route.useParams();
   const { treatment: prefill } = Route.useSearch();
   const navigate = useNavigate();
+  const { user, openAuth } = useAuth();
 
   const { data: directory } = useQuery(directoryQuery);
   const { data: listed = [] } = useQuery(storefrontTreatmentsQuery(id));
@@ -127,6 +129,14 @@ function RequestPage() {
 
   async function submit() {
     if (!ready || busy || !storefront) return;
+    if (!user) {
+      openAuth({ reason: "Sign in to securely save your consultation request." });
+      return;
+    }
+    if (user.email?.toLowerCase() !== email.trim().toLowerCase()) {
+      setError("please use the email on your TreatMe account.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const chosen: PreferredSlot[] = slots
@@ -380,7 +390,7 @@ function RequestPage() {
           {busy ? "sending" : "send request"}
         </button>
         <p className="mt-3 text-center text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.45)" }}>
-          you do not need an account to send this
+          sign in to securely send this request
         </p>
       </div>
     </main>

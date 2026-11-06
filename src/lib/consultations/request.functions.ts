@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const CreateRequestSchema = z.object({
-  accessToken: z.string().max(4096).nullable().optional(),
+  accessToken: z.string().min(10).max(4096),
   storefrontId: z.string().uuid(),
   providerId: z.string().uuid().nullable().optional(),
   treatmentSlug: z.string().trim().min(1).max(120),
@@ -99,8 +99,11 @@ export const submitConsultationRequest = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CreateRequestSchema.parse(input))
   .handler(async ({ data }) => {
     const db = await getAdmin();
-    const user = data.accessToken ? await authenticatedUser(db, data.accessToken) : null;
+    const user = await authenticatedUser(db, data.accessToken);
     const email = data.email.trim().toLowerCase();
+    if (!user.email || user.email.toLowerCase() !== email) {
+      throw new Error("Please use the email associated with your TreatMe account.");
+    }
 
     const { data: clinic, error: clinicError } = await db.from("storefronts")
       .select("id,name").eq("id", data.storefrontId).maybeSingle();
@@ -110,7 +113,7 @@ export const submitConsultationRequest = createServerFn({ method: "POST" })
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count, error: rateError } = await db.from("booking_requests")
       .select("id", { count: "exact", head: true })
-      .eq("email", email).gte("created_at", since);
+      .eq("user_id", user.id).gte("created_at", since);
     if (rateError) throw new Error("Please try again later.");
     if ((count ?? 0) >= 3) throw new Error("Too many consultation requests. Please try again later.");
 
@@ -118,7 +121,7 @@ export const submitConsultationRequest = createServerFn({ method: "POST" })
     const route = partner ? "clinic" : "admin";
     const { data: created, error } = await db.from("booking_requests")
       .insert({
-        user_id: user?.id ?? null,
+        user_id: user.id,
         provider_id: data.providerId ?? null,
         storefront_id: data.storefrontId,
         treatment_slug: data.treatmentSlug,

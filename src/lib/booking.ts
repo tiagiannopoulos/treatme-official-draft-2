@@ -165,9 +165,10 @@ export interface SubmitBooking {
  */
 export async function submitBookingRequest(input: SubmitBooking): Promise<string> {
   const { data: session } = await supabase.auth.getSession();
+  if (!session.session?.access_token) throw new Error("Please sign in to save a consultation request.");
   const response = await submitConsultationRequest({
     data: {
-      accessToken: session.session?.access_token ?? null,
+      accessToken: session.session.access_token,
       storefrontId: input.storefrontId,
       providerId: input.providerId ?? null,
       treatmentSlug: input.treatmentSlug,
