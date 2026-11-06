@@ -61,7 +61,7 @@ export const getConsultationVideoAccess = createServerFn({ method: "POST" })
           properties: {
             exp: Math.floor((end + 30 * 60_000) / 1000),
             max_participants: 2,
-            enable_recording: "off",
+            enable_recording: false,
             enable_chat: false,
           },
         }),
@@ -86,7 +86,7 @@ export const getConsultationVideoAccess = createServerFn({ method: "POST" })
           room_name: room, is_owner: provider,
           exp: Math.floor(Math.min(end + 15 * 60_000, now + 60 * 60_000) / 1000),
           user_id: user.id, user_name: provider ? "Clinic professional" : "Client",
-          enable_recording: "off",
+          enable_recording: false,
         },
       }),
     });

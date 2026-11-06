@@ -5,18 +5,19 @@ import { getConsultationVideoAccess } from "@/lib/consultation-video.functions";
 
 type Frame = { join: (args: {url:string;token:string}) => Promise<unknown>; destroy: () => void };
 type DailyApi = { createFrame: (container: HTMLElement, opts: Record<string, unknown>) => Frame };
-declare global { interface Window { DailyIframe?: DailyApi; } }
+declare global { interface Window { DailyIframe?: DailyApi; Daily?: DailyApi; } }
 
 export const Route = createFileRoute("/consultation/$requestId")({
   component: ConsultationPage,
 });
 
+function currentDaily(): DailyApi | undefined { return window.DailyIframe ?? window.Daily; }
 function loadDailyJs(): Promise<DailyApi> {
-  if (window.DailyIframe) return Promise.resolve(window.DailyIframe);
+  if (currentDaily()) return Promise.resolve(currentDaily()!);
   return new Promise((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>('script[data-treatme-daily]');
     if (existing) {
-      existing.addEventListener("load", () => window.DailyIframe ? resolve(window.DailyIframe) : reject(new Error("video SDK unavailable")), { once: true });
+      existing.addEventListener("load", () => currentDaily() ? resolve(currentDaily()!) : reject(new Error("video SDK unavailable")), { once: true });
       existing.addEventListener("error", () => reject(new Error("video SDK unavailable")), { once: true });
       return;
     }
@@ -24,7 +25,7 @@ function loadDailyJs(): Promise<DailyApi> {
     script.src = "https://unpkg.com/@daily-co/daily-js@0.94.0";
     script.crossOrigin = "anonymous";
     script.dataset.treatmeDaily = "true";
-    script.onload = () => window.DailyIframe ? resolve(window.DailyIframe) : reject(new Error("video SDK unavailable"));
+    script.onload = () => currentDaily() ? resolve(currentDaily()!) : reject(new Error("video SDK unavailable"));
     script.onerror = () => reject(new Error("video SDK unavailable"));
     document.head.appendChild(script);
   });
