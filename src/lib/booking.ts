@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
+import { submitConsultationRequest } from "@/lib/consultations/request.functions";
 
 export type TimeOfDay = "morning" | "afternoon" | "evening";
 export const TIMES_OF_DAY: TimeOfDay[] = ["morning", "afternoon", "evening"];
@@ -155,6 +156,7 @@ export interface SubmitBooking {
   email: string;
   flexibility?: Flexibility;
   isFirstTime?: boolean | null;
+  consentToContact: boolean;
 }
 
 /**
@@ -163,32 +165,24 @@ export interface SubmitBooking {
  */
 export async function submitBookingRequest(input: SubmitBooking): Promise<string> {
   const { data: session } = await supabase.auth.getSession();
-  const uid = session.session?.user.id ?? null;
-
-  const times = input.slots.map(slotToTimestamp);
-
-  const { data, error } = await supabase
-    .from("booking_requests")
-    .insert({
-      user_id: uid,
-      provider_id: input.providerId ? input.providerId : null,
-      storefront_id: input.storefrontId,
-      treatment_slug: input.treatmentSlug,
-      full_name: input.name.trim(),
-      email: input.email.trim(),
-      phone: input.phone.trim(),
-      preferred_1: times[0] ?? null,
-      preferred_2: times[1] ?? null,
-      preferred_3: times[2] ?? null,
+  if (!session.session?.access_token) throw new Error("Please sign in to save a consultation request.");
+  const response = await submitConsultationRequest({
+    data: {
+      accessToken: session.session.access_token,
+      storefrontId: input.storefrontId,
+      providerId: input.providerId ?? null,
+      treatmentSlug: input.treatmentSlug,
+      slots: input.slots.map(slotToTimestamp),
+      note: input.note,
+      fullName: input.name,
+      phone: input.phone,
+      email: input.email,
       flexibility: input.flexibility ?? null,
-      is_first_time: input.isFirstTime ?? null,
-      notes: input.note.trim() ? input.note.trim() : null,
-      status: "new",
-    })
-    .select("id")
-    .single();
-  if (error) throw new Error(error.message);
-  return data.id;
+      isFirstTime: input.isFirstTime ?? null,
+      consentToContact: input.consentToContact,
+    },
+  });
+  return response.requestId;
 }
 
 export interface MyBooking {
