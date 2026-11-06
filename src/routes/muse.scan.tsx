@@ -15,6 +15,7 @@ import {
 } from "@/features/muse/face-landmarks";
 
 export const Route = createFileRoute("/muse/scan")({
+  validateSearch: (search: Record<string, unknown>): { clinic?: string } => ({ clinic: typeof search.clinic === "string" ? search.clinic : undefined }),
   component: ScanPage,
 });
 
@@ -472,6 +473,7 @@ function AngleCapture({
 
 function ScanPage() {
   const navigate = useNavigate();
+  const { clinic } = Route.useSearch();
   const {
     photos,
     frontLandmarks,
@@ -479,7 +481,9 @@ function ScanPage() {
     setFrontLandmarks,
     consent,
     setConsent,
+    setClinicSlug,
   } = useScan();
+  useEffect(() => { setClinicSlug(clinic ?? null); }, [clinic, setClinicSlug]);
   const [step, setStep] = useState(0);
 
   const angle = ANGLES[step];

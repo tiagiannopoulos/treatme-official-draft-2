@@ -20,6 +20,8 @@ interface ScanState {
   concerns: ConcernKey[];
   email: string;
   consent: boolean;
+  clinicSlug: string | null;
+  setClinicSlug: (value: string | null) => void;
   result: AnalysisResult | null;
   scanId: string | null;
   setPhoto: (angle: PhotoAngle, dataUrl: string | null) => void;
@@ -44,6 +46,7 @@ interface ScanDraft {
   ageRange: string | null;
   concerns: ConcernKey[];
   consent: boolean;
+  clinicSlug: string | null;
 }
 
 /** load a saved draft (photos survive the sign-in redirect). null when none. */
@@ -63,6 +66,7 @@ function loadDraft(): ScanDraft | null {
       ageRange: d.ageRange ?? null,
       concerns: Array.isArray(d.concerns) ? (d.concerns as ConcernKey[]) : [],
       consent: d.consent === true,
+      clinicSlug: typeof d.clinicSlug === "string" ? d.clinicSlug : null,
     };
   } catch {
     return null;
@@ -101,13 +105,14 @@ export function ScanProvider({ children }: { children: ReactNode }) {
   const [concerns, setConcerns] = useState<ConcernKey[]>(() => loadDraft()?.concerns ?? []);
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(() => loadDraft()?.consent ?? false);
+  const [clinicSlug, setClinicSlug] = useState<string | null>(() => loadDraft()?.clinicSlug ?? null);
   const [result, setResultState] = useState<AnalysisResult | null>(null);
   const [scanId, setScanId] = useState<string | null>(null);
 
   // persist the draft so a sign-in redirect never loses the scan in progress.
   useEffect(() => {
-    saveDraft({ photos, frontLandmarks, ageRange, concerns, consent });
-  }, [photos, frontLandmarks, ageRange, concerns, consent]);
+    saveDraft({ photos, frontLandmarks, ageRange, concerns, consent, clinicSlug });
+  }, [photos, frontLandmarks, ageRange, concerns, consent, clinicSlug]);
 
   const setPhoto = useCallback(
     (angle: PhotoAngle, dataUrl: string | null) => {
@@ -143,6 +148,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
     setConcerns([]);
     setEmail("");
     setConsent(false);
+    setClinicSlug(null);
     setResultState(null);
     setScanId(null);
     clearDraft();
@@ -156,6 +162,8 @@ export function ScanProvider({ children }: { children: ReactNode }) {
       concerns,
       email,
       consent,
+      clinicSlug,
+      setClinicSlug,
       result,
       scanId,
       setPhoto,
@@ -167,7 +175,7 @@ export function ScanProvider({ children }: { children: ReactNode }) {
       setResult,
       reset,
     }),
-    [photos, frontLandmarks, ageRange, concerns, email, consent, result, scanId, setPhoto, setFrontLandmarks, setAgeRange, toggleConcern, setEmail, setConsent, setResult, reset],
+    [photos, frontLandmarks, ageRange, concerns, email, consent, clinicSlug, result, scanId, setPhoto, setFrontLandmarks, setAgeRange, toggleConcern, setEmail, setConsent, setResult, reset],
   );
 
   return <ScanContext.Provider value={value}>{children}</ScanContext.Provider>;

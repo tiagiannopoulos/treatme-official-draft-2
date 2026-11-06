@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { directoryQuery } from "@/lib/search-data";
 import { useScan } from "@/features/muse/scan-store";
 import {
   CONCERN_GROUPS,
@@ -29,7 +31,9 @@ interface LoadedReport {
 function ReportPage() {
   const { scanId } = Route.useParams();
   const navigate = useNavigate();
-  const { result: liveResult, scanId: liveScanId, photos, frontLandmarks } = useScan();
+  const { result: liveResult, scanId: liveScanId, photos, frontLandmarks, clinicSlug } = useScan();
+  const { data: directory } = useQuery({ ...directoryQuery, enabled: Boolean(clinicSlug) });
+  const sourceClinic = clinicSlug ? directory?.storefronts.find((s) => s.slug === clinicSlug) : undefined;
   const [loaded, setLoaded] = useState<LoadedReport | null>(null);
   const [missing, setMissing] = useState(false);
   const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
@@ -233,13 +237,12 @@ function ReportPage() {
         <button
           className="tm-btn-hot w-full sm:w-auto"
           onClick={() =>
-            navigate({
-              to: "/search",
-              search: { q: undefined, scope: undefined, treatment: undefined },
-            })
+            sourceClinic
+              ? navigate({ to: "/storefront/$id/request", params: { id: sourceClinic.id }, search: { treatment: undefined } })
+              : navigate({ to: "/search", search: { q: undefined, scope: undefined, treatment: undefined } })
           }
         >
-          find an aesthetic clinic near me
+          {sourceClinic ? `request a consultation at ${sourceClinic.name}` : "find an aesthetic clinic near me"}
         </button>
         <p className="mx-auto mt-4 max-w-md text-xs text-ink-mute">
           cosmetic and educational only. this is an estimate from photos, not a
