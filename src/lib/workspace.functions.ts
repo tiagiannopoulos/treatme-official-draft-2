@@ -1,13 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { isActivePartner, type Partner } from "@/lib/consultations/rules";
+import { isTreatMeStaff } from "@/lib/workspace-access";
 
 const Access = z.object({ accessToken: z.string().min(10).max(4096) });
-
-/** Server-only authorization. Never trust client roles, emails or user metadata. */
-export function isTreatMeStaff(userId: string, allowedIds: string): boolean {
-  return allowedIds.split(",").map((id) => id.trim()).filter(Boolean).includes(userId);
-}
 
 export const loadTreatMeWorkspace = createServerFn({ method: "POST" })
   .inputValidator((value: unknown) => Access.parse(value))
