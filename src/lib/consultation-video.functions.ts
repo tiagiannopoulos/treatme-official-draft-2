@@ -21,13 +21,13 @@ export const getConsultationVideoAccess = createServerFn({ method: "POST" })
     if (reqError || !req || !req.storefront_id || req.status !== "confirmed") {
       throw new Error("this consultation has not been confirmed.");
     }
-    const { data: clinic, error: clinicError } = await db.from("clinic_accounts")
-      .select("owner_user_id,status,billing_status,verified_at,notification_email")
+    const { data: clinic, error: clinicError } = await db.from("clinic_partner_accounts")
+      .select("owner_user_id,status,subscription_status,verified_at,booking_email")
       .eq("storefront_id", req.storefront_id).maybeSingle();
     if (clinicError || !clinic) throw new Error("clinic verification is required.");
     const active = clinic.status === "active" && !!clinic.verified_at &&
-      (clinic.billing_status === "active" || clinic.billing_status === "trialing");
-    if (!active) throw new Error("this clinic is not enabled for virtual consultations.");
+      (clinic.subscription_status === "active" || clinic.subscription_status === "trialing");
+    if (!active || !clinic.booking_email || !clinic.owner_user_id) throw new Error("this clinic is not enabled for virtual consultations.");
 
     const provider = clinic.owner_user_id === user.id;
     const customer = req.user_id === user.id;
