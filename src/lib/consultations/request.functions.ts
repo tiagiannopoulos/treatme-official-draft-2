@@ -1,20 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { CreateRequestSchema, isActivePartner, requestRoutingTarget, type Partner } from "@/lib/consultations/rules";
 
-const CreateRequestSchema = z.object({
-  accessToken: z.string().min(10).max(4096),
-  storefrontId: z.string().uuid(),
-  providerId: z.string().uuid().nullable().optional(),
-  treatmentSlug: z.string().trim().min(1).max(120),
-  slots: z.array(z.string().datetime()).min(1).max(3),
-  note: z.string().trim().max(600),
-  fullName: z.string().trim().min(2).max(120),
-  phone: z.string().trim().min(7).max(30),
-  email: z.string().trim().email().max(254),
-  flexibility: z.enum(["very", "somewhat", "these times only"]).nullable().optional(),
-  isFirstTime: z.boolean().nullable().optional(),
-  consentToContact: z.literal(true),
-});
 const InboxSchema = z.object({ accessToken: z.string().min(10).max(4096) });
 const PublicClinicSchema = z.object({ slug: z.string().min(1).max(130).regex(/^[a-z0-9-]+$/) });
 
@@ -22,18 +9,6 @@ type Admin = Awaited<ReturnType<typeof getAdmin>>;
 async function getAdmin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
-}
-type Partner = {
-  storefront_id: string;
-  owner_user_id: string;
-  booking_email: string;
-  status: string;
-  subscription_status: string;
-  verified_at: string | null;
-};
-function isActivePartner(p: Partner | null): p is Partner {
-  return Boolean(p && p.status === "active" && p.verified_at &&
-    (p.subscription_status === "active" || p.subscription_status === "trialing"));
 }
 async function findActivePartner(db: Admin, storefrontId: string) {
   const { data, error } = await db.from("clinic_partner_accounts")
@@ -118,7 +93,7 @@ export const submitConsultationRequest = createServerFn({ method: "POST" })
     if ((count ?? 0) >= 3) throw new Error("Too many consultation requests. Please try again later.");
 
     const partner = await findActivePartner(db, data.storefrontId);
-    const route = partner ? "clinic" : "admin";
+    const route = requestRoutingTarget(partner);
     const { data: created, error } = await db.from("booking_requests")
       .insert({
         user_id: user.id,
