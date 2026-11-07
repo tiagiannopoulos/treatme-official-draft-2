@@ -1,0 +1,65 @@
+name: Repair TanStack preview security dependency
+on:
+  push:
+    branches:
+      - feature/muse-scan-integration
+    paths:
+      - .github/workflows/repair-tanstack-preview.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Pin patched TanStack versions
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const file = "package.json";
+          const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
+          pkg.dependencies["@tanstack/react-start"] = "1.168.60";
+          pkg.overrides = { ...pkg.overrides, "@tanstack/start-server-core": "1.169.39" };
+          fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
+          NODE
+      - name: Regenerate dependency lockfile
+        run: bun install
+      - name: Verify no vulnerable TanStack version remains
+        run: |
+          node <<'NODE'
+          const fs = require("node:fs");
+          const lock = JSON.parse(fs.readFileSync("bun.lock", "utf8"));
+          const targets = { "@tanstack/react-start": [1,168,60], "@tanstack/start-server-core": [1,169,39] };
+          for (const [name, min] of Object.entries(targets)) {
+            const values = Object.entries(lock.packages).filter(([key]) => key === name || key.startsWith(name + "@"));
+            if (!values.length) throw new Error("Missing dependency in lockfile: " + name);
+            for (const [, entry] of values) {
+              const resolved = String(entry[0]);
+              const match = resolved.match(/@([0-9]+)\.([0-9]+)\.([0-9]+)/);
+              if (!match) throw new Error("Unrecognized installed version: " + resolved);
+              const ver = match.slice(1).map(Number);
+              const safe = ver[0] > min[0] || (ver[0] === min[0] && (ver[1] > min[1] || (ver[1] === min[1] && ver[2] >= min[2])));
+              if (!safe) throw new Error("Vulnerable dependency still present: " + resolved);
+              console.log("Patched:", resolved);
+            }
+          }
+          NODE
+      - name: Test consultation authorization and clinic scoping
+        run: bun test src/lib/consultations/rules.test.ts src/lib/workspace.functions.test.ts src/lib/clinic-scan-scope.test.ts
+      - name: Build
+        run: bun run build
+      - name: Commit verified security update to development branch
+        run: |
+          git config user.name "TreatMe GitHub Actions"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json bun.lock
+          if git diff --cached --quiet; then
+            echo "No package changes required"
+            exit 0
+          fi
+          git commit -m "fix(security): update patched TanStack Start and lockfile"
+          git push origin HEAD:refs/heads/feature/muse-scan-integration
