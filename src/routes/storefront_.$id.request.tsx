@@ -8,7 +8,6 @@ import { useAuth } from "@/lib/auth";
 import { directoryQuery } from "@/lib/search-data";
 import { storefrontTreatmentsQuery } from "@/lib/storefront-treatments";
 import { submitBookingRequest, slotDateLabel, type Flexibility, type PreferredSlot, type TimeOfDay } from "@/lib/booking";
-import { displayTreatmentName } from "@/lib/treatment-labels";
 
 const CREAM = "#FCFBF7";
 const INK = "#111111";
@@ -66,26 +65,12 @@ function RequestPage() {
 
   // Only this clinic's listed services appear, plus an optional general consult.
   // The server independently enforces service confirmation for active partners.
-  const options = useMemo<Array<{ slug: string; name: string }>>(() => {
-    const general = { slug: "consultation", name: "general skin consultation" };
-    if (listed.length) return [
-      general,
-      ...listed.filter((l) => l.slug !== "consultation" && l.verified).map((l) => ({ slug: l.slug, name: l.name.toLowerCase() })),
-    ];
-    const seen = new Map<string, string>();
-    for (const p of roster) {
-      for (const t of p.treatments) {
-        if (!seen.has(t.treatment_slug)) {
-          seen.set(t.treatment_slug, displayTreatmentName(t.name, t.treatment_slug).toLowerCase());
-        }
-      }
-    }
-    return [
-      general,
-      // Do not advertise unconfirmed clinic services as selectable bookings.
-      // Clinicians can discuss other options in a general consultation.
-    ];
-  }, [listed, roster]);
+  const options = useMemo<Array<{ slug: string; name: string }>>(() => [
+    { slug: "consultation", name: "general skin consultation" },
+    ...listed
+      .filter((offer) => offer.slug !== "consultation" && offer.verified)
+      .map((offer) => ({ slug: offer.slug, name: offer.name.toLowerCase() })),
+  ], [listed]);
 
   const [slug, setSlug] = useState(prefill ?? "consultation");
   const [pickerOpen, setPickerOpen] = useState(false);
