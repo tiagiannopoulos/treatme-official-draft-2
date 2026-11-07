@@ -2,6 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { directoryQuery } from "@/lib/search-data";
+import { getRecommendations } from "@/lib/recommendations";
+import { verifiedClinicTreatmentSlugs } from "@/lib/clinic-scan-scope";
+import { getPublicBrandedClinic } from "@/lib/consultations/request.functions";
 import { useScan } from "@/features/muse/scan-store";
 import {
   CONCERN_GROUPS,
@@ -33,10 +36,45 @@ function ReportPage() {
   const navigate = useNavigate();
   const { result: liveResult, scanId: liveScanId, photos, frontLandmarks, clinicSlug } = useScan();
   const { data: directory } = useQuery({ ...directoryQuery, enabled: Boolean(clinicSlug) });
-  const sourceClinic = clinicSlug ? directory?.storefronts.find((s) => s.slug === clinicSlug) : undefined;
+  // A user-provided clinic slug is never sufficient to activate a branded experience.
+  const { data: activeClinic } = useQuery({
+    queryKey: ["muse-active-clinic", clinicSlug],
+    enabled: Boolean(clinicSlug),
+    queryFn: () => getPublicBrandedClinic({ data: { slug: clinicSlug! } }),
+    retry: 1,
+    staleTime: 60_000,
+  });
+  const sourceClinic = activeClinic
+    ? directory?.storefronts.find((s) => s.id === activeClinic.id)
+    : undefined;
   const [loaded, setLoaded] = useState<LoadedReport | null>(null);
   const [missing, setMissing] = useState(false);
   const [landmarks, setLandmarks] = useState<Landmark[] | null>(null);
+  const {
+    data: scanSuggestions,
+    isPending: suggestionsPending,
+    isError: suggestionsFailed,
+  } = useQuery({
+    queryKey: [
+      "muse-scan-suggestions",
+      scanId,
+      loaded?.result.top_priorities,
+      clinicSlug,
+      sourceClinic?.id,
+      sourceClinic?.listed.map((offer) => [offer.slug, offer.verified]),
+    ],
+    // A branded scan must never fall back to the unscoped general catalogue.
+    enabled: Boolean(loaded) && (!clinicSlug || Boolean(sourceClinic)),
+    queryFn: async () => {
+      if (!loaded) return [];
+      const allowedSlugs = clinicSlug
+        ? verifiedClinicTreatmentSlugs(sourceClinic?.listed)
+        : undefined;
+      const result = await getRecommendations(loaded.result.top_priorities, [], allowedSlugs);
+      return result.scanDriven;
+    },
+    staleTime: 60_000,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -233,16 +271,64 @@ function ReportPage() {
         </div>
       )}
 
+      <section className="mt-10" aria-label="educational scan suggestions">
+        <h2 className="tm-display text-3xl">your scan suggestions</h2>
+        <p className="mt-2 text-sm text-ink-mute">
+          {clinicSlug
+            ? sourceClinic
+              ? `these are educational options offered by ${sourceClinic.name}, based on its clinic-confirmed service list.`
+              : "this clinic link is not active or its services are unavailable. no other clinics are substituted."
+            : "explore educational options across TreatMe, then find clinics that offer them."}
+        </p>
+        {(!clinicSlug || sourceClinic) && (
+          <div className="mt-4 grid gap-3">
+            {suggestionsPending && <p className="text-sm text-ink-mute">finding relevant services...</p>}
+            {suggestionsFailed && <p className="text-sm text-ink-mute">suggestions are unavailable right now. your scan report is still saved.</p>}
+            {!suggestionsPending && !suggestionsFailed && scanSuggestions?.length === 0 && (
+              <p className="tm-card p-4 text-sm text-ink-soft">
+                no matching services were found{clinicSlug ? " in this clinic's confirmed menu" : ""}.
+                a licensed professional can discuss your options.
+              </p>
+            )}
+            {scanSuggestions?.map((suggestion) => (
+              <div key={suggestion.slug} className="tm-card p-5">
+                <p className="font-semibold">{suggestion.name}</p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  relevant to your scan priorities. suitability requires professional assessment.
+                </p>
+                {sourceClinic ? (
+                  <Link
+                    className="mt-3 inline-block text-sm font-semibold underline"
+                    to="/storefront/$id/request"
+                    params={{ id: sourceClinic.id }}
+                    search={{ treatment: suggestion.slug }}
+                  >request a consultation</Link>
+                ) : (
+                  <Link
+                    className="mt-3 inline-block text-sm font-semibold underline"
+                    to="/search"
+                    search={{ q: undefined, scope: undefined, treatment: suggestion.slug }}
+                  >find clinics offering this</Link>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="mt-8 text-center">
         <button
           className="tm-btn-hot w-full sm:w-auto"
+          disabled={Boolean(clinicSlug) && !sourceClinic}
           onClick={() =>
             sourceClinic
               ? navigate({ to: "/storefront/$id/request", params: { id: sourceClinic.id }, search: { treatment: undefined } })
               : navigate({ to: "/search", search: { q: undefined, scope: undefined, treatment: undefined } })
           }
         >
-          {sourceClinic ? `request a consultation at ${sourceClinic.name}` : "find an aesthetic clinic near me"}
+          {sourceClinic
+            ? `request a consultation at ${sourceClinic.name}`
+            : clinicSlug ? "clinic link unavailable" : "find an aesthetic clinic near me"}
         </button>
         <p className="mx-auto mt-4 max-w-md text-xs text-ink-mute">
           cosmetic and educational only. this is an estimate from photos, not a

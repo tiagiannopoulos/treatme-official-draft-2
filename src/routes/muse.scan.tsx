@@ -15,7 +15,10 @@ import {
 } from "@/features/muse/face-landmarks";
 
 export const Route = createFileRoute("/muse/scan")({
-  validateSearch: (search: Record<string, unknown>): { clinic?: string } => ({ clinic: typeof search.clinic === "string" ? search.clinic : undefined }),
+  validateSearch: (search: Record<string, unknown>): { clinic?: string; mode?: "general" } => ({
+    clinic: typeof search.clinic === "string" ? search.clinic : undefined,
+    mode: search.mode === "general" ? "general" : undefined,
+  }),
   component: ScanPage,
 });
 
@@ -473,7 +476,7 @@ function AngleCapture({
 
 function ScanPage() {
   const navigate = useNavigate();
-  const { clinic } = Route.useSearch();
+  const { clinic, mode } = Route.useSearch();
   const {
     photos,
     frontLandmarks,
@@ -484,7 +487,10 @@ function ScanPage() {
     setClinicSlug,
   } = useScan();
   // A redirect back from sign-in may omit the clinic query. Preserve the original branded journey.
-  useEffect(() => { if (clinic) setClinicSlug(clinic); }, [clinic, setClinicSlug]);
+  useEffect(() => {
+    if (clinic) setClinicSlug(clinic);
+    else if (mode === "general") setClinicSlug(null);
+  }, [clinic, mode, setClinicSlug]);
   const [step, setStep] = useState(0);
 
   const angle = ANGLES[step];
