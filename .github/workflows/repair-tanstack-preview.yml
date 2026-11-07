@@ -32,19 +32,18 @@ jobs:
         run: |
           node <<'NODE'
           const fs = require("node:fs");
-          const lock = JSON.parse(fs.readFileSync("bun.lock", "utf8"));
+          const lock = fs.readFileSync("bun.lock", "utf8");
           const targets = { "@tanstack/react-start": [1,168,60], "@tanstack/start-server-core": [1,169,39] };
+          // bun.lock is JSONC, so parse package/version tokens without strict JSON.parse.
+          const packages = [...lock.matchAll(/@tanstack\/(?:react-start|start-server-core)@([0-9]+)\.([0-9]+)\.([0-9]+)/g)];
           for (const [name, min] of Object.entries(targets)) {
-            const values = Object.entries(lock.packages).filter(([key]) => key === name || key.startsWith(name + "@"));
-            if (!values.length) throw new Error("Missing dependency in lockfile: " + name);
-            for (const [, entry] of values) {
-              const resolved = String(entry[0]);
-              const match = resolved.match(/@([0-9]+)\.([0-9]+)\.([0-9]+)/);
-              if (!match) throw new Error("Unrecognized installed version: " + resolved);
-              const ver = match.slice(1).map(Number);
+            const values = packages.filter((match) => match[0].startsWith(name + "@"));
+            if (!values.length) throw new Error("Missing resolved dependency in lockfile: " + name);
+            for (const value of values) {
+              const ver = value.slice(1, 4).map(Number);
               const safe = ver[0] > min[0] || (ver[0] === min[0] && (ver[1] > min[1] || (ver[1] === min[1] && ver[2] >= min[2])));
-              if (!safe) throw new Error("Vulnerable dependency still present: " + resolved);
-              console.log("Patched:", resolved);
+              if (!safe) throw new Error("Vulnerable dependency still present: " + value[0]);
+              console.log("Patched:", value[0]);
             }
           }
           NODE
