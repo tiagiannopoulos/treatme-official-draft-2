@@ -64,9 +64,14 @@ function RequestPage() {
   const accent = storefront?.brand_accent || "#F8A1C6";
   const clinicName = (storefront?.name ?? "this clinic").toLowerCase();
 
-  // only what this clinic offers: their own listing first, their roster otherwise.
+  // Only this clinic's listed services appear, plus an optional general consult.
+  // The server independently enforces service confirmation for active partners.
   const options = useMemo<Array<{ slug: string; name: string }>>(() => {
-    if (listed.length) return listed.map((l) => ({ slug: l.slug, name: l.name.toLowerCase() }));
+    const general = { slug: "consultation", name: "general skin consultation" };
+    if (listed.length) return [
+      general,
+      ...listed.filter((l) => l.slug !== "consultation" && l.verified).map((l) => ({ slug: l.slug, name: l.name.toLowerCase() })),
+    ];
     const seen = new Map<string, string>();
     for (const p of roster) {
       for (const t of p.treatments) {
@@ -75,10 +80,14 @@ function RequestPage() {
         }
       }
     }
-    return [...seen].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name));
+    return [
+      general,
+      // Do not advertise unconfirmed clinic services as selectable bookings.
+      // Clinicians can discuss other options in a general consultation.
+    ];
   }, [listed, roster]);
 
-  const [slug, setSlug] = useState(prefill ?? "");
+  const [slug, setSlug] = useState(prefill ?? "consultation");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [providerId, setProviderId] = useState("");

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { CreateRequestSchema, isActivePartner, requestRoutingTarget, type Partner } from "./rules";
+import { CreateRequestSchema, isActivePartner, mayRequestPartnerService, requestRoutingTarget, type Partner } from "./rules";
 
 const candidate: Partner = {
   storefront_id: "11111111-1111-4111-8111-111111111111",
@@ -33,6 +33,13 @@ describe("consultation data-sharing and routing rules", () => {
     expect(requestRoutingTarget({ ...candidate, booking_email: "" })).toBe("admin");
     expect(requestRoutingTarget(null)).toBe("admin");
     expect(requestRoutingTarget({ ...candidate, subscription_status: "trialing" })).toBe("clinic");
+  });
+
+  test("prevents a verified clinic from receiving another clinic's treatment requests", () => {
+    expect(mayRequestPartnerService(candidate, "microneedling", false)).toBe(false);
+    expect(mayRequestPartnerService(candidate, "microneedling", true)).toBe(true);
+    expect(mayRequestPartnerService(candidate, "consultation", false)).toBe(true);
+    expect(mayRequestPartnerService(null, "microneedling", false)).toBe(true); // routed to TreatMe admin
   });
 
   test("requires separate affirmative consent before recording a consultation", () => {

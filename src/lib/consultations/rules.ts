@@ -40,3 +40,13 @@ export function isActivePartner(p: Partner | null): p is Partner {
 export function requestRoutingTarget(p: Partner | null): "clinic" | "admin" {
   return isActivePartner(p) ? "clinic" : "admin";
 }
+
+/** A confirmed clinic may receive a request for a general consult or its own verified service.
+ * Non-partner requests are handled only by TreatMe, pending clinic verification. */
+export function mayRequestPartnerService(
+  partner: Partner | null,
+  treatmentSlug: string,
+  confirmedService: boolean,
+): boolean {
+  return !isActivePartner(partner) || treatmentSlug === "consultation" || confirmedService;
+}

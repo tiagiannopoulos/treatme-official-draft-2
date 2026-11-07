@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { CreateRequestSchema, isActivePartner, requestRoutingTarget, type Partner } from "@/lib/consultations/rules";
+import { CreateRequestSchema, isActivePartner, mayRequestPartnerService, requestRoutingTarget, type Partner } from "@/lib/consultations/rules";
 
 const InboxSchema = z.object({ accessToken: z.string().min(10).max(4096) });
 const PublicClinicSchema = z.object({ slug: z.string().min(1).max(130).regex(/^[a-z0-9-]+$/) });
@@ -93,6 +93,29 @@ export const submitConsultationRequest = createServerFn({ method: "POST" })
     if ((count ?? 0) >= 3) throw new Error("Too many consultation requests. Please try again later.");
 
     const partner = await findActivePartner(db, data.storefrontId);
+    // No client-supplied treatment slug can bypass clinic confirmation.
+    // "consultation" is a generic consult, not a claim that a service is offered.
+    if (partner && data.treatmentSlug !== "consultation") {
+      const { data: confirmed, error: confirmationError } = await db.from("storefront_treatments")
+        .select("treatment_slug")
+        .eq("storefront_id", data.storefrontId)
+        .eq("treatment_slug", data.treatmentSlug)
+        .eq("verified_by_clinic", true)
+        .maybeSingle();
+      if (confirmationError) throw new Error("Clinic service verification is unavailable.");
+      if (!mayRequestPartnerService(partner, data.treatmentSlug, Boolean(confirmed))) {
+        throw new Error("This clinic has not confirmed that service. Choose a confirmed service or general consultation.");
+      }
+    }
+    // A request cannot attach an unrelated clinic's practitioner.
+    if (data.providerId) {
+      const { data: practitioner, error: practitionerError } = await db.from("provider_storefronts")
+        .select("provider_id")
+        .eq("provider_id", data.providerId)
+        .eq("storefront_id", data.storefrontId)
+        .maybeSingle();
+      if (practitionerError || !practitioner) throw new Error("The selected provider is not associated with this clinic.");
+    }
     const route = requestRoutingTarget(partner);
     const { data: created, error } = await db.from("booking_requests")
       .insert({
