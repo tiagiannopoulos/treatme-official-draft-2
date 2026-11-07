@@ -69,6 +69,7 @@ function BookingFlow() {
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [consentToContact, setConsentToContact] = useState(false);
 
   const { user, openAuth } = useAuth();
   const userId = user?.id ?? null;
@@ -115,7 +116,7 @@ function BookingFlow() {
 
   // requests route to the clinic. an individual provider is never required.
   const selectionReady = Boolean(storefrontId && treatmentSlug);
-  const detailsReady = name.trim().length > 1 && phone.trim().length > 5 && /.+@.+\..+/.test(email);
+  const detailsReady = name.trim().length > 1 && phone.trim().length > 5 && /.+@.+\..+/.test(email) && consentToContact;
 
   async function send() {
     if (!selectionReady) return;
@@ -133,6 +134,7 @@ function BookingFlow() {
         name,
         phone,
         email,
+        consentToContact,
       });
       setSent(true);
     } catch (error) {
@@ -300,6 +302,10 @@ function BookingFlow() {
                 placeholder="optional. allergies, past treatments, what you want out of it."
                 className="mt-1.5 w-full rounded-[14px] border border-line bg-white px-4 py-3 text-[14px] lowercase outline-none focus:border-ink/40"
               />
+            </label>
+            <label className="flex items-start gap-2 text-[12px] leading-relaxed text-ink/70 lowercase">
+              <input type="checkbox" checked={consentToContact} onChange={(e) => setConsentToContact(e.target.checked)} className="mt-1" />
+              <span>i agree that treatme may use my contact details to coordinate this consultation with my chosen clinic. my scan photos and results stay private unless i separately share them.</span>
             </label>
           </div>
         </section>

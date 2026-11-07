@@ -4,11 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Check, ChevronDown, Search } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth";
 import { directoryQuery } from "@/lib/search-data";
 import { storefrontTreatmentsQuery } from "@/lib/storefront-treatments";
 import { submitBookingRequest, slotDateLabel, type Flexibility, type PreferredSlot, type TimeOfDay } from "@/lib/booking";
-import { sendBookingRequestEmail } from "@/lib/booking-email.functions";
-import { displayTreatmentName } from "@/lib/treatment-labels";
 
 const CREAM = "#FCFBF7";
 const INK = "#111111";
@@ -54,6 +53,7 @@ function RequestPage() {
   const { id } = Route.useParams();
   const { treatment: prefill } = Route.useSearch();
   const navigate = useNavigate();
+  const { user, openAuth } = useAuth();
 
   const { data: directory } = useQuery(directoryQuery);
   const { data: listed = [] } = useQuery(storefrontTreatmentsQuery(id));
@@ -63,21 +63,16 @@ function RequestPage() {
   const accent = storefront?.brand_accent || "#F8A1C6";
   const clinicName = (storefront?.name ?? "this clinic").toLowerCase();
 
-  // only what this clinic offers: their own listing first, their roster otherwise.
-  const options = useMemo<Array<{ slug: string; name: string }>>(() => {
-    if (listed.length) return listed.map((l) => ({ slug: l.slug, name: l.name.toLowerCase() }));
-    const seen = new Map<string, string>();
-    for (const p of roster) {
-      for (const t of p.treatments) {
-        if (!seen.has(t.treatment_slug)) {
-          seen.set(t.treatment_slug, displayTreatmentName(t.name, t.treatment_slug).toLowerCase());
-        }
-      }
-    }
-    return [...seen].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [listed, roster]);
+  // Only this clinic's listed services appear, plus an optional general consult.
+  // The server independently enforces service confirmation for active partners.
+  const options = useMemo<Array<{ slug: string; name: string }>>(() => [
+    { slug: "consultation", name: "general skin consultation" },
+    ...listed
+      .filter((offer) => offer.slug !== "consultation" && offer.verified)
+      .map((offer) => ({ slug: offer.slug, name: offer.name.toLowerCase() })),
+  ], [listed]);
 
-  const [slug, setSlug] = useState(prefill ?? "");
+  const [slug, setSlug] = useState(prefill ?? "consultation");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerQuery, setPickerQuery] = useState("");
   const [providerId, setProviderId] = useState("");
@@ -92,6 +87,7 @@ function RequestPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [consentToContact, setConsentToContact] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -123,10 +119,18 @@ function RequestPage() {
   }, []);
 
   const treatmentName = options.find((o) => o.slug === slug)?.name ?? "";
-  const ready = Boolean(slug && slots[0]?.date && name.trim() && email.trim() && phone.trim());
+  const ready = Boolean(slug && slots[0]?.date && name.trim() && email.trim() && phone.trim() && consentToContact);
 
   async function submit() {
     if (!ready || busy || !storefront) return;
+    if (!user) {
+      openAuth({ reason: "Sign in to securely save your consultation request." });
+      return;
+    }
+    if (user.email?.toLowerCase() !== email.trim().toLowerCase()) {
+      setError("please use the email on your TreatMe account.");
+      return;
+    }
     setBusy(true);
     setError(null);
     const chosen: PreferredSlot[] = slots
@@ -144,29 +148,9 @@ function RequestPage() {
         email,
         flexibility: flex,
         isFirstTime: firstTime,
+        consentToContact,
       });
-      // the request is saved. email is best effort and never blocks the patient.
-      try {
-        await sendBookingRequestEmail({
-          data: {
-            requestId,
-            patientName: name.trim(),
-            patientEmail: email.trim(),
-            patientPhone: phone.trim(),
-            storefrontName: storefront.name,
-            storefrontPhone: storefront.phone ?? null,
-            storefrontAddress: `${storefront.address_line}, ${storefront.city} ${storefront.postcode ?? ""}`.trim(),
-            treatmentName: treatmentName || slug.replace(/-/g, " "),
-            providerName: roster.find((p) => p.id === providerId)?.name ?? null,
-            preferred: chosen.map((s) => `${slotDateLabel(s.date)} ${s.time_of_day}`),
-            flexibility: flex,
-            isFirstTime: firstTime,
-            notes: notes.trim() || null,
-          },
-        });
-      } catch (mailErr) {
-        console.error("booking request email call failed", mailErr);
-      }
+      // Server-managed email routing does not expose patient notes or contact details in notifications.
       setSent(true);
       window.scrollTo({ top: 0 });
     } catch (err) {
@@ -185,7 +169,7 @@ function RequestPage() {
           </span>
           <h1 className="mt-5 text-[26px] font-medium lowercase tracking-[-0.02em]">request sent</h1>
           <p className="mt-2.5 text-[14.5px] lowercase leading-relaxed" style={{ color: "rgba(17,17,17,0.65)" }}>
-            we will call {clinicName} and confirm a time with you. you will hear back within one business day.
+            treatme received your consultation request. we will update you when availability is confirmed.
           </p>
           <p className="mt-3 text-[12.5px] lowercase leading-relaxed" style={{ color: "rgba(17,17,17,0.45)" }}>
             this is not a confirmed appointment yet. do not go to the clinic until we come back to you.
@@ -380,6 +364,10 @@ function RequestPage() {
           />
         </Field>
 
+        <label className="mt-5 flex items-start gap-2 text-[12px] leading-relaxed lowercase">
+          <input type="checkbox" checked={consentToContact} onChange={(e) => setConsentToContact(e.target.checked)} className="mt-1" />
+          <span>i agree that treatme may use my contact details to arrange this request with the selected clinic. my skin report and photos stay private unless i separately share them.</span>
+        </label>
         {error && (
           <p className="mt-4 text-[13px] lowercase" style={{ color: "#B00020" }}>
             {error}
@@ -396,7 +384,7 @@ function RequestPage() {
           {busy ? "sending" : "send request"}
         </button>
         <p className="mt-3 text-center text-[12px] lowercase" style={{ color: "rgba(17,17,17,0.45)" }}>
-          you do not need an account to send this
+          sign in to securely send this request
         </p>
       </div>
     </main>

@@ -72,26 +72,38 @@ function rank(rows: Row[], keys: string[], limit: number): Recommendation[] {
 export async function getRecommendations(
   concerns: string[],
   goals: string[] = [],
+  /** undefined = full catalogue, [] = no allowed clinic services, else strictly these clinic-confirmed slugs */
+  allowedClinicSlugs?: readonly string[],
 ): Promise<Recommendations> {
   const scanDriven: Recommendation[] = [];
   const goalDriven: Recommendation[] = [];
 
+  // Important: never allow a branded result with zero confirmed clinic services
+  // to silently fall back to suggestions from the general marketplace.
+  if (allowedClinicSlugs && allowedClinicSlugs.length === 0) {
+    return { scanDriven, goalDriven };
+  }
+
   if (concerns.length) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("treatments")
       .select(SELECT)
       .eq("rec_mode", "scan")
       .overlaps("improves", concerns);
+    if (allowedClinicSlugs) query = query.in("slug", [...allowedClinicSlugs]);
+    const { data, error } = await query;
     if (error) throw error;
     scanDriven.push(...rank((data ?? []) as Row[], concerns, 6));
   }
 
   if (goals.length) {
-    const { data, error } = await supabase
+    let query = supabase
       .from("treatments")
       .select(SELECT)
       .eq("rec_mode", "goal")
       .overlaps("improves", goals);
+    if (allowedClinicSlugs) query = query.in("slug", [...allowedClinicSlugs]);
+    const { data, error } = await query;
     if (error) throw error;
     goalDriven.push(...rank((data ?? []) as Row[], goals, 4));
   }
