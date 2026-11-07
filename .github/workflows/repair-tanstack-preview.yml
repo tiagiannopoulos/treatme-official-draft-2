@@ -23,7 +23,15 @@ jobs:
           const file = "package.json";
           const pkg = JSON.parse(fs.readFileSync(file, "utf8"));
           pkg.dependencies["@tanstack/react-start"] = "1.168.60";
-          pkg.overrides = { ...pkg.overrides, "@tanstack/start-server-core": "1.169.39" };
+          // The 1.168.60 Start release explicitly depends on React Router 1.170.41.
+          // Keeping the old root-level ^1.168.25 forced incompatible router-core exports.
+          pkg.dependencies["@tanstack/react-router"] = "1.170.41";
+          pkg.dependencies["@tanstack/router-plugin"] = "1.168.42";
+          pkg.overrides = {
+            ...pkg.overrides,
+            "@tanstack/start-server-core": "1.169.39",
+            "@tanstack/router-core": "1.171.34",
+          };
           fs.writeFileSync(file, JSON.stringify(pkg, null, 2) + "\n");
           NODE
       - name: Regenerate dependency lockfile
@@ -33,9 +41,15 @@ jobs:
           node <<'NODE'
           const fs = require("node:fs");
           const lock = fs.readFileSync("bun.lock", "utf8");
-          const targets = { "@tanstack/react-start": [1,168,60], "@tanstack/start-server-core": [1,169,39] };
+          const targets = {
+            "@tanstack/react-start": [1,168,60],
+            "@tanstack/start-server-core": [1,169,39],
+            "@tanstack/react-router": [1,170,41],
+            "@tanstack/router-core": [1,171,34],
+            "@tanstack/router-plugin": [1,168,42],
+          };
           // bun.lock is JSONC, so parse package/version tokens without strict JSON.parse.
-          const packages = [...lock.matchAll(/@tanstack\/(?:react-start|start-server-core)@([0-9]+)\.([0-9]+)\.([0-9]+)/g)];
+          const packages = [...lock.matchAll(/@tanstack\/(?:react-start|start-server-core|react-router|router-core|router-plugin)@([0-9]+)\.([0-9]+)\.([0-9]+)/g)];
           for (const [name, min] of Object.entries(targets)) {
             const values = packages.filter((match) => match[0].startsWith(name + "@"));
             if (!values.length) throw new Error("Missing resolved dependency in lockfile: " + name);
